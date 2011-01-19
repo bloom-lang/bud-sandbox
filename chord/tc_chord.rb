@@ -58,9 +58,11 @@ class TestFind < Test::Unit::TestCase
     @nodes = @addrs.values.map do |a|
       LilChord.new(a.split(':')[0], a.split(':')[1], {'visualize' => true})
     end
-    assert_nothing_raised(RuntimeError) { @nodes.each{|n| n.run_bg} }
 
+    assert_nothing_raised { @nodes.each{|n| n.run_bg} }
     sleep 2
+    assert_nothing_raised { @nodes.each{|n| n.stop_bg} }
+
     assert_equal(3, @nodes[0].succ_cache.length)
     assert_equal(@nodes[0].succ_cache.map{|s| s}, @nodes[1].succ_cache.map{|s| s})
     assert_equal(@nodes[1].succ_cache.map{|s| s}, @nodes[2].succ_cache.map{|s| s})
