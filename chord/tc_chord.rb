@@ -7,26 +7,26 @@ require 'chord_find'
 class LilChord < Bud
   include ChordNode
   include ChordFind
-  
+
   def initialize(ip, port, *flags)
     @addrs = {0 =>'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
     @maxkey = 8
     super(ip,port,*flags)
   end
-  
+
   def state
     super
     table :succ_cache, succ_resp.keys, succ_resp.cols
   end
 
-  # figure 3(b) from stoica's paper  
+  # figure 3(b) from stoica's paper
   # interface input, :find_event, ['key', 'from']
   #   interface output, :closest, ['key'], ['index', 'start', 'hi', 'succ', 'succ_addr']
   #   table :finger, ['index'], ['start', 'hi', 'succ', 'succ_addr']
   #   table :me, [], ['start']
   #   scratch :smaller, ['key', 'index', 'start', 'hi', 'succ', 'succ_addr']
   #   table :localkeys, ['key'], ['val']
-  
+
   def bootstrap
     me << [@ip_port.split(':')[1].to_i%10]
     if me.first == [0]
@@ -44,8 +44,8 @@ class LilChord < Bud
       succ_req <+ [[num]]
     end
   end
-  
-  declare 
+
+  declare
   def persist_resps
     succ_cache <= succ_resp
     # stdio <~ succ_resp.map{|s| [s.inspect]}
@@ -58,7 +58,7 @@ class TestFind < Test::Unit::TestCase
     @nodes = @addrs.values.map do |a|
       LilChord.new(a.split(':')[0], a.split(':')[1], {'visualize' => true})
     end
-    assert_nothing_raised( RuntimeError) { @nodes.each{|n| n.run_bg} }
+    assert_nothing_raised(RuntimeError) { @nodes.each{|n| n.run_bg} }
 
     sleep 2
     assert_equal(3, @nodes[0].succ_cache.length)
