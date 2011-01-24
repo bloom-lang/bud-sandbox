@@ -1,12 +1,6 @@
 require 'voting/voting'
+require 'time_hack/time_moves'
 require 'test/unit'
-
-module TimeMoves
-  def state
-    super
-    periodic :ticc, 1
-  end
-end
 
 class VM < Bud
   include VotingMaster
