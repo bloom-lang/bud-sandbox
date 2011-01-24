@@ -9,7 +9,7 @@ class HB < Bud
   def state
     super
     #channel :tickler, ['@host']
-    periodic :tix, 1
+    #periodic :tix, 1
   end
 
   def bootstrap
@@ -39,26 +39,11 @@ class TestHB < Test::Unit::TestCase
     hb3.run_bg
 
 
-    sleep 10
+    sleep 14
 
-    
-
-    (0..3).each do |i|
-      puts "OK"
-     hb2.last_heartbeat.each do |h|
-        puts i.to_s +  ":" + hb.budtime.to_s + " LAST: #{h.inspect}"
-      end
-      sleep 1
-    end
-    
     [hb, hb2, hb3].each do |h|
       assert_equal(2, h.last_heartbeat.length)
       s = h.last_heartbeat.map{|b| b.peer }
-      #hosts = [46362, 46363, 46364].map do |b| 
-      #  if h.port != b
-      #    "localhost:#{b}"
-      #  end
-      #end 
       hosts = []
       [46362, 46363, 46364].each do |b|
         if h.port != b
@@ -66,17 +51,10 @@ class TestHB < Test::Unit::TestCase
         end
       end
 
-      puts "hosts (len #{hosts.length} is #{hosts.inspect}"
       hosts.each do |c|
-        puts "assert that #{s.inspect} includes #{c}"
         assert(s.include? c)
       end
     end
 
-    #sleep 20
-
-    puts "OK" 
-
-    hb2.heartbeat_log.each {|l| puts "log: #{l.inspect}" } 
   end
 end
