@@ -1,12 +1,11 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'test/test_lib'
 require 'test/kvs_workloads'
-require 'lib/kvs'
-require 'lib/useful_combos'
+require 'kvs/kvs'
+require 'kvs/useful_combos'
 
-class TestKVS < TestLib
+class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
@@ -34,7 +33,7 @@ class TestKVS < TestLib
     assert_nothing_raised(RuntimeError) {v.run_bg}
     add_members(v, "localhost:12352")
     workload2(v)
-    soft_tick(v)
+    #soft_tick(v)
   
     assert_raise(KeyConstraintError)  { advancer(v.ip, v.port) }
   end
@@ -52,8 +51,8 @@ class TestKVS < TestLib
 
 
     workload1(v)
-    advance(v2)
-    advance(v2)
+    #advance(v2)
+    #advance(v2)
 
     assert_equal(1, v.kvstate.length)
     assert_equal("bak", v.kvstate.first[1])
@@ -69,10 +68,10 @@ class TestKVS < TestLib
     sleep 1 
   
     workload1(v)
-    advance(v)
-    advance(v)
-    advance(v)
-    advance(v)
+    #advance(v)
+    #advance(v)
+    #advance(v)
+    #advance(v)
 
     assert_equal(1, v.kvstate.length)
     assert_equal("bak", v.kvstate.first[1])

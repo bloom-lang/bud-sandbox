@@ -1,9 +1,8 @@
 require 'rubygems'
 require 'bud'
 
-#require 'lib/kvs_metered'
-require 'lib/kvs'
-require 'lib/multicast'
+require 'kvs/kvs'
+require 'delivery/multicast'
 
 # some combinations are simple:
 

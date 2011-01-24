@@ -4,7 +4,7 @@ require 'bud'
 require 'lib/voting'
 require 'lib/nonce'
 
-class LeaderElection < Bud
+module LeaderElection 
   include MajorityVotingMaster
   include VotingAgent
 
@@ -14,6 +14,8 @@ class LeaderElection < Bud
     @nonce.tick
     @id = id
   end
+
+
   def state
     super
     #blackboard :current_state, [], ['status', 'leader', 'vid']

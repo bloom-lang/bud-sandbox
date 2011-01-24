@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
-require 'lib/reliable_delivery'
-require 'lib/multicast'
+require 'delivery/reliable_delivery'
+require 'delivery/multicast'
 
 module KVSProtocol
   def state
