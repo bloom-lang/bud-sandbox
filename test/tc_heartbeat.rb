@@ -9,6 +9,7 @@ class HB < Bud
   def state
     super
     #channel :tickler, ['@host']
+    periodic :tix, 1
   end
 
   def bootstrap
@@ -21,22 +22,6 @@ end
 
 class TestHB < Test::Unit::TestCase
 
-  def advance(p)
-    advancer(p.ip, p.port)
-  end
-
-  def advancer(ip, port)
-    sleep 1
-    send_channel(ip, port, "tickler", ["#{ip}:#{port}"])
-  end
-
-  def send_channel(ip, port, chan, payload)
-    EventMachine::connect(ip, port) do |c|
-      pl = ([chan, payload]).to_msgpack
-      assert_nothing_raised(RuntimeError) { c.send_data(pl) }
-    end
-  end
-
   def ntest_basic_heartbeat
     hb = HB.new("localhost", 46364, {'visualize' => true, 'dump' => true})
     hb.run_bg
@@ -46,29 +31,52 @@ class TestHB < Test::Unit::TestCase
   def test_heartbeat_group
     hb = HB.new("localhost", 46362, {'visualize' => true, 'dump' => true})
     hb2 = HB.new("localhost", 46363, {})
-    #hb3 = HB.new("localhost", 46364, {})
+    hb3 = HB.new("localhost", 46364, {})
 
 
     hb.run_bg
     hb2.run_bg
-    #hb3.run_bg
+    hb3.run_bg
 
 
     sleep 10
 
-    (0..50).each do |i|
-      hb.last_heartbeat.each do |h|
+    
+
+    (0..3).each do |i|
+      puts "OK"
+     hb2.last_heartbeat.each do |h|
         puts i.to_s +  ":" + hb.budtime.to_s + " LAST: #{h.inspect}"
       end
       sleep 1
     end
     
+    [hb, hb2, hb3].each do |h|
+      assert_equal(2, h.last_heartbeat.length)
+      s = h.last_heartbeat.map{|b| b.peer }
+      #hosts = [46362, 46363, 46364].map do |b| 
+      #  if h.port != b
+      #    "localhost:#{b}"
+      #  end
+      #end 
+      hosts = []
+      [46362, 46363, 46364].each do |b|
+        if h.port != b
+          hosts << "localhost:#{b}"
+        end
+      end
 
+      puts "hosts (len #{hosts.length} is #{hosts.inspect}"
+      hosts.each do |c|
+        puts "assert that #{s.inspect} includes #{c}"
+        assert(s.include? c)
+      end
+    end
 
     #sleep 20
 
     puts "OK" 
 
-    #hb2.heartbeat_log.each {|l| puts "log: #{l.inspect}" } 
+    hb2.heartbeat_log.each {|l| puts "log: #{l.inspect}" } 
   end
 end
