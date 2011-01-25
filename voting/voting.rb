@@ -1,6 +1,22 @@
 require 'rubygems'
 require 'bud'
 
+
+module VoteMasterProto
+  def state
+    super
+    interface input, :begin_vote, ['ident', 'content']
+    interface output, :victor, ['ident', 'content', 'response']
+  end
+end
+
+module VoteAgentProto
+  def state
+    super
+    interface input, :cast_vote, ['ident', 'response']
+  end 
+end
+
 module VoteInterface
   # channels used by both ends of the voting protocol
   # paa: TODO: figure out the right way to mix in state
@@ -16,14 +32,11 @@ module VotingMaster
   # boilerplate
   include Anise
   include VoteInterface
+  include VoteMasterProto
   annotator :declare
 
   def state
     super if defined? super
-    # local interfaces    
-    interface input, :begin_vote, ['ident', 'content']
-    interface output, :victor, ['ident', 'content', 'response']
-
     table :vote_status, 
           ['ident', 'content', 'response']
     table :member, ['peer']
@@ -83,11 +96,11 @@ module VotingAgent
   include Anise
   annotator :declare
   include VoteInterface
+  include VoteAgentProto
 
   def state
     super if defined? super
     table :waiting_ballots, ['ident', 'content', 'master']
-    interface input, :cast_vote, ['ident', 'response']
   end
 
   # default for decide: always cast vote 'yes'.  expect subclasses to override
