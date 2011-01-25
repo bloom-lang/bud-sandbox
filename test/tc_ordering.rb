@@ -2,6 +2,7 @@ require 'rubygems'
 require 'test/unit'
 require 'bud'
 require 'ordering/serializer'
+#require 'ordering/assigner'
 
 class ST < Bud
   include Serializer
@@ -16,21 +17,29 @@ class ST < Bud
   def remem
     mems <= dequeue_resp
   end
-
 end
+
+#class AS < Bud
+#  include Assigner
+#end
 
 class TestSer < Test::Unit::TestCase
 
+  def ntest_assigner
+    as = AS.new('localhost', 82357, {})
+    as.run_bg
+  end
+
   def test_serialization
-    st = ST.new('localhost', 648212, {})
+    st = ST.new('localhost', 648212, {'dump' => true})
     st.run_bg
 
-    st.enqueue <= [[1, 'foo']]
-    st.enqueue <= [[2, 'bar']]
-    st.enqueue <= [[3, 'baz']]
-
-    st.dequeue <= [[1234]]
+    st.enqueue <+ [[1, 'foo']]
+    st.enqueue <+ [[2, 'bar']]
+    st.enqueue <+ [[3, 'baz']]
+    st.dequeue <+ [[1234]]
     sleep 3
+
     assert_equal(1, st.mems.length)
     assert_equal([1234, 1, 'foo'], st.mems.first)
     st.dequeue <+ [[2345]]
@@ -42,7 +51,5 @@ class TestSer < Test::Unit::TestCase
         when 1 then assert_equal([2345, 2, 'bar'], m)
       end
     end
-
-    
   end
 end
