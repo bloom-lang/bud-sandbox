@@ -16,14 +16,19 @@ module KVSWorkloads
 
   def workload1(v)
     v.kvput <+ [["localhost:54321", "foo", 1, "bar"]]
+    sleep 2
     #advance(v)
     #advance(v)
+    v.kvput.each {|k| puts "K #{k.inspect}" } 
     v.kvput <+ [["localhost:54321", "foo", 2, "baz"]]
     #advance(v)
 
+    sleep 1
     v.kvput <+ [["localhost:54321", "foo", 3, "bam"]]
+    sleep 1
     #advance(v)
     v.kvput <+ [["localhost:54321", "foo", 4, "bak"]]
+    sleep 2
     #advance(v)
   end
 

@@ -3,6 +3,7 @@ require 'bud'
 
 require 'kvs/kvs'
 require 'delivery/multicast'
+require 'time_hack/time_moves'
 
 # some combinations are simple:
 
@@ -11,17 +12,20 @@ class SingleSiteKVS < Bud
   include BasicKVS
   # not necessary except to import 'tickler'
   include BestEffortMulticast
+  include TimeMoves
 end
 
 # was RKV
 class BestEffortReplicatedKVS < Bud
   include ReplicatedKVS
   include BestEffortMulticast
+  include TimeMoves
 end
 
 class ReliableReplicatedKVS < Bud
   include ReplicatedKVS
   include ReliableMulticast
+  include TimeMoves
 end
 
 module ReplicatedMeteredGlue
