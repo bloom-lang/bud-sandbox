@@ -21,15 +21,13 @@ module BasicKVS
   def state
     super
     table :kvstate, ['key'], ['value']
-    interface input, :kvput_internal, ['client', 'key'], ['reqid', 'value']
+    #interface input, :kvput_internal, ['client', 'key'], ['reqid', 'value']
+    scratch :kvput_internal, ['client', 'key'], ['reqid', 'value']
   end
 
   declare 
   def mutate
-    kvstate <+ kvput_internal.map do |s| 
-      puts "put" or [s.key, s.value]
-    end
-
+    kvstate <+ kvput_internal.map{ |s|  [s.key, s.value] } 
     prev = join [kvstate, kvput_internal], [kvstate.key, kvput_internal.key]
     kvstate <- prev.map { |b, s| b }
   end
@@ -38,7 +36,7 @@ module BasicKVS
   def get
     getj = join([kvget, kvstate], [kvget.key, kvstate.key])
     kvget_response <= getj.map do |g, t|
-      puts "RESPONSE" or [g.reqid, t.key, t.value]
+      [g.reqid, t.key, t.value]
     end
   end
 

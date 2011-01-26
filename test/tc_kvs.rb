@@ -24,20 +24,15 @@ class TestKVS < Test::Unit::TestCase
       workload1(v)
       assert_equal(0, v.kvstate.length)
     end
-    
   end
 
-  def ntest_wl5
+  def test_wl5
     # the unmetered kvs fails on a disorderly workload
     v = SingleSiteKVS.new("localhost", 12352, @opts)
     assert_nothing_raised(RuntimeError) {v.run_bg}
     add_members(v, "localhost:12352")
-    workload2(v)
-    #soft_tick(v)
-  
-    assert_raise(KeyConstraintError)  { advancer(v.ip, v.port) }
+    assert_raise(Bud::KeyConstraintError)  { workload2(v) }
   end
-
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
@@ -47,17 +42,13 @@ class TestKVS < Test::Unit::TestCase
     assert_nothing_raised(RuntimeError) {v2.run_bg}
     add_members(v, "localhost:12345", "localhost:12346")
     add_members(v2, "localhost:12345", "localhost:12346")
-    sleep 1
-
+    sleep 2
 
     workload1(v)
-    #advance(v2)
-    #advance(v2)
 
     assert_equal(1, v.kvstate.length)
     assert_equal("bak", v.kvstate.first[1])
     assert_equal(1, v2.kvstate.length)
-
     assert_equal("bak", v2.kvstate.first[1])
   end
 
@@ -66,16 +57,9 @@ class TestKVS < Test::Unit::TestCase
     assert_nothing_raised(RuntimeError) {v.run_bg}
     add_members(v, "localhost:12360")
     sleep 1 
-  
     workload1(v)
-    #advance(v)
-    #advance(v)
-    #advance(v)
-    #advance(v)
-
     assert_equal(1, v.kvstate.length)
     assert_equal("bak", v.kvstate.first[1])
   end
-  
 end
 
