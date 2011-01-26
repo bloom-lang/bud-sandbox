@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'bud'
 
-
 module VoteMasterProto
   def state
     super

@@ -2,6 +2,8 @@ require 'rubygems'
 require 'test/unit'
 require 'bud'
 require 'ordering/serializer'
+require 'ordering/nonce'
+require 'time_hack/time_moves'
 #require 'ordering/assigner'
 
 class ST < Bud
@@ -23,7 +25,28 @@ end
 #  include Assigner
 #end
 
+class SN < Bud
+  include SimpleNonce
+  include TimeMoves
+end
+
 class TestSer < Test::Unit::TestCase
+  
+  def test_simple_nonce
+    sn = SN.new("localhost", 235636, {'dump' => true})
+    sn.run_bg
+
+    old_val = 0
+    (0..20).each do |i|
+      sn.nonce.each {|n| puts "NON: #{n}" } 
+      val = sn.nonce.first.ident
+      assert(val != old_val, "nonce had same value: #{old_val} (on run #{i})")
+      old_val = val
+      sleep 2
+      # doesn't work.
+      #sn.localtick <~ [['1234']]
+    end
+  end 
 
   def ntest_assigner
     as = AS.new('localhost', 82357, {})

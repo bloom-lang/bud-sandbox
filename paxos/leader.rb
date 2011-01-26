@@ -1,89 +1,82 @@
 require 'rubygems'
 require 'bud'
 
-require 'lib/voting'
-require 'lib/nonce'
+require 'voting/voting'
+#require 'lib/nonce'
+require 'ordering/nonce'
 
 module LeaderElection 
   include MajorityVotingMaster
   include VotingAgent
-
+  include SimpleNonce
+  
+  include Anise
+  annotator :declare
+  
   def initialize(i, p, id)
     super i, p, {'dump' => true}
-    @nonce = Nonce.new(i, p.to_i + 1, {'dump' => true})
-    @nonce.tick
     @id = id
   end
 
 
   def state
     super
-    #blackboard :current_state, [], ['status', 'leader', 'vid']
     table :current_state, [], ['status', 'leader', 'vid']
+    #table :current_state, ['status', 'leader', 'vid']
     scratch :will_ballot, ['nonce', 'vid', 'time']
-    ##table :ballot_history, ['nonce', 'vid', 'time']
     scratch :latest_ballot, ['time']
 
-    periodic :timer, 1
-    ##table :seen_ballots, ['peer', 'candidate', 'nonce']
+    periodic :timer, 3
     scratch :will_vote, ['message', 'leader', 'vid']
     scratch :found_leader, ['ballot', 'leader', 'vid']
-  end
-
-  def tick
-    @nonce.tick
-    super
   end
 
   declare
   def decide
       will_vote <= join([ballot, current_state]).map do |b, c|
-        if c.status == "election" and b.content.fetch(2) >= c.vid
-          print "will vote\n" or [b.content, b.content.fetch(1), b.content.fetch(2)]
+        if c.status == "election" and not b.content.fetch(2).nil? and b.content.fetch(2) >= c.vid
+          puts "will vote " + b.inspect or [b.content, b.content.fetch(1), b.content.fetch(2)]
         else
-          print "no vote?" + b.inspect + "," + c.inspect + "\n" or [b.content, c.leader, c.vid]
+          puts "no vote? " + b.inspect + "," + c.inspect or [b.content, c.leader, c.vid]
         end
       end
     
-      cast_vote <+ will_vote.map{|w| [w.message, [w.leader, w.vid]]}
+      cast_vote <+ will_vote.map{|w| puts "casting vote for " + w.inspect or [w.message.fetch(0), [w.leader, w.vid]]}
       current_state <+ will_vote.map{|w| ['election', w.leader, w.vid]}
       current_state <- join([will_vote, current_state]).map{|w, c| c}
   end
 
   declare
   def le_two 
-      nj = join [timer, current_state, @nonce.nonce]
-      #@nonce.nonce <- nj.map do |t, s, n| 
-      #  if s.status == 'election'
-      #    print "(#{budtime} delete nonce #{n.inspect}\n" or n
-      #  end
-      #end
-
+      nj = join [timer, current_state, nonce]
       will_ballot <= nj.map do |t, s, n|
         if s.status == "election" 
-          print "(#{budtime}) will ballot #{n.id}\n" or [n.id, s.vid, Time.new.to_i]
+          puts @budtime.to_s + " will ballot " + n.ident.to_s or [n.ident, s.vid, Time.new.to_i]
         end
       end
 
-      begin_vote <+ will_ballot.map{|w|  [w.nonce, [w.nonce, @myloc, w.vid]] }
+      begin_vote <+ will_ballot.map{|w|  puts "begin vote " + w.inspect or [w.nonce, [w.nonce, @ip_port, w.vid]] }
 
-      found_leader <+ join([current_state, vote_status]).map do |c, s|
+      #found_leader <+ join([current_state, vote_status]).map do |c, s|
+      found_leader <= join([current_state, victor]).map do |c, s|
         #print "found leader? #{v.cnt} for #{v.vote[0]}\n"
         if c.status == "election" 
-          print "found leader?\n" or [s.id, s.content.fetch(1), s.response]
+          puts "found leader? " + s.inspect or [s.ident, s.content.fetch(1), s.response.fetch(1)]
         end
       end
 
-      current_state <+ found_leader.map do |c, s|
-        if f.leader == @myloc
-          print "setting to leader\n" or ['leader', @myloc, f.vid]
+      current_state <+ found_leader.map do |f|
+        if f.leader == @ip_port
+          puts "setting to leader " + f.inspect or ['leader', @ip_port, f.vid]
         else
-          print "setting to follower\n" or ['follower', f.leader, f.vid]
+          puts "setting to follower " + f.inspect  or ['follower', f.leader, f.vid]
         end
       end
 
-      current_state <- found_leader.map{|f, c| c}
+      current_state <- join([current_state, found_leader]).map{|c, f| c}
       #status <= found_leader.map{|f| [f.ballot, f.leader] }
+
+      stdio <~ victor.map{|v| ["VIC: " + v.inspect] }
   end
 end
 
