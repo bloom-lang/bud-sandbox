@@ -14,19 +14,28 @@ def mk_znode(z, path, ephemeral = false, sequence = false)
   end
 end
 
+def register_get_children(z, path)
+  cb = Zookeeper::WatcherCallback.new {
+    puts "Callback!"
+    puts "Path: #{cb.context[:path]}"
+    register_get_children(z, path)
+  }
+
+  r = z.get_children(:path => path, :watcher => cb,
+                     :watcher_context => { :path => "foo" })
+  puts "Children: (\# = #{r[:children].length})"
+  r[:children].each do |c|
+    puts "\t#{c}"
+  end
+end
+
 z = Zookeeper.new(ZK_ADDR)
 z.reopen
 mk_znode(z, "/bud")
 mk_znode(z, "/bud/#{GROUP_NAME}")
 mk_znode(z, "/bud/#{GROUP_NAME}/member", true, true)
 
-cb = Zookeeper::WatcherCallback.new {
-  puts "Callback!"
-  puts "Path: #{cb.context[:path]}"
-}
-
-z.get_children(:path => "/bud/#{GROUP_NAME}", :watcher => cb,
-               :watcher_context => { :path => "foo" })
+register_get_children(z, "/bud/#{GROUP_NAME}")
 
 sleep 20
 puts "Done!"
