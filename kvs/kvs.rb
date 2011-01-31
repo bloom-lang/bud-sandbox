@@ -65,7 +65,7 @@ module ReplicatedKVS
     # if I am the master, multicast store requests
     send_mcast <= kvput.map do |k| 
       unless members.include? [k.client]
-        puts "MCAST" or [k.reqid, [@addy, k.key, k.reqid, k.value]] 
+        [k.reqid, [@addy, k.key, k.reqid, k.value]] 
       end
     end
 
@@ -74,7 +74,7 @@ module ReplicatedKVS
     # if I am a replica, store the payload of the multicast
     kvput_internal <= pipe_chan.map do |d|
       if d.payload.fetch(1) != @addy
-        puts "M DONE" or d.payload 
+        d.payload 
       end
     end
   end

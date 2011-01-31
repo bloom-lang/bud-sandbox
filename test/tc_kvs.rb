@@ -9,17 +9,16 @@ class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
-    @opts = {:dump => true, :visualize => true, :scoping => false, :port}
+    @opts = {:dump => true, :visualize => 1, :scoping => false}
     super
   end
 
-  def ntest_wl2
+  def test_wl2
     # reliable delivery fails if the recipient is down
-    @opts[:port] = 
-    v = SingleSiteKVS.new(@opts)
+    v = SingleSiteKVS.new(:visualize => 1)
     assert_nothing_raised(RuntimeError) {v.run_bg}
     sleep 1
-    add_members(v, "localhost:12347", "localhost:12348")
+    #add_members(v, "localhost:12347", "localhost:12348")
     if v.is_a?  ReliableDelivery
       sleep 1
       workload1(v)
@@ -37,18 +36,17 @@ class TestKVS < Test::Unit::TestCase
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
-    @opts['tag'] = 'dist_1' 
-    v = BestEffortReplicatedKVS.new("localhost", 12345, @opts)
-    @opts['tag'] = 'dist_2' 
-    v2 = BestEffortReplicatedKVS.new("localhost", 12346, @opts)
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_1', :port => 12345))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_2', :port => 12346))
+
     assert_nothing_raised(RuntimeError) {v.run_bg}
     assert_nothing_raised(RuntimeError) {v2.run_bg}
+
+    puts "v2 port is #{v2.port}"
     add_members(v, "localhost:12345", "localhost:12346")
     add_members(v2, "localhost:12345", "localhost:12346")
     sleep 2
-
     workload1(v)
-
     sleep 2
 
     assert_equal(1, v.kvstate.length)
@@ -58,7 +56,7 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_simple
-    v = SingleSiteKVS.new("localhost", 12360, {'dump' => true, 'scoping' => false, 'visualize' => 3, 'tag' => 'simple'})
+    v = SingleSiteKVS.new(:port => 12360, :dump => true, :scoping => false, :visualize => 3, :tag => 'simple')
     assert_nothing_raised(RuntimeError) {v.run_bg}
     #add_members(v, "localhost:12360")
     sleep 1 
