@@ -25,13 +25,12 @@ class TestVoting < Test::Unit::TestCase
 
   def start_kind(kind, port)
     t = nil
-    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new('localhost', #{port}, {'visualize' => 3})" } 
-    #assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new('localhost', #{port}, {'visualize' => false})" } 
+    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(:port => #{port}, :visualize => 3)" } 
     return t
   end
 
   def start_three(one, two, three, kind)
-    t = VM.new('localhost', one, {'dump' => true, 'visualize' => 3})
+    t = VM.new(:port => one, :dump => true, :visualize => 3)
     t2 = start_kind(kind, two)
     t3 = start_kind(kind, three)
     t.run_bg
