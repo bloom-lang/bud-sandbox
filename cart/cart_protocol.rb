@@ -29,13 +29,6 @@ module CartClient
   include Anise
   annotator :declare
 
-  def state
-    super
-    internal output, :action_msg
-    internal input, :client_checkout
-    internal input, :response_msg
-  end
-
   declare 
   def client
     action_msg <~ client_action.map{|a| puts "server is "+a.server.to_s or [a.server, @addy, a.session, a.reqid, a.item, a.action]}
