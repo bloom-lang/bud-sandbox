@@ -31,17 +31,13 @@ class TestBEDelivery < Test::Unit::TestCase
 
 
   def test_besteffort_delivery2
-    rd = RED.new("localhost", 13333, {})
+    rd = RED.new("localhost", 13333, {'visualize' => 3, 'enforce_rewrite' => true})
     rd2 = RED.new("localhost", 13334, {})
     rd.run_bg
     rd2.run_bg
-    #sleep 1
     sendtup = ['localhost:13334', 'localhost:13333', 1, 'foobar']
     rd.pipe_in <+ [ sendtup ]
 
-    # debugging
-    #assert_equal(1, rd.pipe.length)
-  
     sleep 6
 
     # transmission 'complete'
