@@ -9,9 +9,9 @@ module DeliveryProtocol
     channel :tickler, ['@myself']
   end
 
-  def initialize(host, port, opts)
-    @addy = "#{host}:#{port}"
-    super(host, port, opts)
+  def initialize(opts)
+    super
+    @addy = "#{opts[:ip]}:#{opts[:port]}"
   end
 end
 
@@ -31,11 +31,9 @@ module BestEffortDelivery
       pipe_chan <~ pipe_in
     end
 
-  declare 
+  declare
     def done
       # vacuous ackuous.  override me!
       pipe_sent <= pipe_in
     end
 end
-
-

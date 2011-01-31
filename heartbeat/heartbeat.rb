@@ -16,8 +16,7 @@ module Heartbeat
   include Anise
   annotator :declare
 
-  def initialize(i, p, o)
-    @addy = "#{i}:#{p}"
+  def initialize(opts)
     super
   end
 
@@ -33,9 +32,9 @@ module Heartbeat
   declare 
   def announce
     heartbeat <~ join([hb_timer, peers]).map do |t, p|
-      unless p.peer == @addy
-        #puts @addy  + " at " + Time.parse(t.time).to_f.to_s + " SENDO " + p.inspect or [p.peer, @addy, Time.parse(t.time).to_f]
-        [p.peer, @addy, Time.parse(t.time).to_f]
+      unless p.peer == @ip_port
+        #puts @ip_port  + " at " + Time.parse(t.time).to_f.to_s + " SENDO " + p.inspect or [p.peer, @addy, Time.parse(t.time).to_f]
+        [p.peer, @ip_port, Time.parse(t.time).to_f]
       end
     end
   end

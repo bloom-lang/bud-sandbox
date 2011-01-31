@@ -28,7 +28,6 @@ class PaxosPrepare < Bud
     end
 
     begin_vote <+ prepare.map{|p| print "put in ballot : " + p.inspect + "\n" or [p.view, p.aru]}
-
   end
 
   declare 

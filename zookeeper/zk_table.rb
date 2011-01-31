@@ -2,19 +2,14 @@ require "rubygems"
 require "bud"
 
 class ZkTableTest < Bud
-  def initialize(ip, port)
-    super(ip, port)
-  end
-
   def state
-    zktable :z, "/"
+    zktable :foo, "/foo"
   end
 
   declare
-  def logic
-    stdio <~ zktable.map{|z| z.value}
+  def other
   end
 end
 
-z = ZkTableTest.new("localhost", 5000)
+z = ZkTableTest.new
 z.run
