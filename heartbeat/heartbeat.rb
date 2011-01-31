@@ -11,7 +11,7 @@ module HeartbeatProtocol
   end
 end
 
-module Heartbeat
+module HeartbeatAgent
   include HeartbeatProtocol
   include Anise
   annotator :declare
@@ -54,8 +54,8 @@ module Heartbeat
   def current_output
     lj = join [heartbeat_log, highest], [heartbeat_log.peer, highest.peer], [heartbeat_log.time, highest.time]
     last_heartbeat <+ lj.map{|l, h| l}
-    heartbeat_log <- join([heartbeat_log, highest], [heartbeat_log.peer, highest.peer]).map do |l, h|
-      l unless h.time == l.time
-    end
+    #heartbeat_log <- join([heartbeat_log, highest], [heartbeat_log.peer, highest.peer]).map do |l, h|
+     # l unless h.time == l.time
+    #end
   end 
 end

@@ -1,10 +1,12 @@
 require 'rubygems'
 require 'bud'
 
-require 'lib/voting'
+require 'voting/voting'
 
-class PaxosPrepare < Bud
+module PaxosPrepare 
   include MajorityVotingMaster
+  include Anise
+  annotator :declare
 
   def state
     super
@@ -41,11 +43,14 @@ class PaxosPrepare < Bud
   end
 end
 
-class PaxosPrepareAgent < Bud
+module PaxosPrepareAgent 
   include VotingAgent
+  include Anise
+  annotator :declare
+
   def state
     super
-    table :datalist, ['view', 'aru_requested', 'seq', 'update', 'type']
+    table :datalist, ['view', 'aru_requested', 'seq', 'update', 'dltype']
     table :datalist_length, ['aru', 'len']
     table :global_history, ['host', 'seqno'], ['requestor', 'update']
     table :last_installed, [], ['view']
@@ -63,7 +68,7 @@ class PaxosPrepareAgent < Bud
     end
 
     datalist <= join([datalist, global_history]).map do |d, g|
-      if g.seqno > d.aru_requested and d.type == "bottom"
+      if g.seqno > d.aru_requested and d.dltype == "bottom"
         print "oh yeah\n" or [d.view, d.aru_requested, g.seqno, g.update, "ordered"]
       else
         print "oh dear.  !" + g.seqno.to_s + " > " + d.aru_requested.to_s + "\n"
@@ -71,7 +76,7 @@ class PaxosPrepareAgent < Bud
     end
 
     datalist <= join([datalist, accept]).map do |d, a|
-      if a.seq >= d.aru and d.type == "bottom"
+      if a.seq >= d.aru and d.dltype == "bottom"
         [d.view, d.aru_requested, a.seq, a.update, "proposed"]
       else
         print "oh dear. !" + a.seq.to_s + " >= " + d.aru.to_s + "\n"
@@ -85,7 +90,7 @@ class PaxosPrepareAgent < Bud
   def decide
     dj = join([datalist, datalist_length])
     cast_vote <+ dj.map do |d, l|
-      print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.type, l.len]]
+      print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
     end
   
     datalist <- dj.map{|d, l| d}
