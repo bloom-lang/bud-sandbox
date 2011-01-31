@@ -4,7 +4,7 @@ require 'test/unit'
 require 'heartbeat/heartbeat'
 
 class HB < Bud
-  include Heartbeat
+  include HeartbeatAgent
 
   def state
     super
@@ -22,22 +22,13 @@ end
 
 class TestHB < Test::Unit::TestCase
 
-  def ntest_basic_heartbeat
-    hb = HB.new("localhost", 46364, {'visualize' => true, 'dump' => true})
-    hb.run_bg
-    sleep 100
-  end
-  
   def test_heartbeat_group
-    hb = HB.new("localhost", 46362, {'visualize' => true, 'dump' => true})
-    hb2 = HB.new("localhost", 46363, {})
-    hb3 = HB.new("localhost", 46364, {})
-
-
+    hb = HB.new(:port => 46362, :visualize => 1, :dump => true)
+    hb2 = HB.new(:port => 46363)
+    hb3 = HB.new(:port => 46364)
     hb.run_bg
     hb2.run_bg
     hb3.run_bg
-
 
     sleep 14
 
