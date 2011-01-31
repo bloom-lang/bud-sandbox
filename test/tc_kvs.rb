@@ -9,13 +9,14 @@ class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
-    @opts = {'dump' => true, 'visualize' => 3, 'scoping' => false}
+    @opts = {:dump => true, :visualize => true, :scoping => false, :port}
     super
   end
 
   def ntest_wl2
     # reliable delivery fails if the recipient is down
-    v = SingleSiteKVS.new("localhost", 12347, {'visualize' => 3})
+    @opts[:port] = 
+    v = SingleSiteKVS.new(@opts)
     assert_nothing_raised(RuntimeError) {v.run_bg}
     sleep 1
     add_members(v, "localhost:12347", "localhost:12348")
@@ -28,7 +29,7 @@ class TestKVS < Test::Unit::TestCase
 
   def ntest_wl5
     # the unmetered kvs fails on a disorderly workload
-    v = SingleSiteKVS.new("localhost", 12352, @opts)
+    v = SingleSiteKVS.new(@opts.merge(:port => 12352))
     assert_nothing_raised(RuntimeError) {v.run_bg}
     add_members(v, "localhost:12352")
     assert_raise(Bud::KeyConstraintError)  { workload2(v) }

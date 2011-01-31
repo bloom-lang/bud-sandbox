@@ -8,10 +8,10 @@ class LilChord < Bud
   include ChordNode
   include ChordFind
 
-  def initialize(ip, port, *flags)
+  def initialize(opts)
+    super
     @addrs = {0 =>'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
     @maxkey = 8
-    super(ip,port,*flags)
   end
 
   def state
@@ -56,7 +56,8 @@ class TestFind < Test::Unit::TestCase
   def test_find
     @addrs = {0 => 'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
     @nodes = @addrs.values.map do |a|
-      LilChord.new(a.split(':')[0], a.split(':')[1], {'visualize' => true})
+      parts = a.split(':')
+      LilChord.new(:ip => parts[0], :port => parts[1], :visualize => true)
     end
 
     assert_nothing_raised { @nodes.each{|n| n.run_bg} }

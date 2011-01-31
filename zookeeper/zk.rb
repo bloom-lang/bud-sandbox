@@ -5,10 +5,10 @@ require "zookeeper"
 class ZooMember < Bud
   ZK_ADDR = "localhost:2181"
 
-  def initialize(ip, port, group)
-    super(ip, port)
-    @group = group
-    @z = ZooKeeper.new(ZK_ADDR)
+  def initialize(zk_group)
+    super()
+    @group = zk_group
+    @z = Zookeeper.new(ZK_ADDR)
   end
 
   def state
@@ -23,5 +23,5 @@ class ZooMember < Bud
   end
 end
 
-z = ZooMember.new("localhost", 5555, "foo")
+z = ZooMember.new("foo")
 z.run

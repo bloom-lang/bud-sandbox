@@ -9,7 +9,7 @@ module TwoPCAgent
   # * ballots describe transactions
   # * voting is Y/N.  A single N vote should cause abort.
   def state
-    super if defined? super
+    super
     scratch :can_commit, ['xact', 'decision']
   end
 
@@ -53,7 +53,7 @@ module TwoPCMaster
   # * ballots describe transactions
   # * voting is Y/N.  A single N vote should cause abort.
   def state
-    super if defined? super
+    super
     
     table :xact, ['xid', 'data'], ['status']
     scratch :request_commit, ['xid'], ['data']
@@ -88,14 +88,14 @@ module Monotonic2PCMaster
   include Anise
   annotator :declare
   include VotingMaster
-  def initialize(i, p, o)
-    super(i, p, o)
+  def initialize(opts)
+    super
     xact_order << ['prepare', 0]
     xact_order << ['commit', 1]
     xact_order << ['abort', 2]
   end
   def state
-    super if defined? super
+    super
     
     # TODO
     table :xact_order, ['status'], ['ordinal']
