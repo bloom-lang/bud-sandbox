@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'multicast/multicast'
+require 'delivery/multicast'
 
 module TestState
   include Anise
