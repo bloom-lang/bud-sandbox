@@ -10,8 +10,6 @@ require 'time_hack/time_moves'
 # was TKV
 class SingleSiteKVS < Bud
   include BasicKVS
-  # not necessary except to import 'tickler'
-  include BestEffortMulticast
   include TimeMoves
 end
 
