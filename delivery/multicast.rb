@@ -22,15 +22,6 @@ module Multicast
   include Anise
   annotator :declare
   
-  def state
-    super
-    # contract: use some delivery class to realize the multicast
-    # we would ideally name it as below
-    #internal output, DeliveryProtocol.pipe_in
-    internal output, :pipe_in
-    internal input, :pipe_sent
-  end
-
   declare   
   def snd_mcast
     pipe_in <= join([send_mcast, members]).map do |s, m|
