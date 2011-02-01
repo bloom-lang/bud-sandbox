@@ -4,7 +4,7 @@ require 'bud'
 require 'ordering/serializer'
 require 'ordering/nonce'
 require 'time_hack/time_moves'
-#require 'ordering/assigner'
+require 'ordering/assigner'
 
 class ST < Bud
   include Serializer
@@ -21,9 +21,9 @@ class ST < Bud
   end
 end
 
-#class AS < Bud
-#  include Assigner
-#end
+class AS < Bud
+  include AggAssign
+end
 
 class SN < Bud
   include SimpleNonce
@@ -31,13 +31,20 @@ class SN < Bud
 end
 
 class TestSer < Test::Unit::TestCase
+
+  def test_assn
+    as = AS.new
+    as.run_bg
+
+    sleep 10
+  end
   
   def test_simple_nonce
-    sn = SN.new("localhost", 235636, {'dump' => true})
+    sn = SN.new(:dump => true, :port => 235235)
     sn.run_bg
 
     old_val = 0
-    (0..20).each do |i|
+    (0..10).each do |i|
       sn.nonce.each {|n| puts "NON: #{n}" } 
       val = sn.nonce.first.ident
       assert(val != old_val, "nonce had same value: #{old_val} (on run #{i})")
@@ -49,12 +56,12 @@ class TestSer < Test::Unit::TestCase
   end 
 
   def ntest_assigner
-    as = AS.new('localhost', 82357, {})
+    as = AS.new
     as.run_bg
   end
 
   def test_serialization
-    st = ST.new('localhost', 648212, {'dump' => true})
+    st = ST.new
     st.run_bg
 
     st.enqueue <+ [[1, 'foo']]
