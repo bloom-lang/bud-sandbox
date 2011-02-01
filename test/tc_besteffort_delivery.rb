@@ -20,7 +20,7 @@ end
 class TestBEDelivery < Test::Unit::TestCase
 
   def test_besteffort_delivery
-    rd = BED.new("localhost", 11116, {'dump' => true, 'visualize' => 3})
+    rd = BED.new(:visualize => 3)
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']
     rd.pipe_in <+ [ sendtup ]
     rd.run_bg

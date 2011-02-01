@@ -15,9 +15,9 @@ end
 
 class Test2PC < Test::Unit::TestCase
   def test_singlenode
-    t = TPCM.new('localhost', 12345, {'visualize' => true})
-    t2 = TPCA.new('localhost', 12346, {'visualize' => true})
-    t3 = TPCA.new('localhost', 12347, nil)
+    t = TPCM.new(:port => 12345)
+    t2 = TPCA.new(:port => 12346)
+    t3 = TPCA.new(:port => 12347)
     t.run_bg
     t2.run_bg
     t3.run_bg
