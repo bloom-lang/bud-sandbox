@@ -13,12 +13,12 @@ module LeaderElection
   include Anise
   annotator :declare
 
-  def initialize(opts, id)
-    my_opts = opts.clone
-    my_opts[:dump] = true
-    super my_opts
-    @id = id
-  end
+  #def initialize(opts, id)
+  #  my_opts = opts.clone
+  #  my_opts[:dump] = true
+  #  super my_opts
+  #  @id = id
+  #end
 
   def state
     super
