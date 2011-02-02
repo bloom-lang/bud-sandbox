@@ -5,17 +5,16 @@ require 'heartbeat/heartbeat'
 
 class HB < Bud
   include HeartbeatAgent
+  include StaticMembership
 
   def state
     super
-    #channel :tickler, ['@host']
-    #periodic :tix, 1
   end
 
   def bootstrap
-    peers << [ "localhost:46362" ]
-    peers << [ "localhost:46363" ]
-    peers << [ "localhost:46364" ]
+    add_member <+ [[ "localhost:46362" ]]
+    add_member <+ [[ "localhost:46363" ]]
+    add_member <+ [[ "localhost:46364" ]]
   end
 end
 

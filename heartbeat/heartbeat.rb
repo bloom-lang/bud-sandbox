@@ -2,11 +2,12 @@ require 'rubygems'
 require 'bud'
 require 'time'
 #require 'lib/bfs_client'
+require 'membership/membership'
 
 module HeartbeatProtocol
+  include MembershipProto
   def state
     super
-    table :peers, ['peer']
     interface output, :last_heartbeat, ['peer', 'peer_time', 'time']
   end
 end
@@ -31,10 +32,9 @@ module HeartbeatAgent
 
   declare 
   def announce
-    heartbeat <~ join([hb_timer, peers]).map do |t, p|
-      unless p.peer == @ip_port
-        #puts @ip_port  + " at " + Time.parse(t.time).to_f.to_s + " SENDO " + p.inspect or [p.peer, @addy, Time.parse(t.time).to_f]
-        [p.peer, @ip_port, Time.parse(t.time).to_f]
+    heartbeat <~ join([hb_timer, member]).map do |t, p|
+      unless p.host == @ip_port
+        [p.host, @ip_port, Time.parse(t.time).to_f]
       end
     end
   end
@@ -54,7 +54,9 @@ module HeartbeatAgent
     lj = join [heartbeat_log, highest], [heartbeat_log.peer, highest.peer], [heartbeat_log.time, highest.time]
     last_heartbeat <+ lj.map{|l, h| l}
     #heartbeat_log <- join([heartbeat_log, highest], [heartbeat_log.peer, highest.peer]).map do |l, h|
-     # l unless h.time == l.time
+    #  if h.time > l.time
+    #    #puts "delete " + l.inspect + " b/c it's not the highest time " + h.inspect or l
+    #  end
     #end
   end 
 end

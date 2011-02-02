@@ -30,16 +30,39 @@ class SN < Bud
   include TimeMoves
 end
 
+class GN < Bud
+  include GroupNonce
+  include StaticMembership
+  include TimeMoves
+end
+
 class TestSer < Test::Unit::TestCase
 
-  def test_assn
+  def test_group_nonce
+    gn = GN.new(:visualize => 3, :dump => true)
+    gn.my_id <+ [[1]]
+    gn.add_member <+ [['foo', 1]]
+    gn.add_member <+ [['bar', 2]]
+    gn.add_member <+ [['baz', 3]]
+    gn.seed <+ [[nil]]
+    
+    gn.run_bg
+
+    (0..7).each do |t|
+      sleep 1
+      puts "NON: #{gn.nonce.first.inspect}"
+      #gn.member.each{ |m| puts "EM: #{m.inspect}" }
+    end
+  end
+
+  def nntest_assn
     as = AS.new
     as.run_bg
 
     sleep 10
   end
   
-  def test_simple_nonce
+  def ntest_simple_nonce
     sn = SN.new(:dump => true, :port => 235235)
     sn.run_bg
 
@@ -60,7 +83,7 @@ class TestSer < Test::Unit::TestCase
     as.run_bg
   end
 
-  def test_serialization
+  def ntest_serialization
     st = ST.new
     st.run_bg
 

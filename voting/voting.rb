@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bud'
+require 'membership/membership'
 
 module VoteMasterProto
   def state
@@ -32,13 +33,13 @@ module VotingMaster
   include Anise
   include VoteInterface
   include VoteMasterProto
+  include StaticMembership
   annotator :declare
 
   def state
     super if defined? super
     table :vote_status, 
           ['ident', 'content', 'response']
-    table :member, ['peer']
     table :votes_rcvd, ['ident', 'response', 'peer']
     scratch :member_cnt, ['cnt']
     scratch :vote_cnt, ['ident', 'response', 'cnt']
@@ -50,7 +51,7 @@ module VotingMaster
     # to members, set status to 'in flight'
     j = join([begin_vote, member])
     ballot <~ j.map do |b,m| 
-      puts "ipport " + @ip_port or [m.peer, @ip_port, b.ident, b.content] 
+      puts "ipport " + @ip_port + " send to " + m.inspect + " -- " + b.inspect or [m.host, @ip_port, b.ident, b.content] 
     end
     vote_status <+ begin_vote.map do |b| 
       [b.ident, b.content, 'in flight'] 
@@ -73,12 +74,12 @@ module VotingMaster
   def summary
     # this stub changes vote_status only on a 
     # complete and unanimous vote.
-    # a subclass will likely overridente this
+    # a subclass will likely override this
     # paa -- fix potentially global scope of join aliases somehow...
     sj = join([vote_status, member_cnt, vote_cnt], 
              [vote_status.ident, vote_cnt.ident])
     victor <= sj.map do |s,m,v|
-      if m.cnt == v.cnt
+      if s.response == 'in flight' and m.cnt == v.cnt
         [v.ident, s.content, v.response]
       end
     end
@@ -105,14 +106,14 @@ module VotingAgent
   # default for decide: always cast vote 'yes'.  expect subclasses to override
   declare 
   def decide
-    cast_vote <= waiting_ballots.map{ |b| print "EMPTY cast\n" or [b.ident, 'yes'] }
+    cast_vote <= ballot.map{ |b| print "EMPTY cast\n" or [b.ident, 'yes'] }
   end
   
   declare 
   def casting
     # cache incoming ballots for subsequent decisions (may be delayed)
     waiting_ballots <= ballot.map{|b| [b.ident, b.content, b.master] }
-    stdio <~ ballot.map{|b| ["PUT"] }
+    stdio <~ ballot.map{|b| [@ip_port + " PUT ballot " + b.inspect] }
     # whenever we cast a vote on a waiting ballot, send the vote
     vote <~ join([cast_vote, waiting_ballots], [cast_vote.ident, waiting_ballots.ident]).map do |v, c| 
       [c.master, @ip_port, v.ident, v.response] 
@@ -129,7 +130,7 @@ module MajorityVotingMaster
   declare
   def summary
     victor <= join([vote_status, member_cnt, vote_cnt], [vote_status.ident, vote_cnt.ident]).map do |s, m, v|
-      if v.cnt > m.cnt / 2
+      if s.response == "in flight" and v.cnt > m.cnt / 2
         [v.ident, s.content, v.response]
       end
     end 

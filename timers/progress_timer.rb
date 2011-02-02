@@ -6,6 +6,7 @@ require 'time'
 
 module ProgressTimerProto
   def state
+    super
     interface :input, :set_alarm, ['name', 'timeout']
     interface :input, :del_alarm, ['name']
     interface :output, :alarm, ['name', 'timeout']

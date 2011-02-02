@@ -33,13 +33,13 @@ class TestVoting < Test::Unit::TestCase
     t = VM.new(:port => one, :dump => true, :visualize => 3)
     t2 = start_kind(kind, two)
     t3 = start_kind(kind, three)
+
+    t.add_member <+ [["localhost:#{two.to_s}"]]
+    t.add_member <+ [["localhost:#{three.to_s}"]]
+
     t.run_bg
     t2.run_bg
     t3.run_bg
-
-    t.member << ["localhost:#{two.to_s}"]
-    t.member << ["localhost:#{three.to_s}"]
-
 
     return [t, t2, t3]
   end
