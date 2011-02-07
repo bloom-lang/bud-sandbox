@@ -26,11 +26,13 @@ module ChordFind
     
     # if not at successor, forward to closest finger   
     find_req <~ join([find_event, finger, closest, me], [find_event.key, closest.key]).map do |e, f, c, m| 
+      stdio <~ [["forward to closest finger!"]]
       [c.succ_addr, e.key, e.from] unless (f.index == 0 and in_range(e.key, m.start, f.succ, true))
     end
 
     # else at successor, so respond with successor's ID/address
     find_resp <~ join([find_event, finger, me]).map do |e, f, m|
+      stdio <~ [["at successor!"]]
       [e.from, e.key, f.succ, f.succ_addr] if f.index == 0 and in_range(e.key, m.start, f.succ, true)
     end
     
