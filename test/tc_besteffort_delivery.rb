@@ -22,8 +22,8 @@ class TestBEDelivery < Test::Unit::TestCase
   def test_besteffort_delivery
     rd = BED.new(:visualize => 3)
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']
-    rd.pipe_in <+ [ sendtup ]
     rd.run_bg
+    rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
     sleep 1
     assert_equal(1, rd.pipe_perm.length)
     assert_equal(sendtup, rd.pipe_perm.first)
