@@ -35,7 +35,7 @@ end
 
 class TestSer < Test::Unit::TestCase
 
-  def ntest_group_nonce
+  def test_group_nonce
     gn = GN.new(:visualize => 3, :dump => true)
     gn.my_id <+ [[1]]
     gn.add_member <+ [['foo', 1]]
@@ -45,10 +45,10 @@ class TestSer < Test::Unit::TestCase
     
     gn.run_bg
 
-    (0..7).each do |t|
-      sleep 1
-      gn.sync_do{ puts "NON: #{gn.nonce.first.inspect}" } 
-      #gn.member.each{ |m| puts "EM: #{m.inspect}" }
+    (0..30).each do |t|
+      rem = nil
+      gn.sync_do{ rem = gn.nonce.first }
+      assert_equal(t * 3 + 1, rem[0])
     end
   end
 
