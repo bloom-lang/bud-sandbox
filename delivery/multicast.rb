@@ -3,14 +3,16 @@ require 'bud'
 
 require 'delivery/reliable_delivery'
 require 'voting/voting'
+require 'membership/membership.rb'
 
 module MulticastProtocol 
   include Anise
   annotator :declare  
+  include MembershipProto
 
   def state
     super
-    table :members, ['peer']
+    #table :members, ['peer']
     interface input, :send_mcast, ['ident'], ['payload']
     interface output, :mcast_done, ['ident'], ['payload']
   end
@@ -24,8 +26,8 @@ module Multicast
   
   declare   
   def snd_mcast
-    pipe_in <= join([send_mcast, members]).map do |s, m|
-      [m.peer, @addy, s.ident, s.payload]
+    pipe_in <= join([send_mcast, member]).map do |s, m|
+      [m.host, @addy, s.ident, s.payload]
     end
   end
   
