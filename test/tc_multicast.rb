@@ -6,6 +6,7 @@ require 'delivery/multicast'
 module TestState
   include Anise
   annotator :declare
+  include StaticMembership
 
   def state
     super
@@ -32,43 +33,28 @@ end
 
 
 class TestMC < Test::Unit::TestCase
-  def ntest_be
+  def test_be
     mc = MC.new(:port => 34256, :dump => true)
     mc2 = MC.new(:port =>  34257)
     mc3 = MC.new(:port =>  34258)
 
-    assert_nothing_raised(RuntimeError) { mc.run_bg; mc2.run_bg; mc3.run_bg } 
 
-    mc.members << ["localhost: 34257" ] 
-    mc.members << ["localhost: 34258" ] 
-
-    mc.send_mcast <+ [[1, 'foobar']] 
-
-    #advance(mc)
-    #advance(mc)
-    assert_equal(1, mc.mcast_done_perm.length)
-    assert_equal("foobar", mc.mcast_done_perm.first.payload)
-
-    assert_equal(1, mc2.rcv_perm.length)
-    assert_equal(1, mc3.rcv_perm.length)
-    assert_equal("foobar", mc2.rcv_perm.first.payload)
-  end
-
-  def test_rd
-    mc = RMC.new(:port => 44256, :dump => true)
-    mc2 = RMC.new(:port => 44257)
-    mc3 = RMC.new(:port => 44258)
+    mc.add_member <+ [["localhost: 34257" ]] 
+    mc.add_member <+ [["localhost: 34258" ]] 
 
     assert_nothing_raised(RuntimeError) { mc.run_bg; mc2.run_bg; mc3.run_bg } 
 
-    mc.members << ["localhost: 34257" ] 
-    mc.members << ["localhost: 34258" ] 
-
-    mc.send_mcast <+ [[1, 'foobar']] 
-
+    mc.sync_do{ mc.send_mcast <+ [[1, 'foobar']] }
 
     #advance(mc)
     #advance(mc)
+    mc.sync_do{ assert_equal(1, mc.mcast_done_perm.length) }
+    mc.sync_do{ assert_equal("foobar", mc.mcast_done_perm.first.payload) }
+
+    mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
+    mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
+    mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
   end
+
   
 end
