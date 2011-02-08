@@ -29,11 +29,12 @@ class TestHB < Test::Unit::TestCase
     hb2.run_bg
     hb3.run_bg
 
-    sleep 14
+    sleep 16
 
     [hb, hb2, hb3].each do |h|
-      assert_equal(2, h.last_heartbeat.length)
-      s = h.last_heartbeat.map{|b| b.peer }
+      h.sync_do{ assert_equal(2, h.last_heartbeat.length) }
+      s = nil
+      h.sync_do{ s = h.last_heartbeat.map{|b| b.peer } }
       hosts = []
       [46362, 46363, 46364].each do |b|
         if h.port != b
@@ -45,6 +46,5 @@ class TestHB < Test::Unit::TestCase
         assert(s.include? c)
       end
     end
-
   end
 end
