@@ -18,33 +18,34 @@ class RED < Bud
 end
 
 class TestBEDelivery < Test::Unit::TestCase
-  def test_delivery1
-    rd = RED.new(:port => 12222)
+  def ntest_delivery1
+    rd = RED.new(:port => 12222, :dump => true, :enforce_rewrite => true)
     rd.run_bg
 
     sendtup = ['localhost:12223', 'localhost:12222', 1, 'foobar']
-    rd.pipe_in <+ [ sendtup ]
+    rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
 
     # transmission not 'complete'
-    assert_equal(0, rd.pipe_perm.length)
+    rd.sync_do{ assert_equal(0, rd.pipe_perm.length) }
   end
 
 
   def test_besteffort_delivery2
-    rd = RED.new(:port => 13333, :visualize => 3, :enforce_rewrite => true)
+    rd = RED.new(:port => 13333, :visualize => 0, :enforce_rewrite => true)
+    #rd = RED.new(:port => 13333, :enforce_rewrite => true)
     rd2 = RED.new(:port => 13334)
     rd.run_bg
     rd2.run_bg
     sendtup = ['localhost:13334', 'localhost:13333', 1, 'foobar']
-    rd.pipe_in <+ [ sendtup ]
+    rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
 
-    sleep 6
+    sleep 2
 
     # transmission 'complete'
-    assert_equal(1, rd.pipe_perm.length)
+    rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
 
     # gc done
-    assert_equal(0, rd.pipe.length)
+    rd.sync_do{ assert_equal(0, rd.pipe.length) }
   end
 
 

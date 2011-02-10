@@ -64,7 +64,7 @@ module ReplicatedKVS
   def local_indir
     # if I am the master, multicast store requests
     send_mcast <= kvput.map do |k| 
-      unless members.include? [k.client]
+      unless member.include? [k.client]
         [k.reqid, [@addy, k.key, k.reqid, k.value]] 
       end
     end

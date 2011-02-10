@@ -10,20 +10,19 @@ require 'time_hack/time_moves'
 # was TKV
 class SingleSiteKVS < Bud
   include BasicKVS
-  include TimeMoves
 end
 
 # was RKV
 class BestEffortReplicatedKVS < Bud
   include ReplicatedKVS
   include BestEffortMulticast
-  include TimeMoves
+  include StaticMembership
 end
 
 class ReliableReplicatedKVS < Bud
   include ReplicatedKVS
   include ReliableMulticast
-  include TimeMoves
+  include StaticMembership
 end
 
 module ReplicatedMeteredGlue
@@ -60,10 +59,3 @@ module ReplicatedMeteredGlue
     cs_meter <- csj.map {|r, m| m }
   end
 end
-
-#class MeteredBestEffortReplicatedKVS < Bud
-#  include ReplicatedKVS
-#  include KVSMetering
-#  include BestEffortMulticast
-#  include ReplicatedMeteredGlue
-#end

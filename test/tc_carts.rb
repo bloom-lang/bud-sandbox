@@ -29,8 +29,6 @@ class BCS < Bud
   include ReplicatedDisorderlyCart
   include CartClient
   include Remember
-
-  include TimeMoves
 end
 
 class DCR < Bud
@@ -76,48 +74,28 @@ class TestCart < Test::Unit::TestCase
 
   def test_disorderly_cart
     program = BCS.new(:port => 23765, :dump => true, :visualize => 3)
+    #program = BCS.new(:port => 23765, :dump => true)
     #program = DummyDC.new('localhost', 23765, {'dump' => true})
     #program = DCR.new('localhost', 23765, {'dump' => true, 'scoping' => true})
 
+    addy = "#{program.ip}:#{program.port}"
+    add_members(program, addy)
     program.run_bg
-    sleep 1
     run_cart(program)
 
     sleep 4
-    program.memo.each {|m| puts "MEMO: #{m.inspect}" }
+    #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
 
-    assert_equal(1, program.memo.length)
-    assert_equal(2, program.memo.first.array.length)
-    #program.memo.each do |a|
-    #  print "item: #{a.inspect}\n"
-    #  if a.item == "beer"
-    #    assert_equal(3, a.cnt)
-    #  elsif a.item == "diapers"
-    #    assert_equal(1, a.cnt)
-    #  else
-    #    assert_error("incorrect item #{a.item} in cart")
-    #  end
-    #end
-
-    # the checkout message is redelivered!
-    #addy = "#{program.ip}:#{program.port}"
-    #send_channel(program.ip, program.port, "checkout_msg", [addy, addy, 1234, 133])
-    #advance(program)
- 
-    #pcnt = 0
-    #program.memo.each do |a|
-    #  pcnt = a.cnt if a.item == "papers"
-    #end 
-
-    ## undesirable but consistent that a 2nd checkout message should produce a revised manifest.
-    #assert_equal(3, program.memo.length)
-    #assert_equal(1, pcnt)
-    
+    program.sync_do{ 
+      assert_equal(1, program.memo.length) 
+      program.memo.each {|m| puts "MEMO: #{m.inspect}" }
+      assert_equal(2, program.memo.first.array.length) 
+    }
   end
 
   def add_members(b, *hosts)
     hosts.each do |h|
-      assert_nothing_raised(RuntimeError) { b.members << [h] }
+      assert_nothing_raised(RuntimeError) { b.add_member <+ [[h]] }
     end
   end
 

@@ -10,65 +10,46 @@ module KVSWorkloads
   def add_members(b, *hosts)
     hosts.each do |h|
       #print "ADD MEMBER: #{h.inspect}\n"
-      assert_nothing_raised(RuntimeError) { b.members << [h] }
+      assert_nothing_raised(RuntimeError) { b.add_member <+ [[h]] }
     end
   end
 
   def workload1(v)
-    v.kvput <+ [["localhost:54321", "foo", 1, "bar"]]
-    sleep 2
-    #advance(v)
-    #advance(v)
-    v.kvput.each {|k| puts "K #{k.inspect}" } 
-    v.kvput <+ [["localhost:54321", "foo", 2, "baz"]]
-    #advance(v)
-
+    v.sync_do { 
+      v.kvput <+ [["localhost:54321", "foo", 1, "bar"]] 
+    }
+    v.sync_do { v.kvput.each {|k| puts "K #{k.inspect}" }  }
+    v.sync_do { v.kvput <+ [["localhost:54321", "foo", 2, "baz"]] }
+    v.sync_do { v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] }
+    v.sync_do { v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
+    # give the messages a moment to arrive
     sleep 1
-    v.kvput <+ [["localhost:54321", "foo", 3, "bam"]]
-    sleep 1
-    #advance(v)
-    v.kvput <+ [["localhost:54321", "foo", 4, "bak"]]
-    sleep 2
-    #advance(v)
   end
 
   def workload2(v)
-    v.kvput <+ [["localhost:54321", "foo", 1, "bar"]]
-    v.kvput <+ [["localhost:54321", "foo", 2, "baz"]]
-    v.kvput <+ [["localhost:54321", "foo", 3, "bam"]]
-    v.kvput <+ [["localhost:54321", "foo", 4, "bak"]]
-    #advance(v)
+    v.async_do{ v.kvput <+ [["localhost:54321", "foo", 1, "bar"]] }
+    v.async_do{ v.kvput <+ [["localhost:54321", "foo", 2, "baz"]] }
+    v.async_do{ v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] } 
+    v.async_do{ v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
+    v.sync_do{ }
+    v.sync_do { v.kvstate.each{|k| puts "KVP: #{k.inspect}" } } 
   end
 
   def append(prog, item)
     curr = prog.bigtable.first[1]
     new = curr.clone
     new.push(item)
-    #send_channel(prog.ip, prog.port, "kvput", ["#{prog.ip}:#{prog.port}", "localhost:54321", "foo", @id, new])
-    prog.kvput <+ [[ "localhost:54321", "foo", @id, new ]] 
+    prog.sync_do{ prog.kvput <+ [[ "localhost:54321", "foo", @id, new ]]  }
     @id = @id + 1
-    soft_tick(prog)
   end
 
   def workload3(v)
-    #send_channel(v.ip, v.port, "kvput", ["localhost:54321", "foo", 1, ["bar"]])
-    v.kvput <+ [[ "localhost:54321", "foo", 1, ["bar"] ]]
-    print "STORE\n"
-    soft_tick(v)
-    print "TICKED one\n"
-    soft_tick(v)
-    print "AHEM\n"
+    v.sync_do{ v.kvput <+ [[ "localhost:54321", "foo", 1, ["bar"] ]] }
     assert_equal(1, v.bigtable.length)
     assert_equal("foo", v.bigtable.first[0])
     curr = v.bigtable.first[1]
 
-    print "OK!\n"
-    #print "curr is #{curr.inspect}\n"
-    kvput <+ [[ "localhost:54321", "foo", 2, Array.new(curr).push("baz") ]]
-    #send_channel(v.ip, v.port, "kvput", ["localhost:54321", "foo", 2, Array.new(curr).push("baz")])
-    soft_tick(v)
-    soft_tick(v)
-
+    v.sync_do{ kvput <+ [[ "localhost:54321", "foo", 2, Array.new(curr).push("baz") ]] }
     assert_equal("foo", v.bigtable.first[0])
     assert_equal(['bar','baz'], v.bigtable.first[1])
   
