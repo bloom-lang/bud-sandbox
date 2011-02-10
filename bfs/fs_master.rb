@@ -12,7 +12,7 @@ module FSProtocol
     interface input, :fsls, ['reqid', 'path']
     interface input, :fscreate, [], ['reqid', 'name', 'path', 'data']
     interface input, :fsrm, [], ['reqid', 'name', 'path']
-    interface input, :fmkdir, [], ['reqid', 'name', 'path']
+    interface input, :fsmkdir, [], ['reqid', 'name', 'path']
   
     interface output, :fsret, ['reqid', 'status', 'data']
   end
@@ -57,7 +57,25 @@ module KVSFS
     end
 
     kvput <= dir_exists.map do |c, r|
-      [@ip_port, c.path + '/' + c.name, c.reqid, "DATA"]
+      [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, "DATA"]
+    end
+  end
+
+  declare
+  def mkdir
+    kvget <= fsmkdir.map{ |m| [m.reqid, m.path] }
+    fsret <= fsmkdir.map do |c|
+      unless kvget_response.map{ |r| r.reqid}.include? c.reqid
+        [c.reqid, false, nil]
+      end
+    end
+
+    mkdir_exists = join [fsmkdir, kvget_response], [fsmkdir.reqid, kvget_response.reqid]
+    kvput <= mkdir_exists.map do |c, r|
+      puts "DO it with #{r.inspect}" or [@ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
+    end
+    kvput <= mkdir_exists.map do |c, r|
+      [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, []]
     end
   end
 end
