@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'chord_find'
+require 'chord/chord_find'
 
 module ChordJoin
   include Anise

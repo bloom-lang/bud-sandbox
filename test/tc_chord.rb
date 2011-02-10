@@ -1,9 +1,9 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'chord_node'
-require 'chord_find'
-require 'chord_join'
+require 'chord/chord_node'
+require 'chord/chord_find'
+require 'chord/chord_join'
 
 class LilChord < Bud
   include ChordNode

@@ -1,3 +1,4 @@
+require 'test/tc_chord'
 require 'test/tc_besteffort_delivery'
 require 'test/tc_reliable_delivery'
 require 'test/tc_multicast'
