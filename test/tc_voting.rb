@@ -54,6 +54,10 @@ class TestVoting < Test::Unit::TestCase
     t3.sync_do{ assert_equal([1,'me for king', 'localhost:12346'], t3.waiting_ballots.first) }
     t.sync_do{ assert_equal([1, 'yes', 2], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'yes'], t.vote_status.first) }
+  
+    t.stop_bg
+    t2.stop_bg
+    t3.stop_bg
   end
 
   def xntest_votingpair2

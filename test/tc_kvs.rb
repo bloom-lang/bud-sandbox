@@ -33,6 +33,7 @@ class TestKVS < Test::Unit::TestCase
     assert_nothing_raised(RuntimeError) {v.run_bg}
     #add_members(v, "localhost:12352")
     assert_raise(Bud::KeyConstraintError)  { workload2(v) }
+    v.stop_bg
   end
 
   def test_wl1
@@ -49,6 +50,8 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) } 
     v2.sync_do{ assert_equal(1, v2.kvstate.length) }
     v2.sync_do{ assert_equal("bak", v2.kvstate.first[1]) }
+    v.stop_bg
+    v2.stop_bg
   end
 
   def test_simple
@@ -63,6 +66,8 @@ class TestKVS < Test::Unit::TestCase
       assert_equal(1, v.kvget_response.length)
       assert_equal("bak", v.kvget_response.first[1])
     }
+
+    v.stop_bg
   end
 end
 

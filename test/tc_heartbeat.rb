@@ -46,5 +46,8 @@ class TestHB < Test::Unit::TestCase
         assert(s.include? c)
       end
     end
+    hb.stop_bg
+    hb2.stop_bg
+    hb3.stop_bg
   end
 end
