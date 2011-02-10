@@ -15,7 +15,7 @@ module TwoPCAgent
 
   declare
   def decide
-    cast_vote <= join([waiting_ballots, can_commit], [waiting_ballots.ident, can_commit.xact]).map{|w, c| [w.ident, c.decision] }
+    cast_vote <= join([waiting_ballots, can_commit], [waiting_ballots.ident, can_commit.xact]).map{|w, c| puts @ip_port + " agent cast vote " + c.inspect or [w.ident, c.decision] }
   end
 
 end
@@ -32,14 +32,16 @@ module TwoPCVotingMaster
     victor <= join([vote_status, member_cnt, vote_cnt], [vote_status.ident, vote_cnt.ident]).map do |s, m, v|
       if v.response == "N"
         [v.ident, s.content, "N"]
-      elsif v.cnt > m.cnt / 2
+      # huh??
+      #elsif v.cnt > m.cnt / 2
+      elsif v.cnt == m.cnt
         [v.ident, s.content, v.response]
       end
     end
 
     vote_status <+ victor.map{|v| v }
     vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
-    localtick <~ victor.map{|v| [@ip_port]}
+    #localtick <~ victor.map{|v| [@ip_port]}
   end
 end
 
