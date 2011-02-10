@@ -7,9 +7,9 @@ require 'time'
 module ProgressTimerProto
   def state
     super
-    interface :input, :set_alarm, ['name', 'timeout']
+    interface :input, :set_alarm, ['name', 'time_out']
     interface :input, :del_alarm, ['name']
-    interface :output, :alarm, ['name', 'timeout']
+    interface :output, :alarm, ['name', 'time_out']
   end
 end
 
@@ -20,17 +20,17 @@ module ProgressTimer
 
   def state
     super
-    table :timer_state, ['name'], ['start_tm', 'timeout']
+    table :timer_state, ['name'], ['start_tm', 'time_out']
     periodic :timer, 0.2
   end
 
   declare 
   def timer_logic
-    timer_state <= join([set_alarm, timer]).map{ |s, t| [s.name, Time.parse(t.time).to_f, s.timeout] }
+    timer_state <= join([set_alarm, timer]).map{ |s, t| [s.name, Time.parse(t.time).to_f, s.time_out] }
       
     alarm <= join([timer_state, timer]).map do |s, t|
-      if Time.parse(t.time).to_f - s.start_tm > s.timeout
-        [s.name, s.timeout]
+      if Time.parse(t.time).to_f - s.start_tm > s.time_out
+        [s.name, s.time_out]
       end
     end
     
