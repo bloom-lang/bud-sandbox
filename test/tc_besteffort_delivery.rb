@@ -27,5 +27,6 @@ class TestBEDelivery < Test::Unit::TestCase
     sleep 1
     assert_equal(1, rd.pipe_perm.length)
     assert_equal(sendtup, rd.pipe_perm.first)
+    rd.stop_bg
   end
 end

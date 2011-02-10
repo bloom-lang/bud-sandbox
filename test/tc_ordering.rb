@@ -20,10 +20,6 @@ class ST < Bud
   end
 end
 
-class AS < Bud
-  include AggAssign
-end
-
 class SN < Bud
   include SimpleNonce
 end
@@ -50,15 +46,9 @@ class TestSer < Test::Unit::TestCase
       gn.sync_do{ rem = gn.nonce.first }
       assert_equal(t * 3 + 1, rem[0])
     end
+    gn.stop_bg
   end
 
-  def ntest_assn
-    as = AS.new
-    as.run_bg
-
-    sleep 10
-  end
-  
   def test_simple_nonce
     sn = SN.new(:dump => true, :port => 235235)
     sn.run_bg
@@ -73,12 +63,8 @@ class TestSer < Test::Unit::TestCase
       # doesn't work.
       #sn.localtick <~ [['1234']]
     end
+    sn.stop_bg
   end 
-
-  def ntest_assigner
-    as = AS.new
-    as.run_bg
-  end
 
   def test_serialization
     st = ST.new(:visualize => 3)
@@ -108,5 +94,6 @@ class TestSer < Test::Unit::TestCase
         end
       end
     }
+    st.stop_bg
   end
 end

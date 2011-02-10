@@ -54,6 +54,10 @@ class TestMC < Test::Unit::TestCase
     mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
+  
+    mc.stop_bg
+    mc2.stop_bg
+    mc3.stop_bg
   end
 
   
