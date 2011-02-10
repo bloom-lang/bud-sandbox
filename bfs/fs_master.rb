@@ -22,10 +22,7 @@ module FS
 
   def bootstrap
     file <+ [[0, '/']]
-    #dir <+ [[0, 0]]
-
-    file <+ [[1, 'foo'], [2, 'bar']]
-    dir <+ [[0, 1], [0, 2]]
+    super
   end
 
   def state
