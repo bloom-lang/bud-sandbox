@@ -1,6 +1,7 @@
 # that these unit test batches should succeed individually
 # but fail when run together as below is troublesome!
 
+require 'test/tc_chord'
 require 'test/tc_besteffort_delivery'
 require 'test/tc_reliable_delivery'
 require 'test/tc_multicast'

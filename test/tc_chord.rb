@@ -1,12 +1,14 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'chord_node'
-require 'chord_find'
+require 'chord/chord_node'
+require 'chord/chord_find'
+require 'chord/chord_join'
 
 class LilChord < Bud
   include ChordNode
   include ChordFind
+  include ChordJoin
 
   def initialize(opts)
     @addrs = {0 =>'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
@@ -39,6 +41,9 @@ class LilChord < Bud
       finger <= [[0,4,5,0,@addrs[0]], [1,5,7,0,@addrs[0]], [2,7,3,0,@addrs[0]]]
       localkeys <= [[2, '']]
     end
+  end
+  
+  def do_lookups
     # issue local lookups for 1,2,6
     [1,2,6].each do |num|
       succ_req <+ [[num]]
@@ -56,11 +61,12 @@ class TestFind < Test::Unit::TestCase
   def test_find
     @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
     @my_nodes = @addrs.values.map do |a|
-      LilChord.new(:port => a, :visualize => 3)
+      LilChord.new(:port => a) #, :visualize => 3)
     end
     assert_nothing_raised { @my_nodes.each{|n| n.run_bg} }
-    assert_nothing_raised { @my_nodes.each{|n| n.async_do {n.load_data}}}
-    sleep 5
+    assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.load_data}}}
+    assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.do_lookups}}}
+    sleep 2
     assert_nothing_raised { @my_nodes.each{|n| n.stop_bg} }
     
     # [0,1,2].each do |num|
@@ -69,6 +75,27 @@ class TestFind < Test::Unit::TestCase
     assert_equal(3, @my_nodes[0].succ_cache.length)
     assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
     assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
-    assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[0].succ_cache.map{|s| s})
   end
+  # def test_join
+  #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
+  #   @my_nodes = @addrs.values.map do |a|
+  #     LilChord.new(:port => a, :visualize => 3)
+  #   end
+  #   assert_nothing_raised { @my_nodes.each{|n| n.run_bg} }
+  #   assert_nothing_raised { @my_nodes.each{|n| n.async_do {n.load_data}}}
+  #   @addrs[6] = 12346
+  #   newnode = LilChord.new(:port => 12346, :visualize => 3)
+  #   @my_nodes << newnode
+  #   assert_nothing_raised { newnode.run_bg}
+  #   assert_nothing_raised { newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}}
+  #   sleep 2
+  #   assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.do_lookups}}}
+  #   sleep 2
+  #   assert_nothing_raised { @my_nodes.each{|n| n.stop_bg} }
+  #   # assert_equal(4, @my_nodes[0].succ_cache.length)
+  #   assert_equal(@my_nodes[0].finger.map{|f| f}, nil)
+  #   assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
+  #   assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
+  #   assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[3].succ_cache.map{|s| s})
+  # end
 end

@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'chord_find'
+require 'chord/chord_find'
 
 module ChordJoin
   include Anise
@@ -9,7 +9,7 @@ module ChordJoin
 
   def state
     super
-    channel :join_req, ['from'], ['start']
+    channel :join_req, ['@to', 'requestor_addr'], ['start']
     table   :join_pending, join_req.keys, join_req.cols
     # table :finger, ['index'], ['start', 'hi', 'succ', 'succ_addr']
     # interface output, :succ_resp, ['key'], ['start', 'addr']
@@ -22,12 +22,12 @@ module ChordJoin
   end
 
   def log2(x)
-    log(x)/log(2)
+    Math.log(x)/Math.log(2)
   end
 
-  def initialize
+  def bootstrap
     super
-    offsets <= [1..log2(@maxkey)]
+    offsets <= [(1..log2(@maxkey)).map{|o| o}]
   end
 
 
@@ -39,22 +39,22 @@ module ChordJoin
 
     # cache the request
     join_pending <= join_req
+    stdio <~ join_req.map{|j| [j.inspect]}
     # asynchronously, find out who owns start+1
-    succ_req <= join_req.map{|j| j.start+1}
+    succ_req <= join_req.map{|j| j.start}
     # upon response to successor request, ask the successor to send the contents
     #  of its finger table directly to the new node.
-    finger_table_req <~ join([join_pending, succ_resp],
-                             [join_pending.start+1, succ_resp.key]).map do |j, s|
-      [s.addr, j.from]
+    finger_table_req <~ join([join_pending, succ_resp]).map do |j, s|
+      [s.addr, j.from] if j.start+1 == s.key
     end
   end
 
   declare
   def join_rules_successor
     # at successor, upon receiving finger_table_req, ship finger table entries directly to new node
-    finger_table_resp <~ join([finger_table_req, finger]).map do |ft, f|
+    finger_table_resp <~ join([finger_table_req, finger]).map do |ftreq, f|
       # finger tuple prefixed with requestor_addr
-      [ft.requestor_addr] + f
+      [ftreq.requestor_addr] + f
     end
   end
 
@@ -66,10 +66,11 @@ module ChordJoin
       (finger.keys + finger.cols).map{|c| f.send{c.to_sym}}
     end
     # update all nodes whose finger tables should refer here
-    # first, for each offset o find last node whose o'th finger might be n
+    # first, for each offset o find last node whose o'th finger might be the new node's id
     pred_req <= join([me,offsets]).map do |m,o|
       [m.start - 2**o.val, o.val]
     end
+    # upon pred_resp, send a finger_upd message to the node that was found to point here
     finger_upd <~ natjoin([me, pred_resp]).map do |m, resp|
       [resp.referrer_addr, resp.referrer_index, m.start, ip_port]
     end
