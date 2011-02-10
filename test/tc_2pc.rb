@@ -13,11 +13,11 @@ end
 
 class Test2PC < Test::Unit::TestCase
   def test_singlenode
-    t = TPCM.new(:port => 12345)
-    t2 = TPCA.new(:port => 12346)
-    t3 = TPCA.new(:port => 12347)
-    t.add_member <+ [['localhost:12346']]
-    t.add_member <+ [['localhost:12347']]
+    t = TPCM.new(:port => 32345)
+    t2 = TPCA.new(:port => 32346)
+    t3 = TPCA.new(:port => 32347)
+    t.add_member <+ [['localhost:32346']]
+    t.add_member <+ [['localhost:32347']]
     t.run_bg
     t2.run_bg
     #t3.run_bg

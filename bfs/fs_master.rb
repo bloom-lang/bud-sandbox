@@ -17,6 +17,8 @@ end
 
 module FS 
   include FSProtocol
+  include Serializer
+  include SimpleNonce
   include Anise
   annotator :declare
 
@@ -70,6 +72,9 @@ module FS
   declare
   def create
     lookup <= fscreate.map{|c| [c.reqid, c.path] }
+    enqueue <= fscreate.map{|c| [c.reqid, c.path] } 
+
+    create_attempts = join [
 
     fsret <= fscreate.map do |l|
       unless result.map{|r| r.reqid}.include? fsls.reqid
