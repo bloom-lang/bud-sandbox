@@ -71,7 +71,7 @@ module ChordJoin
       [m.start - 2**o.val, o.val]
     end
     finger_upd <~ natjoin([me, pred_resp]).map do |m, resp|
-      [resp.referrer_addr, resp.referrer_index, m.start, @ip_port]
+      [resp.referrer_addr, resp.referrer_index, m.start, ip_port]
     end
   end
 
