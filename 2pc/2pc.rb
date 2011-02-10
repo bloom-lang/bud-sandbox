@@ -39,7 +39,7 @@ module TwoPCVotingMaster
 
     vote_status <+ victor.map{|v| v }
     vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
-    localtick <~ victor.map{|v| [@ip_port]}
+    localtick <~ victor.map{|v| [ip_port]}
   end
 end
 

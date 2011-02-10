@@ -33,5 +33,6 @@ module ChordNode
                  end
     # now for each key pick the highest-index candidate; it's the closest
     closest <= candidate.argmax([candidate.key], candidate.index)
+    # stdio <~ closest.map {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"]}
   end
 end

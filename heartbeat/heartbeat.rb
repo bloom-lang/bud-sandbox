@@ -33,8 +33,8 @@ module HeartbeatAgent
   declare 
   def announce
     heartbeat <~ join([hb_timer, member]).map do |t, p|
-      unless p.host == @ip_port
-        [p.host, @ip_port, Time.parse(t.time).to_f]
+      unless p.host == ip_port
+        [p.host, ip_port, Time.parse(t.time).to_f]
       end
     end
   end
