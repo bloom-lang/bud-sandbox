@@ -64,7 +64,7 @@ module TwoPCMaster
   declare 
   def boots
     xact <= request_commit.map{|r| [r.xid, r.data, 'prepare'] }
-    stdio <~ request_commit.map{|r| ["begin that vote"]}
+    #stdio <~ request_commit.map{|r| ["begin that vote"]}
     begin_vote <= request_commit.map{|r| [r.xid, r.data] }
   end
 

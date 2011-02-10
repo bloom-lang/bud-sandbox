@@ -48,7 +48,7 @@ class Test2PC < Test::Unit::TestCase
 
  
     t.sync_do {  
-      t.xact.each {|x| puts "XACT: #{x.inspect}" }  
+      #t.xact.each {|x| puts "XACT: #{x.inspect}" }  
       assert_rqual(1, t.xact.length)
       assert_equal("commit", t.xact.first[2])
     }

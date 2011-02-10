@@ -50,9 +50,9 @@ module AggAssign
   declare 
   def grouping
     holder <= dump.group(nil, accum(dump.payload))
-    stdio <~ holder.map{|h| ["HOLD: #{h.inspect}"] }
+    #stdio <~ holder.map{|h| ["HOLD: #{h.inspect}"] }
     pickup <= holder.flat_map do |h|
-      h.array.each_with_index.map{|a, i| puts "OOK" or [i, a] }
+      h.array.each_with_index.map{|a, i| [i, a] }
     end
   end
 end

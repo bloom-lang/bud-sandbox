@@ -31,7 +31,7 @@ module CartClient
 
   declare 
   def client
-    action_msg <~ client_action.map{|a| puts "server is "+a.server.to_s or [a.server, @addy, a.session, a.reqid, a.item, a.action]}
+    action_msg <~ client_action.map{|a| [a.server, @addy, a.session, a.reqid, a.item, a.action]}
     checkout_msg <~ client_checkout.map{|a| [a.server, @addy, a.session, a.reqid]}
     client_response <= response_msg.map {|r| r }
   end

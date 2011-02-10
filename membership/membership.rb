@@ -21,11 +21,9 @@ module StaticMembership
     member <= add_member.map do |m| 
       if @budtime == 0
         m
-      else
-        puts "reject " + m.inspect + ": BUDTIME IS " + @budtime.to_s
       end 
     end
-    local_id <= my_id.map{ |m| puts "set my id" or m if @budtime == 0 } 
+    local_id <= my_id.map{ |m| m if @budtime == 0 } 
   end
   
 end

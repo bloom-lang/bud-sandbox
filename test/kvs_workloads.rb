@@ -18,7 +18,7 @@ module KVSWorkloads
     v.sync_do { 
       v.kvput <+ [["localhost:54321", "foo", 1, "bar"]] 
     }
-    v.sync_do { v.kvput.each {|k| puts "K #{k.inspect}" }  }
+    #v.sync_do { v.kvput.each {|k| puts "K #{k.inspect}" }  }
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 2, "baz"]] }
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] }
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
@@ -32,7 +32,7 @@ module KVSWorkloads
     v.async_do{ v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] } 
     v.async_do{ v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
     v.sync_do{ }
-    v.sync_do { v.kvstate.each{|k| puts "KVP: #{k.inspect}" } } 
+    #v.sync_do { v.kvstate.each{|k| puts "KVP: #{k.inspect}" } } 
   end
 
   def append(prog, item)

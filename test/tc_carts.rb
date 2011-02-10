@@ -88,7 +88,7 @@ class TestCart < Test::Unit::TestCase
 
     program.sync_do{ 
       assert_equal(1, program.memo.length) 
-      program.memo.each {|m| puts "MEMO: #{m.inspect}" }
+      #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
       assert_equal(2, program.memo.first.array.length) 
     }
   end

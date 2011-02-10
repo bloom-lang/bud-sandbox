@@ -51,7 +51,7 @@ module VotingMaster
     # to members, set status to 'in flight'
     j = join([begin_vote, member])
     ballot <~ j.map do |b,m| 
-      puts "ipport " + ip_port + " send to " + m.inspect + " -- " + b.inspect or [m.host, ip_port, b.ident, b.content] 
+      [m.host, ip_port, b.ident, b.content] 
     end
     vote_status <+ begin_vote.map do |b| 
       [b.ident, b.content, 'in flight'] 
@@ -63,7 +63,7 @@ module VotingMaster
   def counting
     # accumulate votes into votes_rcvd table, 
     # calculate current counts
-    stdio <~ vote.map { |v| ["GOT VOTE: " + v.inspect] }
+    #stdio <~ vote.map { |v| ["GOT VOTE: " + v.inspect] }
     votes_rcvd <= vote.map { |v| [v.ident, v.response, v.peer] }
     vote_cnt <= votes_rcvd.group(
       [votes_rcvd.ident, votes_rcvd.response], 
@@ -106,14 +106,14 @@ module VotingAgent
   # default for decide: always cast vote 'yes'.  expect subclasses to override
   declare 
   def decide
-    cast_vote <= ballot.map{ |b| print "EMPTY cast\n" or [b.ident, 'yes'] }
+    cast_vote <= ballot.map{ |b| [b.ident, 'yes'] }
   end
   
   declare 
   def casting
     # cache incoming ballots for subsequent decisions (may be delayed)
     waiting_ballots <= ballot.map{|b| [b.ident, b.content, b.master] }
-    stdio <~ ballot.map{|b| [ip_port + " PUT ballot " + b.inspect] }
+    #stdio <~ ballot.map{|b| [ip_port + " PUT ballot " + b.inspect] }
     # whenever we cast a vote on a waiting ballot, send the vote
     vote <~ join([cast_vote, waiting_ballots], [cast_vote.ident, waiting_ballots.ident]).map do |v, c| 
       [c.master, ip_port, v.ident, v.response] 
