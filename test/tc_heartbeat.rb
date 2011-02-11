@@ -7,10 +7,6 @@ class HB < Bud
   include HeartbeatAgent
   include StaticMembership
 
-  def state
-    super
-  end
-
   def bootstrap
     payload <+ [['foo']]
     payload <+ [['foo']]

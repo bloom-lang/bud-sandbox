@@ -8,8 +8,8 @@ module HeartbeatProtocol
   include MembershipProto
   def state
     super
-    interface input, :payload, [], ['payload']
-    interface output, :last_heartbeat, ['peer', 'peer_time', 'time', 'payload']
+    interface input, :payload, [] => [:payload]
+    interface output, :last_heartbeat, [:peer, :peer_time, :time, :payload]
   end
 end
 
@@ -20,20 +20,19 @@ module HeartbeatAgent
 
   def state
     super 
-    channel :heartbeat, ['@dst', 'src', 'peer_time', 'payload']
-    table :heartbeat_buffer, ['peer', 'peer_time', 'payload']
-    table :heartbeat_log, ['peer', 'peer_time', 'time', 'payload']
-    table :payload_buffer, ['payload']
-    #periodic :hb_timer, 3
-    periodic :hb_timer, 1
-    scratch :highest, ['peer','time']
+    channel :heartbeat, [:@dst, :src, :peer_time, :payload]
+    table :heartbeat_buffer, [:peer, :peer_time, :payload]
+    table :heartbeat_log, [:peer, :peer_time, :time, :payload]
+    table :payload_buffer, [:payload]
+    periodic :hb_timer, 3
+    scratch :highest, [:peer,:time]
   end
 
   declare 
   def announce
     heartbeat <~ join([hb_timer, member, payload_buffer]).map do |t, m, p|
       unless m.host == ip_port
-        puts "SEND HB #{p.payload.inspect}" or [m.host, ip_port, Time.parse(t.time).to_f, p.payload]
+        [m.host, ip_port, Time.parse(t.time).to_f, p.payload]
       end
     end
   end
@@ -46,7 +45,7 @@ module HeartbeatAgent
 
   declare 
   def reckon
-    stdio <~ hb_timer.map{|t| ["TICK with #{member.length} members"] } 
+    #stdio <~ hb_timer.map{|t| ["TICK with #{member.length} members"] } 
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.peer_time, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
     heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.peer_time, Time.parse(t.time).to_f, h.payload] }
