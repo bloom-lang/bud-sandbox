@@ -10,8 +10,8 @@ module TestState
 
   def state
     super
-    table :mcast_done_perm, ['ident'], ['payload']
-    table :rcv_perm, ['ident'], ['payload']
+    table :mcast_done_perm, [:ident] => [:payload]
+    table :rcv_perm, [:ident] => [:payload]
   end
 
   declare
@@ -46,12 +46,12 @@ class TestMC < Test::Unit::TestCase
 
     mc.sync_do{ mc.send_mcast <+ [[1, 'foobar']] }
 
-    #advance(mc)
-    #advance(mc)
     mc.sync_do{ assert_equal(1, mc.mcast_done_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc.mcast_done_perm.first.payload) }
+    sleep 1
 
     mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
+    return 
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
   

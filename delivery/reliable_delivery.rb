@@ -9,8 +9,8 @@ module ReliableDelivery
 
   def state
     super
-    table :pipe, ['dst', 'src', 'ident'], ['payload']
-    channel :ack, ['@src', 'dst', 'ident']
+    table :pipe, [:dst, :src, :ident] => [:payload]
+    channel :ack, [:@src, :dst, :ident]
     periodic :tock, 2
   end
   
@@ -22,7 +22,7 @@ module ReliableDelivery
   
   declare
   def rcv
-    ack <~ pipe_chan.map {|p| puts @addy +  " ack" or [p.src, p.dst, p.ident] }
+    ack <~ pipe_chan.map {|p| [p.src, p.dst, p.ident] }
   end
 
   declare 

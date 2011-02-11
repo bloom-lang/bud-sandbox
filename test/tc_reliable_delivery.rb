@@ -8,7 +8,7 @@ class RED < Bud
   
   def state
     super 
-    table :pipe_perm, ['dst', 'src', 'ident', 'payload']
+    table :pipe_perm, [:dst, :src, :ident, :payload]
   end
   
   declare 

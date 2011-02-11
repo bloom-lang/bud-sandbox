@@ -4,14 +4,8 @@ require 'bud'
 module DeliveryProtocol
   def state
     super
-    interface input, :pipe_in, ['dst', 'src', 'ident'], ['payload']
-    interface output, :pipe_sent, ['dst', 'src', 'ident'], ['payload']
-    channel :tickler, ['@myself']
-  end
-
-  def initialize(opts)
-    super
-    @addy = "#{opts[:ip]}:#{opts[:port]}"
+    interface input, :pipe_in, [:dst, :src, :ident] => [:payload]
+    interface output, :pipe_sent, [:dst, :src, :ident] => [:payload]
   end
 end
 
@@ -22,8 +16,7 @@ module BestEffortDelivery
 
   def state
     super
-    #channel :pipe_chan, ['@dst', 'src', 'ident'], ['payload']
-    channel :pipe_chan, ['dst', 'src', 'ident'], ['payload']
+    channel :pipe_chan, [:dst, :src, :ident] => [:payload]
   end
 
   declare

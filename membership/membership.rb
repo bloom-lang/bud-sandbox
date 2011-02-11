@@ -4,10 +4,10 @@ require 'bud'
 module MembershipProto
   def state
     super
-    interface input, :add_member, ['host', 'ident']
-    interface input, :my_id, [], ['ident']
-    table :member, ['host'], ['ident']
-    table :local_id, [], ['ident']
+    interface input, :add_member, [:host] => [:ident]
+    interface input, :my_id, [] => [:ident]
+    table :member, [:host] => [:ident]
+    table :local_id, [] => [:ident]
   end
 end
 

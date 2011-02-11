@@ -12,9 +12,8 @@ module MulticastProtocol
 
   def state
     super
-    #table :members, ['peer']
-    interface input, :send_mcast, ['ident'], ['payload']
-    interface output, :mcast_done, ['ident'], ['payload']
+    interface input, :send_mcast, [:ident] => [:payload]
+    interface output, :mcast_done, [:ident] => [:payload]
   end
 end
 
@@ -27,7 +26,7 @@ module Multicast
   declare   
   def snd_mcast
     pipe_in <= join([send_mcast, member]).map do |s, m|
-      [m.host, @addy, s.ident, s.payload]
+      [m.host, @ip_port, s.ident, s.payload]
     end
   end
   
