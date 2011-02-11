@@ -11,7 +11,7 @@ class ST < Bud
   
   def state
     super
-    table :mems, ['reqid', 'ident', 'payload']
+    table :mems, [:reqid, :ident, :payload]
   end 
 
   declare 

@@ -7,8 +7,8 @@ require 'ordering/serializer'
 module AssignerProto
   def state
     super
-    interface input, :dump, ['payload']
-    interface output, :pickup, ['ident'], ['payload']
+    interface input, :dump, [:payload]
+    interface output, :pickup, [:ident] => [:payload]
   end
 end
 
@@ -42,8 +42,8 @@ module AggAssign
 
   def state
     super
-    scratch :holder, ['array']
-    scratch :holder2, ['array']
+    scratch :holder, [:array]
+    scratch :holder2, [:array]
   end
 
   

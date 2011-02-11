@@ -4,9 +4,9 @@ require 'bud'
 module SerializerProto
   def state
     super
-    interface input, :enqueue, ['ident'], ['payload']
-    interface input, :dequeue, [], ['reqid']
-    interface output, :dequeue_resp, ['reqid'], ['ident', 'payload']
+    interface input, :enqueue, [:ident] =>  [:payload]
+    interface input, :dequeue, [] => [:reqid]
+    interface output, :dequeue_resp, [:reqid] => [:ident, :payload]
   end
 end
 
@@ -17,8 +17,8 @@ module Serializer
 
   def state
     super
-    table :storage, ['ident', 'payload']
-    scratch :top, ['ident']
+    table :storage, [:ident, :payload]
+    scratch :top, [:ident]
   end
 
   def bootstrap

@@ -9,7 +9,7 @@ module NonceProto
   def state
     super
     interface input, :seed, []
-    interface output, :nonce, ['ident']
+    interface output, :nonce, [] => [:ident]
   end
 end
 
@@ -25,8 +25,8 @@ module GroupNonce
 
   def state
     super
-    table :permo, [], ['ident']
-    scratch :mcnt, [], ['cnt']
+    table :permo, [] => [:ident]
+    scratch :mcnt, [] => [:cnt]
   end
   
   def bootstrap
@@ -52,7 +52,7 @@ module SimpleNonce
   # this is a technicality: need to drive things
   def state
     super
-    table :permo, [], ['ident']
+    table :permo, [] => [:ident]
   end
   
   def bootstrap
@@ -76,7 +76,7 @@ module NNonce
 
   def state
     super
-    table :storage, [], ['ident']
+    table :storage, [], [:ident]
   end
 
   def bootstrap 
@@ -99,7 +99,7 @@ module SNNonce
 
   def state
     super
-    scratch :storage, [], ['ident']
+    scratch :storage, [], [:ident]
   end
 
   def bootstrap 
