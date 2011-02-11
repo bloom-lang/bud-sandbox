@@ -5,15 +5,15 @@ require 'membership/membership'
 module VoteMasterProto
   def state
     super
-    interface input, :begin_vote, ['ident', 'content']
-    interface output, :victor, ['ident', 'content', 'response']
+    interface input, :begin_vote, [:ident, :content]
+    interface output, :victor, [:ident, :content, :response]
   end
 end
 
 module VoteAgentProto
   def state
     super
-    interface input, :cast_vote, ['ident', 'response']
+    interface input, :cast_vote, [:ident, :response]
   end 
 end
 
@@ -22,9 +22,9 @@ module VoteInterface
   # paa: TODO: figure out the right way to mix in state
   def state
     super if defined? super
-    channel :ballot, ['@peer', 'master', 'ident'], ['content']
-    channel :vote, ['@master', 'peer', 'ident'], ['response']
-    channel :tickler, ['@master'] unless defined? tickler
+    channel :ballot, [:@peer, :master, :ident] => [:content]
+    channel :vote, [:@master, :peer, :ident] => [:response]
+    channel :tickler, [:@master] unless defined? tickler
   end
 end
 
@@ -38,11 +38,10 @@ module VotingMaster
 
   def state
     super if defined? super
-    table :vote_status, 
-          ['ident', 'content', 'response']
-    table :votes_rcvd, ['ident', 'response', 'peer']
-    scratch :member_cnt, ['cnt']
-    scratch :vote_cnt, ['ident', 'response', 'cnt']
+    table :vote_status, [:ident, :content, :response]
+    table :votes_rcvd, [:ident, :response, :peer]
+    scratch :member_cnt, [:cnt]
+    scratch :vote_cnt, [:ident, :response, :cnt]
   end
 
   declare
@@ -100,7 +99,7 @@ module VotingAgent
 
   def state
     super if defined? super
-    table :waiting_ballots, ['ident', 'content', 'master']
+    table :waiting_ballots, [:ident, :content, :master]
   end
 
   # default for decide: always cast vote 'yes'.  expect subclasses to override
@@ -138,5 +137,4 @@ module MajorityVotingMaster
     vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
     #localtick <~ victor.map{|v| v}
   end
-
 end
