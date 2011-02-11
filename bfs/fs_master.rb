@@ -33,7 +33,7 @@ module KVSFS
   declare 
   def elles
     kvget <= fsls.map{ |l| [l.reqid, l.path] } 
-    fsret <= kvget_response.map{ |r| [r.reqid, true, r.value] }
+    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| [r.reqid, true, r.value] }
     fsret <= fsls.map do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
         [l.reqid, false, nil]
@@ -59,6 +59,7 @@ module KVSFS
     kvput <= dir_exists.map do |c, r|
       [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, "DATA"]
     end
+    fsret <= dir_exists.map{ |c, r| [c.reqid, true, nil] }
   end
 
   declare
@@ -77,8 +78,14 @@ module KVSFS
     kvput <= mkdir_exists.map do |c, r|
       [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, []]
     end
+
+    fsret <= mkdir_exists.map{ |c, r| [c.reqid, true, nil] }
   end
 end
+
+
+####### 
+# fold; aborted 'pure' FS below
 
 module FS 
   include FSProtocol

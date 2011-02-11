@@ -12,6 +12,9 @@ class HB < Bud
   end
 
   def bootstrap
+    payload <+ [['foo']]
+    payload <+ [['foo']]
+    payload <+ [['foo']]
     add_member <+ [[ "localhost:46362" ]]
     add_member <+ [[ "localhost:46363" ]]
     add_member <+ [[ "localhost:46364" ]]
@@ -25,9 +28,13 @@ class TestHB < Test::Unit::TestCase
     hb = HB.new(:port => 46362, :visualize => 1, :dump => true)
     hb2 = HB.new(:port => 46363)
     hb3 = HB.new(:port => 46364)
+    hb.payload << ['foo']
+    hb2.payload << ['foo']
+    hb3.payload << ['foo']
     hb.run_bg
     hb2.run_bg
     hb3.run_bg
+
 
     sleep 16
 

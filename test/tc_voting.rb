@@ -60,7 +60,7 @@ class TestVoting < Test::Unit::TestCase
     t3.stop_bg
   end
 
-  def xntest_votingpair2
+  def test_votingpair2
   
     (t, t2, t3) = start_three(12316, 12317, 12318, "VA2")
 
