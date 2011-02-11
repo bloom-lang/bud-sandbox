@@ -9,7 +9,8 @@ class ZkTableTest < Bud
 
   declare
   def other
-    stdio <~ foo.map{|f| ["ZK: " + f.key + "," + f.value]}
+    stdio <~ foo.map{|f| ["ZK: k = #{f.key}"]}
+    stdio <~ foo.map{|f| ["ZK: k = " + f.key]}
     #foo <~ tik.map{|t| ["tik_" + t.time, "time = " + t.time]}
   end
 end
