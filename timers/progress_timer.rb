@@ -7,9 +7,9 @@ require 'time'
 module ProgressTimerProto
   def state
     super
-    interface :input, :set_alarm, ['name', 'time_out']
-    interface :input, :del_alarm, ['name']
-    interface :output, :alarm, ['name', 'time_out']
+    interface :input, :set_alarm, [:name, :time_out]
+    interface :input, :del_alarm, [:name]
+    interface :output, :alarm, [:name, :time_out]
   end
 end
 
@@ -20,7 +20,7 @@ module ProgressTimer
 
   def state
     super
-    table :timer_state, ['name'], ['start_tm', 'time_out']
+    table :timer_state, [:name] => [:start_tm, :time_out]
     periodic :timer, 0.2
   end
 

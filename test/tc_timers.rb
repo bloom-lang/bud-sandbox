@@ -19,5 +19,6 @@ class TestBEDelivery < Test::Unit::TestCase
     tt.run_bg
     tt.set_alarm <+ [['foo', 3]]
     sleep 5
+    tt.stop_bg
   end
 end

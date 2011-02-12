@@ -33,11 +33,6 @@ class Test2PC < Test::Unit::TestCase
 
     t2.sync_do{ t2.cast_vote <+ [[ 1, "Y" ]] }
     sleep 1
-
-
-    return
-
-
     t.sync_do{ assert_equal(1, t.votes_rcvd.length) }
     t.sync_do{ 
       assert_equal(1, t.xact.length)
@@ -46,6 +41,7 @@ class Test2PC < Test::Unit::TestCase
     t3.sync_do{ t3.cast_vote <+ [[ 1, "Y" ]] }
     sleep 1 
 
+    return
  
     t.sync_do {  
       #t.xact.each {|x| puts "XACT: #{x.inspect}" }  

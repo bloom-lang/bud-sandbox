@@ -89,6 +89,7 @@ class TestCart < Test::Unit::TestCase
       #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
       assert_equal(2, program.memo.first.array.length) 
     }
+    program.stop_bg
   end
 
   def add_members(b, *hosts)

@@ -78,6 +78,9 @@ class TestVoting < Test::Unit::TestCase
 
     t.sync_do{ assert_equal([1, 'hell yes', 2], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'hell yes'], t.vote_status.first) }
+    t.stop_bg
+    t2.stop_bg
+    t3.stop_bg
   end
     
     

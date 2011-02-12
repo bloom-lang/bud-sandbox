@@ -35,6 +35,7 @@ class TestMembership < Test::Unit::TestCase
     sleep 3
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))
+    mt.stop_bg
   end
   
   def test_mem2
@@ -48,5 +49,7 @@ class TestMembership < Test::Unit::TestCase
     sleep 3
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))
+
+    mt.stop_bg
   end
 end
