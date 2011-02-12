@@ -16,8 +16,7 @@ module BestEffortDelivery
 
   def state
     super
-    #channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
-    channel :pipe_chan, [:dst, :src, :ident] => [:payload]
+    channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
   end
 
   declare
