@@ -18,7 +18,7 @@ class LilChord < Bud
 
   def state
     super
-    table :succ_cache, succ_resp.keys, succ_resp.cols
+    table :succ_cache, succ_resp.keys => succ_resp.cols
   end
 
   # figure 3(b) from stoica's paper

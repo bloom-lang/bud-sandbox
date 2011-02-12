@@ -7,12 +7,12 @@ module ChordNode
 
   def state
     super
-    interface input, :find_event, ['key', 'from']
-    interface output, :closest, ['key'], ['index', 'start', 'hi', 'succ', 'succ_addr']
-    table :finger, ['index'], ['start', 'hi', 'succ', 'succ_addr']
-    table :me, [], ['start']
-    scratch :candidate, ['key', 'index', 'start', 'hi', 'succ', 'succ_addr']
-    table :localkeys, ['key'], ['val']
+    interface input, :find_event, [:key, :from]
+    interface output, :closest, [:key] => [:index, :start, :hi, :succ, :succ_addr]
+    table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
+    table :me, [] => [:start]
+    scratch :candidate, [:key, :index, :start, :hi, :succ, :succ_addr]
+    table :localkeys, [:key] => [:val]
   end
 
   def in_range(key, lo, hi, inclusive_hi=false)
