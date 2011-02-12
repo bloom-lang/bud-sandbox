@@ -13,8 +13,7 @@ module Remember
   annotator :declare
   def state
     super
-    #table :memo, ['client', 'server', 'session', 'item', 'cnt']
-    table :memo, ['client', 'server', 'session', 'array']
+    table :memo, [:client, :server, :session, :array]
   end
 
   declare 
@@ -51,8 +50,7 @@ class DummyDC < Bud
 
   def state
     super
-    table :members, ['peer']
-    channel :tickler, ['myself']
+    table :members, [:peer]
   end
 end
 
@@ -60,7 +58,7 @@ class BCSC < Bud
   include CartClient
   def state
     super
-    table :cli_resp_mem, ['@client', 'server', 'session', 'item', 'cnt']
+    table :cli_resp_mem, [:@client, :server, :session, :item, :cnt]
   end
 
   declare 

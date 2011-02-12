@@ -11,9 +11,9 @@ module DisorderlyCart
 
   def state
     super
-    table :cart_action, ['session', 'reqid'], ['item', 'action']
-    scratch :action_cnt, ['session', 'item', 'action'], ['cnt']
-    scratch :status, ['server', 'client', 'session', 'item'], ['cnt']
+    table :cart_action, [:session, :reqid] => [:item, :action]
+    scratch :action_cnt, [:session, :item, :action] => [:cnt]
+    scratch :status, [:server, :client, :session, :item] => [:cnt]
   end
  
   declare
