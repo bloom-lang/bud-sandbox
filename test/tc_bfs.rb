@@ -12,7 +12,7 @@ module FSUtil
 
   def state
     super    
-    table :remember_resp, ['reqid', 'status', 'data']
+    table :remember_resp, fsret.keys => fsret.cols
   end
 
   declare

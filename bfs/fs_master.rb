@@ -9,12 +9,12 @@ require 'ordering/nonce'
 module FSProtocol
   def state
     super
-    interface input, :fsls, ['reqid', 'path']
-    interface input, :fscreate, [], ['reqid', 'name', 'path', 'data']
-    interface input, :fsrm, [], ['reqid', 'name', 'path']
-    interface input, :fsmkdir, [], ['reqid', 'name', 'path']
+    interface input, :fsls, [:reqid, :path]
+    interface input, :fscreate, [] => [:reqid, :name, :path, :data]
+    interface input, :fsrm, [] => [:reqid, :name, :path]
+    interface input, :fsmkdir, [] => [:reqid, :name, :path]
   
-    interface output, :fsret, ['reqid', 'status', 'data']
+    interface output, :fsret, [:reqid, :status, :data]
   end
 end
 
@@ -101,13 +101,13 @@ module FS
 
   def state
     super
-    table :file, ['fid', 'name']
-    table :dir, ['dir', 'contained']
-    table :fqpath, ['fid', 'path']
+    table :file, [:fid, :name]
+    table :dir, [:dir, :contained]
+    table :fqpath, [:fid, :path]
 
-    scratch :cr, ['reqid', 'loc', 'name']
-    scratch :lookup, ['reqid', 'path']
-    scratch :result, ['reqid', 'fid']
+    scratch :cr, [:reqid, :loc, :name]
+    scratch :lookup, [:reqid, :path]
+    scratch :result, [:reqid, :fid]
   end
 
   declare
