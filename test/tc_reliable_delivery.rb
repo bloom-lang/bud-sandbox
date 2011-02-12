@@ -19,7 +19,7 @@ end
 
 class TestBEDelivery < Test::Unit::TestCase
   def ntest_delivery1
-    rd = RED.new(:port => 12222, :dump => true, :enforce_rewrite => true)
+    rd = RED.new(:port => 12222, :dump => true)
     rd.run_bg
 
     sendtup = ['localhost:12223', 'localhost:12222', 1, 'foobar']
@@ -32,8 +32,8 @@ class TestBEDelivery < Test::Unit::TestCase
 
 
   def test_besteffort_delivery2
-    rd = RED.new(:port => 13333, :visualize => 0, :enforce_rewrite => true)
-    #rd = RED.new(:port => 13333, :enforce_rewrite => true)
+    rd = RED.new(:port => 13333, :visualize => 0)
+    #rd = RED.new(:port => 13333)
     rd2 = RED.new(:port => 13334)
     rd.run_bg
     rd2.run_bg
