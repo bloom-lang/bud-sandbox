@@ -6,10 +6,10 @@ require 'delivery/multicast'
 module KVSProtocol
   def state
     super
-    #interface input, :kvput, ['client', 'key', 'reqid'], ['value']
-    interface input, :kvput, ['client', 'key'], ['reqid', 'value']
-    interface input, :kvget, ['reqid'], ['key']
-    interface output, :kvget_response, ['reqid'], ['key', 'value']
+    #interface input, :kvput, [:client, :key, :reqid] => [:value]
+    interface input, :kvput, [:client, :key] => [:reqid, :value]
+    interface input, :kvget, [:reqid] => [:key]
+    interface output, :kvget_response, [:reqid] => [:key, :value]
   end
 end
 
@@ -20,9 +20,9 @@ module BasicKVS
 
   def state
     super
-    table :kvstate, ['key'], ['value']
-    #interface input, :kvput_internal, ['client', 'key'], ['reqid', 'value']
-    scratch :kvput_internal, ['client', 'key'], ['reqid', 'value']
+    table :kvstate, [:key] => [:value]
+    #interface input, :kvput_internal, [:client, :key] => [:reqid, :value]
+    scratch :kvput_internal, [:client, :key] => [:reqid, :value]
   end
 
   declare 
@@ -57,7 +57,7 @@ module ReplicatedKVS
   #def state
   #  super
   #  # override kvput
-  #  interface input, :kvput_in, ['client', 'key'], ['reqid', 'value']
+  #  interface input, :kvput_in, [:client, :key] => [:reqid, :value]
   #end
 
   declare
