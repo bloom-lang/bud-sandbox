@@ -34,7 +34,7 @@ end
 
 class TestMC < Test::Unit::TestCase
   def test_be
-    mc = MC.new(:port => 34256, :dump => true)
+    mc = MC.new(:port => 34256, :dump => true, :visualize => 3)
     mc2 = MC.new(:port =>  34257)
     mc3 = MC.new(:port =>  34258)
 

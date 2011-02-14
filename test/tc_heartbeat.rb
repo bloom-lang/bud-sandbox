@@ -21,7 +21,7 @@ end
 class TestHB < Test::Unit::TestCase
 
   def test_heartbeat_group
-    hb = HB.new(:port => 46362, :visualize => 1, :dump => true)
+    hb = HB.new(:port => 46362, :dump => true)
     hb2 = HB.new(:port => 46363)
     hb3 = HB.new(:port => 46364)
     hb.payload << ['foo']
