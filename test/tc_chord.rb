@@ -17,8 +17,7 @@ class LilChord < Bud
   end
 
   state {
-    # XXX: used to just reference "succ_resp" -- is there an easy way to restore this?
-    table :succ_cache, [:key] => [:start, :addr]
+    table :succ_cache, succ_resp.keys => succ_resp.cols
   }
 
   # figure 3(b) from stoica's paper
