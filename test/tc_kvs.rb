@@ -9,7 +9,8 @@ class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
-    @opts = {:dump => true, :visualize => 1, :scoping => false}
+    #@opts = {:dump => true, :visualize => 1, :scoping => false}
+    @opts = {:dump => true}
     super
   end
 
@@ -55,7 +56,8 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_simple
-    v = SingleSiteKVS.new(:port => 12360, :dump => true, :scoping => false, :visualize => 3, :tag => 'simple')
+    #v = SingleSiteKVS.new(:port => 12360, :dump => true, :scoping => false, :visualize => 3, :tag => 'simple')
+    v = SingleSiteKVS.new(:port => 12360, :dump => true)
     assert_nothing_raised(RuntimeError) {v.run_bg}
     workload1(v)
     v.sync_do{ assert_equal(1, v.kvstate.length) }
