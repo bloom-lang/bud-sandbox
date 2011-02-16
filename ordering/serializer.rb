@@ -2,24 +2,22 @@ require 'rubygems'
 require 'bud'
 
 module SerializerProto
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :enqueue, [:ident] =>  [:payload]
     interface input, :dequeue, [] => [:reqid]
     interface output, :dequeue_resp, [:reqid] => [:ident, :payload]
-  end
+  }
 end
 
 module Serializer
   include SerializerProto
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :storage, [:ident, :payload]
     scratch :top, [:ident]
-  end
+  }
 
   def bootstrap
     #localtick <~ [[@budtime]]

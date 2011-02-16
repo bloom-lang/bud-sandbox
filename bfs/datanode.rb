@@ -3,16 +3,13 @@ require 'bud'
 require 'heartbeat/heartbeat'
 
 module BFSDatanode
-  include Anise
   include HeartbeatAgent
   include StaticMembership
-  annotator :declare
 
-  def state
-    super
+  state {
     table :chunks, [:file, :ident, :size]
     scratch :chunk_summary, [:payload]
-  end
+  }
 
   def bootstrap
     # fake; we'd read these from the fs
@@ -26,6 +23,4 @@ module BFSDatanode
     chunk_summary <= chunks.map{|c| [[c.file, c.ident]] } 
     payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
   end
-
-  
 end

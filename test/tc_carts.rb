@@ -7,18 +7,16 @@ require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
 
 
-
 module Remember
-  include Anise
-  annotator :declare
-  def state
-    super
-    table :memo, [:client, :server, :session, :array]
-  end
+  include BudModule
 
-  declare 
+  state {
+    table :memo, [:client, :server, :session, :array]
+  }
+
+  declare
   def memm
-    memo <= response_msg.map{|r| r }
+    memo <= response_msg
   end
 end
 
@@ -48,20 +46,19 @@ class DummyDC < Bud
   include BasicKVS
   include Remember
 
-  def state
-    super
+  state {
     table :members, [:peer]
-  end
+  }
 end
 
 class BCSC < Bud
   include CartClient
-  def state
-    super
-    table :cli_resp_mem, [:@client, :server, :session, :item, :cnt]
-  end
 
-  declare 
+  state {
+    table :cli_resp_mem, [:@client, :server, :session, :item, :cnt]
+  }
+
+  declare
   def memmy
     cli_resp_mem <= response_msg.map{|r| r }
   end
@@ -84,10 +81,10 @@ class TestCart < Test::Unit::TestCase
     sleep 4
     #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
 
-    program.sync_do{ 
-      assert_equal(1, program.memo.length) 
+    program.sync_do{
+      assert_equal(1, program.memo.length)
       #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
-      assert_equal(2, program.memo.first.array.length) 
+      assert_equal(2, program.memo.first.array.length)
     }
     program.stop_bg
   end
@@ -97,6 +94,4 @@ class TestCart < Test::Unit::TestCase
       assert_nothing_raised(RuntimeError) { b.add_member <+ [[h]] }
     end
   end
-
-
 end

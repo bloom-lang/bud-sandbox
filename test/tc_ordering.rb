@@ -9,10 +9,9 @@ require 'ordering/assigner'
 class ST < Bud
   include Serializer
   
-  def state
-    super
+  state {
     table :mems, [:reqid, :ident, :payload]
-  end 
+  }
 
   declare 
   def remem

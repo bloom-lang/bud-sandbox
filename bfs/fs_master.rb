@@ -7,22 +7,21 @@ require 'ordering/assigner'
 require 'ordering/nonce'
 
 module FSProtocol
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :fsls, [:reqid, :path]
     interface input, :fscreate, [] => [:reqid, :name, :path, :data]
     interface input, :fsrm, [] => [:reqid, :name, :path]
     interface input, :fsmkdir, [] => [:reqid, :name, :path]
   
     interface output, :fsret, [:reqid, :status, :data]
-  end
+  }
 end
 
 module KVSFS
   include FSProtocol
   include BasicKVS
-  include Anise
-  annotator :declare
 
   def bootstrap
     super
@@ -91,16 +90,13 @@ module FS
   include FSProtocol
   include Serializer
   include SimpleNonce
-  include Anise
-  annotator :declare
 
   def bootstrap
     file <+ [[0, '/']]
     super
   end
 
-  def state
-    super
+  state {
     table :file, [:fid, :name]
     table :dir, [:dir, :contained]
     table :fqpath, [:fid, :path]
@@ -108,7 +104,7 @@ module FS
     scratch :cr, [:reqid, :loc, :name]
     scratch :lookup, [:reqid, :path]
     scratch :result, [:reqid, :fid]
-  end
+  }
 
   declare
   def view
@@ -116,7 +112,6 @@ module FS
     fqpath <= join([dir, fqpath, file], [dir.dir, fqpath.fid], [dir.contained, file.fid]).map do |d, p, f|
       puts "path now " + p.inspect or [f.fid, p.path + '/' + f.name] unless f.name == '/'
     end 
-
   end
   
   declare

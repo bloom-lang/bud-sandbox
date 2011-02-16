@@ -6,11 +6,10 @@ require 'delivery/delivery'
 class BED < Bud
   include BestEffortDelivery
   
-  def state
-    super
+  state {
     table :pipe_chan_perm, [:dst, :src, :ident, :payload]
     table :pipe_sent_perm, [:dst, :src, :ident, :payload]
-  end 
+  }
 
   declare
   def lcl_process

@@ -5,16 +5,13 @@ require 'delivery/multicast'
 require 'cart/cart_protocol'
 
 module DisorderlyCart
-  include Anise
   include CartProtocol
-  annotator :declare
 
-  def state
-    super
+  state {
     table :cart_action, [:session, :reqid] => [:item, :action]
     scratch :action_cnt, [:session, :item, :action] => [:cnt]
     scratch :status, [:server, :client, :session, :item] => [:cnt]
-  end
+  }
  
   declare
   def saved
@@ -47,8 +44,6 @@ end
 module ReplicatedDisorderlyCart
   include DisorderlyCart
   include Multicast
-  include Anise
-  annotator :declare
 
   declare 
   def replicate

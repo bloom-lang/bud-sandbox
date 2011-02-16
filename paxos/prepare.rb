@@ -5,17 +5,14 @@ require 'voting/voting'
 
 module PaxosPrepare 
   include MajorityVotingMaster
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :local_aru, [], ['host', 'aru']
     scratch :leader_change, ['host'], ['leader', 'view']
   
     scratch :prepare, ['view', 'aru']
     table :quorum, ['view', 'aru']
-  end
+  }
 
   declare 
   def prep1
@@ -44,17 +41,14 @@ end
 
 module PaxosPrepareAgent 
   include VotingAgent
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :datalist, ['view', 'aru_requested', 'seq', 'update', 'dltype']
     table :datalist_length, ['aru', 'len']
     table :global_history, ['host', 'seqno'], ['requestor', 'update']
     table :last_installed, [], ['view']
     table :accept, ['view', 'seq', 'update']
-  end 
+  }
 
   declare
   def build_reply

@@ -3,46 +3,45 @@ require 'bud'
 require 'membership/membership'
 
 module VoteMasterProto
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :begin_vote, [:ident, :content]
     interface output, :victor, [:ident, :content, :response]
-  end
+  }
 end
 
 module VoteAgentProto
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :cast_vote, [:ident, :response]
-  end 
+  }
 end
 
 module VoteInterface
+  include BudModule
+
   # channels used by both ends of the voting protocol
   # paa: TODO: figure out the right way to mix in state
-  def state
-    super if defined? super
+  state {
     channel :ballot, [:@peer, :master, :ident] => [:content]
     channel :vote, [:@master, :peer, :ident] => [:response]
     channel :tickler, [:@master] unless defined? tickler
-  end
+  }
 end
 
 module VotingMaster
-  # boilerplate
-  include Anise
   include VoteInterface
   include VoteMasterProto
   include StaticMembership
-  annotator :declare
 
-  def state
-    super if defined? super
+  state {
     table :vote_status, [:ident, :content, :response]
     table :votes_rcvd, [:ident, :response, :peer]
     scratch :member_cnt, [:cnt]
     scratch :vote_cnt, [:ident, :response, :cnt]
-  end
+  }
 
   declare
   def initiation
@@ -92,15 +91,12 @@ end
 
 
 module VotingAgent
-  include Anise
-  annotator :declare
   include VoteInterface
   include VoteAgentProto
 
-  def state
-    super if defined? super
+  state {
     table :waiting_ballots, [:ident, :content, :master]
-  end
+  }
 
   # default for decide: always cast vote 'yes'.  expect subclasses to override
   declare 
@@ -122,10 +118,8 @@ end
 
 
 module MajorityVotingMaster 
-  # boilerplate
-  include Anise
-  annotator :declare
   include VotingMaster
+
   declare
   def summary
     victor <= join([vote_status, member_cnt, vote_cnt], [vote_status.ident, vote_cnt.ident]).map do |s, m, v|

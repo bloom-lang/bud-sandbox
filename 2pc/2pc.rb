@@ -1,30 +1,21 @@
 require 'voting/voting'
 
 module TwoPCAgent
-  # boilerplate!!
-  include Anise
-  annotator :declare
   include VotingAgent
   # 2pc is a specialization of voting:
   # * ballots describe transactions
   # * voting is Y/N.  A single N vote should cause abort.
-  def state
-    super
+  state {
     scratch :can_commit, [:xact, :decision]
-  end
+  }
 
   declare
   def decide
     cast_vote <= join([waiting_ballots, can_commit], [waiting_ballots.ident, can_commit.xact]).map{|w, c| puts @ip_port + " agent cast vote " + c.inspect or [w.ident, c.decision] }
   end
-
 end
 
-
 module TwoPCVotingMaster
-  # boilerplate
-  include Anise
-  annotator :declare
   include VotingMaster
   # override the default summary s.t. a single N vote
   # makes the vote_status = ABORT
@@ -47,19 +38,14 @@ end
 
 
 module TwoPCMaster
-  # boilerplate
-  include Anise
-  annotator :declare
   include TwoPCVotingMaster
   # 2pc is a specialization of voting:
   # * ballots describe transactions
   # * voting is Y/N.  A single N vote should cause abort.
-  def state
-    super
-
+  state {
     table :xact, [:xid, :data] => [:status]
     scratch :request_commit, [:xid] => [:data]
-  end
+  }
 
   declare
   def boots
@@ -86,19 +72,16 @@ module TwoPCMaster
 end
 
 module Monotonic2PCMaster
-  # boilerplate
-  include Anise
-  annotator :declare
   include VotingMaster
+
   def initialize(opts)
     super
     xact_order << ['prepare', 0]
     xact_order << ['commit', 1]
     xact_order << ['abort', 2]
   end
-  def state
-    super
 
+  state {
     # TODO
     table :xact_order, [:status] => [:ordinal]
     table :xact_final, [:xid, :ordinal]
@@ -106,7 +89,7 @@ module Monotonic2PCMaster
     table :xact_accum, [:xid, :data, :status]
     scratch :request_commit, [:xid] => [:data]
     scratch :sj, [:xid, :data, :status, :ordinal]
-  end
+  }
 
   declare
   def boots

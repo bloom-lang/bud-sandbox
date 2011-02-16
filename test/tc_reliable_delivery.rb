@@ -6,10 +6,9 @@ require 'delivery/reliable_delivery'
 class RED < Bud
   include ReliableDelivery
   
-  def state
-    super 
+  state {
     table :pipe_perm, [:dst, :src, :ident, :payload]
-  end
+  }
   
   declare 
   def recall
@@ -50,6 +49,4 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.stop_bg
     rd2.stop_bg
   end
-
-
 end

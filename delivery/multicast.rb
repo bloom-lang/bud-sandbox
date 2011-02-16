@@ -5,41 +5,35 @@ require 'delivery/reliable_delivery'
 require 'voting/voting'
 require 'membership/membership.rb'
 
-module MulticastProtocol 
-  include Anise
-  annotator :declare  
+module MulticastProtocol
   include MembershipProto
 
-  def state
-    super
+  state {
     interface input, :send_mcast, [:ident] => [:payload]
     interface output, :mcast_done, [:ident] => [:payload]
-  end
+  }
 end
 
 module Multicast
   include MulticastProtocol
   include DeliveryProtocol
-  include Anise
-  annotator :declare
-  
-  declare   
+
+  declare
   def snd_mcast
     pipe_in <= join([send_mcast, member]).map do |s, m|
       [m.host, @ip_port, s.ident, s.payload]
     end
   end
-  
-  declare 
-  def done_mcast    
+
+  declare
+  def done_mcast
     # override me
     mcast_done <= pipe_sent.map{|p| [p.ident, p.payload] }
   end
-
 end
 
 module BestEffortMulticast
-  include BestEffortDelivery 
+  include BestEffortDelivery
   include Multicast
 end
 
@@ -48,8 +42,6 @@ module ReliableMulticast
   include VotingMaster
   include VotingAgent
   include Multicast
-  include Anise
-  annotator :declare
 
   declare
   def start_mcast
@@ -58,13 +50,13 @@ module ReliableMulticast
 
   declare
   def agency
-    cast_vote <= join([pipe_sent, waiting_ballots], [pipe_sent.ident, waiting_ballots.ident]).map{|p, b| [b.ident, b.content]} 
+    cast_vote <= join([pipe_sent, waiting_ballots], [pipe_sent.ident, waiting_ballots.ident]).map{|p, b| [b.ident, b.content]}
   end
 
   declare
   def done_mcast
     mcast_done <= vote_status.map do |v|
-      "VEE: " + v.inspect 
+      "VEE: " + v.inspect
     end
   end
 end

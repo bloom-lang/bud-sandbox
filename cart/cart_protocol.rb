@@ -2,8 +2,9 @@ require 'rubygems'
 require 'bud'
 
 module CartProtocol
-  def state
-    super
+  include BudModule
+
+  state {
     # PAA -- took the '@'s off all occurrences of :server below
     channel :action_msg, 
       [:server, :client, :session, :reqid] => [:item, :action]
@@ -11,23 +12,22 @@ module CartProtocol
       [:server, :client, :session, :reqid]
     channel :response_msg, 
       [:client, :server, :session, :item] => [:cnt]
-  end
+  }
 end
 
 module CartClientProtocol
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :client_checkout, [:server, :session, :reqid]
     interface input, :client_action, [:server, :session, :reqid] => [:item, :action]
     interface output, :client_response, [:client, :server, :session] => [:item, :cnt]
-  end
+  }
 end
 
 module CartClient
   include CartProtocol
   include CartClientProtocol
-  include Anise
-  annotator :declare
 
   declare 
   def client

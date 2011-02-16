@@ -11,11 +11,8 @@ module LeaderElection
   include MajorityVotingMaster
   include VotingAgent
   include SimpleNonce
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :current_state, [], ['status', 'leader', 'vid', 'start_tm', 'timeout', 'ballot_id']
     #table :current_state, ['status', 'leader', 'vid']
     scratch :rcv_ballot, ['ident', 'vid', 'host']
@@ -27,7 +24,7 @@ module LeaderElection
     scratch :will_vote, ['ident', 'leader', 'vid', 'timeout']
     scratch :rcv_vote, ['message', 'leader', 'vid', 'timeout']
     scratch :found_leader, ['ballot', 'leader', 'vid', 'timeout']
-  end
+  }
 
   declare
   def decide

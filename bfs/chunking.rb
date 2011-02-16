@@ -5,25 +5,22 @@ require 'bfs/hb_master'
 
 module ChunkedFSProtocol
   include FSProtocol
-  def state
-    super
+
+  state {
     interface :input, :fschunklocations, [:reqid, :file, :chunkid]
     interface :input, :fsnewchunk, [:reqid, :file]
-  end
+  }
 end
 
 module ChunkedKVSFS
   include ChunkedFSProtocol
   include KVSFS
   include HBMaster
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     scratch :chunk_buffer, [:reqid, :host]
     scratch :chunk_buffer2, [:reqid, :hostlist]
-  end
+  }
 
   declare
   def getchunks
@@ -41,4 +38,3 @@ module ChunkedKVSFS
     fsret <= chunk_buffer2.map{|c| [c.reqid, true, c.hostlist] }
   end
 end
-

@@ -6,27 +6,24 @@ require 'membership/membership'
 
 module HeartbeatProtocol
   include MembershipProto
-  def state
-    super
+
+  state {
     interface input, :payload, [] => [:payload]
     interface output, :last_heartbeat, [:peer, :peer_time, :time, :payload]
-  end
+  }
 end
 
 module HeartbeatAgent
   include HeartbeatProtocol
-  include Anise
-  annotator :declare
 
-  def state
-    super 
+  state {
     channel :heartbeat, [:@dst, :src, :peer_time, :payload]
     table :heartbeat_buffer, [:peer, :peer_time, :payload]
     table :heartbeat_log, [:peer, :peer_time, :time, :payload]
     table :payload_buffer, [:payload]
     periodic :hb_timer, 3
     scratch :highest, [:peer,:time]
-  end
+  }
 
   declare 
   def announce

@@ -3,23 +3,20 @@ require 'bud'
 require 'chord/chord_find'
 
 module ChordJoin
-  include Anise
-  annotator :declare
   include ChordFind
 
-  def state
-    super
+  state {
     channel :join_req, [:@to, :requestor_addr] => [:start]
     table   :join_pending, join_req.keys => join_req.cols
     # table :finger, [:index] => [:start, 'hi', :succ, :succ_addr]
     # interface output, :succ_resp, [:key] => [:start, :addr]
     channel :finger_table_req, [:@to,:requestor_addr]
-    channel :finger_table_resp, [:@requestor_addr] + finger.keys => finger.cols
+    channel :finger_table_resp, [:@requestor_addr, :index] => [:start, :hi, :succ, :succ_addr]
     channel :pred_req, [:referrer_key, :referrer_index]
     channel :pred_resp, [:referrer_key, :referrer_index, :referrer_addr]
     channel :finger_upd, [:referrer_addr, :referrer_index, :my_start, :my_addr]
     table :offsets, [:val]
-  end
+  }
 
   def log2(x)
     Math.log(x)/Math.log(2)

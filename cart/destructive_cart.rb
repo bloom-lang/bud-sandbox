@@ -8,8 +8,6 @@ require 'cart/cart_protocol'
 module DestructiveCart
   include CartProtocol
   include KVSProtocol
-  include Anise 
-  annotator :declare
 
   declare
   def queueing

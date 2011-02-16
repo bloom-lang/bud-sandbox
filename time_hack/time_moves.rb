@@ -1,7 +1,8 @@
 module TimeMoves
-  def state
-    super
+  include BudModule
+
+  state {
     periodic :ticc, 1
-  end
+  }
 end
 

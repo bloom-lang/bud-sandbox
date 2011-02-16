@@ -16,10 +16,10 @@ class LilChord < Bud
     super
   end
 
-  def state
-    super
-    table :succ_cache, succ_resp.keys => succ_resp.cols
-  end
+  state {
+    # XXX: used to just reference "succ_resp" -- is there an easy way to restore this?
+    table :succ_cache, [:key] => [:start, :addr]
+  }
 
   # figure 3(b) from stoica's paper
   # interface input, :find_event, ['key', 'from']

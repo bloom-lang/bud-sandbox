@@ -3,32 +3,30 @@ require 'bud'
 require 'membership/membership'
 
 # one version of a nonce is a relation that is guaranteed to have only
-# once unary tuple per timestep.  using it correctly to assign unique ids
+# one unary tuple per timestep.  using it correctly to assign unique ids
 # to arbitrary streams will require installing serializers
 module NonceProto
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :seed, []
     interface output, :nonce, [] => [:ident]
-  end
+  }
 end
 
 module GroupNonce
   include NonceProto
   include MembershipProto
-  include Anise
-  annotator :declare
 
   # a nonce generator built on top of a membership group.
   # at each timestep, return a number that is unique to
   # this host (among group members) and monotonically increasing
 
-  def state
-    super
+  state {
     table :permo, [] => [:ident]
     scratch :mcnt, [] => [:cnt]
-  end
-  
+  }
+
   def bootstrap
     permo <= local_id
   end
@@ -37,24 +35,21 @@ module GroupNonce
   def fiddle
     mcnt <= member.group(nil, count)
     nonce <= join([permo,  mcnt]).map{ |p, m| [p.ident + (@budtime * m.cnt)] }
-    permo <= join([seed, local_id]).map {|s, l| l if @budtime == 0 } 
+    permo <= join([seed, local_id]).map {|s, l| l if @budtime == 0 }
   end
 end
 
 module SimpleNonce
   include NonceProto
-  include Anise
-  annotator :declare
-    
+
   # we don't need any state: just salt in address and local time.
   # assigning an arbitrary # of ids in a single timestep is another matter.
 
   # this is a technicality: need to drive things
-  def state
-    super
+  state {
     table :permo, [] => [:ident]
-  end
-  
+  }
+
   def bootstrap
     permo <= [[self.object_id << 16]]
   end
@@ -71,19 +66,16 @@ end
 # this works but is totally redundant with @budtime...!
 module NNonce
   include NonceProto
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :storage, [], [:ident]
-  end
+  }
 
-  def bootstrap 
+  def bootstrap
     storage <= [[0]]
   end
 
-  declare 
+  declare
   def logic
     storage <+ storage.map {|s| [s.ident + 1]}
     storage <- storage
@@ -94,19 +86,16 @@ end
 # I thought the below would work
 module SNNonce
   include NonceProto
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     scratch :storage, [], [:ident]
-  end
+  }
 
-  def bootstrap 
+  def bootstrap
     storage <= [[0]]
   end
 
-  declare 
+  declare
   def logic
     nonce <= storage
     storage <+ storage.map {|s| puts "BUMP " + s.inspect or [s.ident + 1]}

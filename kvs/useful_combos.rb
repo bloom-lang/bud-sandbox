@@ -26,8 +26,8 @@ class ReliableReplicatedKVS < Bud
 end
 
 module ReplicatedMeteredGlue
-  include Anise
-  annotator :declare
+  include BudModule
+
   # we have mixed in KVSMetering and ReplicatedKVS,
   # both of which implement indirection.  we need to 
   # compose these!
@@ -37,12 +37,11 @@ module ReplicatedMeteredGlue
   # orthogonal components.  I'd like to see this as a rewrite,
   # though different rewrites correspond to different 
   # strategies for join order, materialization etc.
-  def state
-    super
+  state {
     table :cs_rep, ['ident'], ['payload']
     table :cs_meter, ['ident'], ['payload']
     scratch :rmg_can_store, ['ident'], ['payload']
-  end
+  }
   
   declare
   def indir

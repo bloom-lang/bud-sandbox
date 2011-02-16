@@ -5,22 +5,17 @@ require 'backports'
 require 'ordering/serializer'
 
 module AssignerProto
-  def state
-    super
+  include BudModule
+
+  state {
     interface input, :dump, [:payload]
     interface output, :pickup, [:ident] => [:payload]
-  end
+  }
 end
 
 module Assigner
   include AssignerProto
   include SerializerProto
-  include Anise
-  annotator :declare
-
-  def state
-    super
-  end
 
   declare 
   def logos 
@@ -37,15 +32,11 @@ end
 
 module AggAssign
   include AssignerProto
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     scratch :holder, [:array]
     scratch :holder2, [:array]
-  end
-
+  }
   
   declare 
   def grouping

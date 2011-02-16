@@ -4,15 +4,12 @@ require 'delivery/delivery'
 
 module ReliableDelivery
   include  BestEffortDelivery
-  include Anise
-  annotator :declare
 
-  def state
-    super
+  state {
     table :pipe, [:dst, :src, :ident] => [:payload]
     channel :ack, [:@src, :dst, :ident]
     periodic :tock, 2
-  end
+  }
   
   declare 
   def remember

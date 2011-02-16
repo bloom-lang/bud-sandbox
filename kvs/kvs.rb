@@ -4,26 +4,24 @@ require 'delivery/reliable_delivery'
 require 'delivery/multicast'
 
 module KVSProtocol
-  def state
-    super
+  include BudModule
+
+  state {
     #interface input, :kvput, [:client, :key, :reqid] => [:value]
     interface input, :kvput, [:client, :key] => [:reqid, :value]
     interface input, :kvget, [:reqid] => [:key]
     interface output, :kvget_response, [:reqid] => [:key, :value]
-  end
+  }
 end
 
 module BasicKVS
-  include Anise
   include KVSProtocol
-  annotator :declare
 
-  def state
-    super
+  state {
     table :kvstate, [:key] => [:value]
     #interface input, :kvput_internal, [:client, :key] => [:reqid, :value]
     scratch :kvput_internal, [:client, :key] => [:reqid, :value]
-  end
+  }
 
   declare 
   def mutate
@@ -49,16 +47,13 @@ end
 
 
 module ReplicatedKVS
-  include Anise
-  annotator :declare
   include BasicKVS
   include MulticastProtocol
 
-  #def state
-  #  super
+  #state {
   #  # override kvput
   #  interface input, :kvput_in, [:client, :key] => [:reqid, :value]
-  #end
+  #}
 
   declare
   def local_indir

@@ -4,17 +4,14 @@ require 'bud'
 require 'heartbeat/heartbeat'
 
 module HBMaster
-  include Anise
   include HeartbeatAgent
   #include HeartbeatProtocol
   #include StaticMembership
-  annotator :declare
 
-  def state
-    super
+  state {
     table :chunks, [:node, :file, :chunkid]
     scratch :chunk_summary, [:payload]
-  end
+  }
 
   declare 
   def hblogic
@@ -23,6 +20,4 @@ module HBMaster
       l.payload.map{ |p|  p.clone.unshift(l.peer) } 
     end
   end
-
-  
 end

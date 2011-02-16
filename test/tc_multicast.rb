@@ -4,19 +4,16 @@ require 'test/unit'
 require 'delivery/multicast'
 
 module TestState
-  include Anise
-  annotator :declare
   include StaticMembership
 
-  def state
-    super
+  state {
     table :mcast_done_perm, [:ident] => [:payload]
     table :rcv_perm, [:ident] => [:payload]
-  end
+  }
 
   declare
   def mem
-    mcast_done_perm <= mcast_done.map{|d| d } 
+    mcast_done_perm <= mcast_done.map{|d| d }
     rcv_perm <= pipe_chan.map{|r| [r.ident, r.payload] }
   end
 end
@@ -38,11 +35,10 @@ class TestMC < Test::Unit::TestCase
     mc2 = MC.new(:port =>  34257)
     mc3 = MC.new(:port =>  34258)
 
+    mc.add_member <+ [["localhost: 34257" ]]
+    mc.add_member <+ [["localhost: 34258" ]]
 
-    mc.add_member <+ [["localhost: 34257" ]] 
-    mc.add_member <+ [["localhost: 34258" ]] 
-
-    assert_nothing_raised(RuntimeError) { mc.run_bg; mc2.run_bg; mc3.run_bg } 
+    assert_nothing_raised(RuntimeError) { mc.run_bg; mc2.run_bg; mc3.run_bg }
 
     mc.sync_do{ mc.send_mcast <+ [[1, 'foobar']] }
 
@@ -51,14 +47,12 @@ class TestMC < Test::Unit::TestCase
     sleep 1
 
     mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
-    return 
+    return
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
-  
+
     mc.stop_bg
     mc2.stop_bg
     mc3.stop_bg
   end
-
-  
 end

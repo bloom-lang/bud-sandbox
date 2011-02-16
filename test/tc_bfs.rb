@@ -7,13 +7,10 @@ require 'bfs/chunking'
 
 module FSUtil
   include FSProtocol
-  include Anise
-  annotator :declare
 
-  def state
-    super    
+  state {
     table :remember_resp, fsret.keys => fsret.cols
-  end
+  }
 
   declare
   def remz
