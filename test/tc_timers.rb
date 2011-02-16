@@ -3,7 +3,8 @@ require 'test/unit'
 require 'bud'
 require 'timers/progress_timer'
 
-class TT < Bud
+class TT
+  include Bud
   include ProgressTimer
 
   declare

@@ -8,18 +8,21 @@ require 'time_hack/time_moves'
 # some combinations are simple:
 
 # was TKV
-class SingleSiteKVS < Bud
+class SingleSiteKVS
+  include Bud
   include BasicKVS
 end
 
 # was RKV
-class BestEffortReplicatedKVS < Bud
+class BestEffortReplicatedKVS
+  include Bud
   include ReplicatedKVS
   include BestEffortMulticast
   include StaticMembership
 end
 
-class ReliableReplicatedKVS < Bud
+class ReliableReplicatedKVS
+  include Bud
   include ReplicatedKVS
   include ReliableMulticast
   include StaticMembership

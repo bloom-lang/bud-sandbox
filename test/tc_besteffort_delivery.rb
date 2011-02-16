@@ -3,7 +3,8 @@ require 'test/unit'
 require 'bud'
 require 'delivery/delivery'
 
-class BED < Bud
+class BED
+  include Bud
   include BestEffortDelivery
   
   state {

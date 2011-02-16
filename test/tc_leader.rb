@@ -5,7 +5,8 @@ require 'time_hack/time_moves'
 #require 'paxos/leader'
 require 'paxos/le3'
 
-class LE < Bud
+class LE
+  include Bud
   include LeaderElection
   include TimeMoves
 end 

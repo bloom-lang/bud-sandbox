@@ -3,11 +3,13 @@ require 'time_hack/time_moves'
 require 'test/unit'
 
 
-class TPCM < Bud
+class TPCM
+  include Bud
   include TwoPCMaster
 end
 
-class TPCA < Bud
+class TPCA
+  include Bud
   include TwoPCAgent
 end 
 

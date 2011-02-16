@@ -6,7 +6,8 @@ require 'ordering/nonce'
 require 'time_hack/time_moves'
 require 'ordering/assigner'
 
-class ST < Bud
+class ST
+  include Bud
   include Serializer
   
   state {
@@ -19,11 +20,13 @@ class ST < Bud
   end
 end
 
-class SN < Bud
+class SN
+  include Bud
   include SimpleNonce
 end
 
-class GN < Bud
+class GN
+  include Bud
   include GroupNonce
   include StaticMembership
 end

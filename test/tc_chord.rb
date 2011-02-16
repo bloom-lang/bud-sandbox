@@ -5,7 +5,8 @@ require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
 
-class LilChord < Bud
+class LilChord
+  include Bud
   include ChordNode
   include ChordFind
   include ChordJoin

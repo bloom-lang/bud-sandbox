@@ -18,23 +18,27 @@ module FSUtil
   end
 end
 
-class FSC < Bud
+class FSC
+  include Bud
   include KVSFS
   include FSUtil
 end
 
-class CFSC < Bud
+class CFSC
+  include Bud
   include ChunkedKVSFS
   include StaticMembership
   include FSUtil
 end
 
 
-class DN < Bud
+class DN
+  include Bud
   include BFSDatanode
 end
 
-class HBA < Bud
+class HBA
+  include Bud
   #include HeartbeatAgent
   include HBMaster
   include StaticMembership

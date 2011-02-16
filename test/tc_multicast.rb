@@ -18,12 +18,14 @@ module TestState
   end
 end
 
-class MC < Bud
+class MC
+  include Bud
   include TestState
   include BestEffortMulticast
 end
 
-class RMC < Bud
+class RMC
+  include Bud
   include TestState
   include ReliableMulticast
 end

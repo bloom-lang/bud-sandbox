@@ -4,7 +4,8 @@ require 'bud'
 require 'membership/membership'
 require 'time_hack/time_moves'
 
-class MT < Bud
+class MT
+  include Bud
   include StaticMembership
   include TimeMoves
   
@@ -14,8 +15,8 @@ class MT < Bud
   end
 end
 
-
-class MT2 < Bud
+class MT2
+  include Bud
   include StaticMembership
   include TimeMoves
   

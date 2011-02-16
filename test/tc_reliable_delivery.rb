@@ -3,7 +3,8 @@ require 'bud'
 require 'test/unit'
 require 'delivery/reliable_delivery'
 
-class RED < Bud
+class RED
+  include Bud
   include ReliableDelivery
   
   state {
