@@ -7,11 +7,11 @@ module ChordJoin
 
   state {
     channel :join_req, [:@to, :requestor_addr] => [:start]
-    table   :join_pending, join_req.keys => join_req.cols
+    table   :join_pending, join_req.key_cols => join_req.cols
     # table :finger, [:index] => [:start, 'hi', :succ, :succ_addr]
     # interface output, :succ_resp, [:key] => [:start, :addr]
     channel :finger_table_req, [:@to,:requestor_addr]
-    channel :finger_table_resp, [:@requestor_addr] + finger.keys => finger.cols
+    channel :finger_table_resp, [:@requestor_addr] + finger.key_cols => finger.cols
     channel :pred_req, [:referrer_key, :referrer_index]
     channel :pred_resp, [:referrer_key, :referrer_index, :referrer_addr]
     channel :finger_upd, [:referrer_addr, :referrer_index, :my_start, :my_addr]
@@ -60,7 +60,7 @@ module ChordJoin
     # at new member, install finger entries
     finger <= finger_table_resp do |f|
       # construct tuple that contains all the finger columns in f
-      (finger.keys + finger.cols).map{|c| f.send{c.to_sym}}
+      (finger.key_cols + finger.cols).map{|c| f.send{c.to_sym}}
     end
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
