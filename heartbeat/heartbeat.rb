@@ -29,7 +29,7 @@ module HeartbeatAgent
   def announce
     heartbeat <~ join([hb_timer, member, payload_buffer]).map do |t, m, p|
       unless m.host == ip_port
-        [m.host, ip_port, Time.parse(t.time).to_f, p.payload]
+        [m.host, ip_port, Time.parse(t.val).to_f, p.payload]
       end
     end
   end
@@ -45,7 +45,7 @@ module HeartbeatAgent
     #stdio <~ hb_timer.map{|t| ["TICK with #{member.length} members"] } 
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.peer_time, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
-    heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.peer_time, Time.parse(t.time).to_f, h.payload] }
+    heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.peer_time, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- duty_cycle.map{|t, h| h } 
     highest <= heartbeat_log.group([heartbeat_log.peer], max(heartbeat_log.time))
   end
