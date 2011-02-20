@@ -2,20 +2,21 @@ require 'voting/voting'
 require 'time_hack/time_moves'
 require 'test/unit'
 
-class VM < Bud
+class VM
+  include Bud
   include VotingMaster
   include TimeMoves
 end
 
-class VA < Bud
+class VA
+  include Bud
   include VotingAgent
   include TimeMoves
 end
 
 class VA2 < VA
-
   # override the default
-  declare 
+  declare
   def decide
     cast_vote <= waiting_ballots.map{|b| b if 1 == 2 }
   end
@@ -25,7 +26,7 @@ class TestVoting < Test::Unit::TestCase
 
   def start_kind(kind, port)
     t = nil
-    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(:port => #{port}, :visualize => 3)" } 
+    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(:port => #{port}, :visualize => 3)" }
     return t
   end
 
@@ -43,9 +44,8 @@ class TestVoting < Test::Unit::TestCase
 
     return [t, t2, t3]
   end
-  
+
   def test_votingpair
-  
     (t, t2, t3) = start_three(12346, 12347, 12348, "VA")
 
     t.sync_do{ t.begin_vote <+ [[1, 'me for king']] }
@@ -54,14 +54,13 @@ class TestVoting < Test::Unit::TestCase
     t3.sync_do{ assert_equal([1,'me for king', 'localhost:12346'], t3.waiting_ballots.first) }
     t.sync_do{ assert_equal([1, 'yes', 2], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'yes'], t.vote_status.first) }
-  
+
     t.stop_bg
     t2.stop_bg
     t3.stop_bg
   end
 
   def test_votingpair2
-  
     (t, t2, t3) = start_three(12316, 12317, 12318, "VA2")
 
     t.sync_do{ t.begin_vote <+ [[1, 'me for king']] }
@@ -70,7 +69,7 @@ class TestVoting < Test::Unit::TestCase
     t3.sync_do{ assert_equal([1,'me for king', 'localhost:12316'], t3.waiting_ballots.first) }
     t.sync_do{ t2.cast_vote <+ [[1, "hell yes"]] }
     sleep 1
-  
+
     t.sync_do{ assert_equal([1, 'hell yes', 1], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'in flight'], t.vote_status.first) }
     t3.sync_do{ t3.cast_vote <+ [[1, "hell yes"]] }
@@ -82,6 +81,4 @@ class TestVoting < Test::Unit::TestCase
     t2.stop_bg
     t3.stop_bg
   end
-    
-    
 end

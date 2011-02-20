@@ -35,8 +35,7 @@ module ChordJoin
     # node's behalf
 
     # cache the request
-    join_pending <= join_req
-    stdio <~ join_req.map{|j| [j.inspect]}
+    stdio <~ (join_pending <= join_req).inspected
     # asynchronously, find out who owns start+1
     succ_req <= join_req.map{|j| j.start}
     # upon response to successor request, ask the successor to send the contents

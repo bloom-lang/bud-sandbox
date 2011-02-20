@@ -5,7 +5,8 @@ require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
 
-class LilChord < Bud
+class LilChord
+  include Bud
   include ChordNode
   include ChordFind
   include ChordJoin
@@ -17,7 +18,7 @@ class LilChord < Bud
   end
 
   state {
-    table :succ_cache, succ_resp.keys => succ_resp.cols
+    table :succ_cache, succ_resp.key_cols => succ_resp.cols
   }
 
   # figure 3(b) from stoica's paper

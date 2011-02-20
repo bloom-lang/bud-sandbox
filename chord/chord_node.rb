@@ -4,14 +4,14 @@ require 'bud'
 module ChordNode
   include BudModule
 
-  state {
+  state do
     interface input, :find_event, [:key, :from]
     interface output, :closest, [:key] => [:index, :start, :hi, :succ, :succ_addr]
     table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
     table :me, [] => [:start]
     scratch :candidate, [:key, :index, :start, :hi, :succ, :succ_addr]
-    table :localkeys, [:key] => [:val]
-  }
+    table :localkeys
+  end
 
   def in_range(key, lo, hi, inclusive_hi=false)
     if hi > lo

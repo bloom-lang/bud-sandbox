@@ -24,10 +24,10 @@ module ProgressTimer
 
   declare
   def timer_logic
-    timer_state <= join([set_alarm, timer]).map{ |s, t| [s.name, Time.parse(t.time).to_f, s.time_out] }
+    timer_state <= join([set_alarm, timer]).map{ |s, t| [s.name, Time.parse(t.val).to_f, s.time_out] }
 
     alarm <= join([timer_state, timer]).map do |s, t|
-      if Time.parse(t.time).to_f - s.start_tm > s.time_out
+      if Time.parse(t.val).to_f - s.start_tm > s.time_out
         [s.name, s.time_out]
       end
     end

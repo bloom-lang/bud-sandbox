@@ -3,7 +3,8 @@ require 'bud'
 require 'test/unit'
 require 'heartbeat/heartbeat'
 
-class HB < Bud
+class HB
+  include Bud
   include HeartbeatAgent
   include StaticMembership
 

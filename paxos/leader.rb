@@ -30,7 +30,7 @@ module LeaderElection
   def decide
     # need to override "decide" from voting parent module
     will_ballot <= join([timer, current_state, nonce]).map do |t, s, n|
-      if s.status == "election" and Time.parse(t.time).to_i - s.start_tm > s.timeout
+      if s.status == "election" and Time.parse(t.val).to_i - s.start_tm > s.timeout
         puts ip_port + "@" + @budtime.to_s + " will ballot " + n.ident.to_s or [n.ident, [n.ident, s.vid, ip_port]]
       end
     end

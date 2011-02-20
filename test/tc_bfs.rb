@@ -11,9 +11,7 @@ module FSUtil
   include FSProtocol
 
   state {
-    #table :remember_resp, fsret.keys => fsret.cols
-    table :remember_resp, fsret.schema
-    #table :rem_av, available.keys => available.cols
+    table :remember_resp, fsret.key_cols => fsret.cols
   }
 
   declare
@@ -29,7 +27,7 @@ class FSC
   include FSUtil
 end
 
-class CFSC 
+class CFSC
   include Bud
   include ChunkedKVSFS
   include HBMaster

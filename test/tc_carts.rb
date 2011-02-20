@@ -21,14 +21,16 @@ module Remember
 end
 
 
-class BCS < Bud
+class BCS
+  include Bud
   include BestEffortMulticast
   include ReplicatedDisorderlyCart
   include CartClient
   include Remember
 end
 
-class DCR < Bud
+class DCR
+  include Bud
   include CartClientProtocol
   include CartClient
   include CartProtocol
@@ -38,7 +40,8 @@ class DCR < Bud
   include Remember
 end
 
-class DummyDC < Bud
+class DummyDC
+  include Bud
   include CartClientProtocol
   include CartClient
   include CartProtocol
@@ -51,7 +54,8 @@ class DummyDC < Bud
   }
 end
 
-class BCSC < Bud
+class BCSC
+  include Bud
   include CartClient
 
   state {
@@ -60,7 +64,7 @@ class BCSC < Bud
 
   declare
   def memmy
-    cli_resp_mem <= response_msg.map{|r| r }
+    cli_resp_mem <= response_msg
   end
 end
 
