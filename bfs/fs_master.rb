@@ -26,12 +26,13 @@ module KVSFS
   def bootstrap
     super
     # replace with nonce reference?
-    kvput <+ [[@ip_port, '/', 23646, []]]
+    puts "BOOTZ"
+    kvput <+ [[ip_port, '/', 23646, []]]
   end
   
   declare 
   def elles
-    kvget <= fsls.map{ |l| [l.reqid, l.path] } 
+    kvget <= fsls.map{ |l| puts "got ls" or [l.reqid, l.path] } 
     fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| [r.reqid, true, r.value] }
     fsret <= fsls.map do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
@@ -42,21 +43,21 @@ module KVSFS
 
   declare
   def create
-    kvget <= fscreate.map{ |c| [c.reqid, c.path] }    
+    kvget <= fscreate.map{ |c| puts "get #{c.inspect}" or [c.reqid, c.path] }    
     fsret <= fscreate.map do |c|
       unless kvget_response.map{ |r| r.reqid}.include? c.reqid
-        [c.reqid, false, nil]
+        puts "ONO #{c.inspect}" or [c.reqid, false, nil]
       end
     end
 
     dir_exists = join [fscreate, kvget_response], [fscreate.reqid, kvget_response.reqid]
     # update dir entry
     kvput <= dir_exists.map do |c, r|
-      puts "DO it with #{r.inspect}" or [@ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
+      puts "DO it with #{r.inspect}" or [ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
     end
 
     kvput <= dir_exists.map do |c, r|
-      [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, "DATA"]
+      [ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, "DATA"]
     end
     fsret <= dir_exists.map{ |c, r| [c.reqid, true, nil] }
   end
@@ -72,10 +73,10 @@ module KVSFS
 
     mkdir_exists = join [fsmkdir, kvget_response], [fsmkdir.reqid, kvget_response.reqid]
     kvput <= mkdir_exists.map do |c, r|
-      puts "DO it with #{r.inspect}" or [@ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
+      puts "DO it with #{r.inspect}" or [ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
     end
     kvput <= mkdir_exists.map do |c, r|
-      [@ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, []]
+      [ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, []]
     end
 
     fsret <= mkdir_exists.map{ |c, r| [c.reqid, true, nil] }

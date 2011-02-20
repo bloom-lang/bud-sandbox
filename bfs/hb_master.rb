@@ -5,19 +5,27 @@ require 'heartbeat/heartbeat'
 
 module HBMaster
   include HeartbeatAgent
-  #include HeartbeatProtocol
-  #include StaticMembership
 
   state {
-    table :chunks, [:node, :file, :chunkid]
+    table :chunk_cache, [:node, :file, :chunkid]
+    scratch :chunk_cache_nodes, [:node]
     scratch :chunk_summary, [:payload]
+
+    # at any given time, :available will contain a list of datanodes in preference order.
+    # for now, arbitrary
+    scratch :available, [] => [:pref_list]
   }
 
   declare 
   def hblogic
-    chunks <= last_heartbeat.flat_map do |l| 
+    #stdio <~ heartbeat
+    chunk_cache <= last_heartbeat.flat_map do |l| 
       #l.payload.map{ |p|  [l.peer, p[0], p[1]] } 
-      l.payload.map{ |p|  p.clone.unshift(l.peer) } 
+      l.payload.map{ |p| puts "CACHE!" or p.clone.unshift(l.peer) } 
     end
+
+    chunk_cache_nodes <= chunk_cache.map{ |cc| [cc.node] }
+    available <= chunk_cache_nodes.group(nil, accum(chunk_cache.node))
+    stdio <~ available.map{ |a| ["avail: #{a.inspect}"] } 
   end
 end
