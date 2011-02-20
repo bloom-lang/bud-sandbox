@@ -54,7 +54,7 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
-  def ntest_client
+  def test_client
     dn = new_datanode(65432)
     dn2= new_datanode(65432)
     b = CFSC.new(:port => "65432", :visualize => 3)
@@ -84,6 +84,9 @@ class TestBFS < Test::Unit::TestCase
     }
 
     sleep  4
+    dn.stop_bg
+    dn2.stop_bg
+    s.stop_bg
   
   end
 
@@ -101,7 +104,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def ntest_addchunks
+  def test_addchunks
     dn = new_datanode(65432)
     dn2 = new_datanode(65432)
 
@@ -120,20 +123,17 @@ class TestBFS < Test::Unit::TestCase
     b.chunk.each do |a|
       puts "CC: #{a.inspect}"
     end 
+    dn.stop_bg
+    dn2.stop_bg
+    b.stop_bg
   end
 
-  def ntest_chunked_fsmaster
-    dn = DN.new
-    dn.add_member <+ [["localhost:65432"]]
-    dn.run_bg
-
-    dn2 = DN.new
-    dn2.add_member <+ [["localhost:65432"]]
-    dn2.run_bg
-
+  def test_chunked_fsmaster
+    dn = new_datanode(65432)
+    dn2 = new_datanode(65432)
     b = CFSC.new(:port => 65432, :dump => true)
     b.run_bg
-    sleep 5
+    sleep 3
     do_basic_fs_tests(b)
     b.sync_do {  b.fschunklocations <+ [[654, 1, 1]] }
     sleep 1
@@ -219,42 +219,31 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_datanode
-    dn = DN.new(:dump => true)
-    # paa
-    #dn.add_member <+ [['localhost:45638']]
-    #dn.run_bg
-    #dn = new_datanode(45637)
+    dn = new_datanode(45637)
 
     hbc = HBA.new(:port => 45637, :dump => true)
     hbc.run_bg
     hbc.sync_do {} 
-    sleep 1
 
-    puts "ahem, about to run datanode"
     dn.run_bg
+
+    sleep 3
     
     #dn.sync_do  {
     #  dn.payload.each{|p| puts "PL: #{p.inspect}" }
     #  dn.member.each{|m| puts "DNM: #{m.inspect}" } 
     #}
 
-    puts "about to sync"
-    
-    hbc.sync_do {} 
-      
     sleep 3
 
-    puts "OK"
-
-    hbc.sync_do {} 
-
     hbc.sync_do {
-      hbc.last_heartbeat.each{|l| puts "LHB: #{l.inspect}" }
-      hbc.chunk_cache.each{|l| puts "CH: #{l.inspect}" }
+      assert_equal(3, hbc.chunk_cache.length)
+      #hbc.last_heartbeat.each{|l| puts "LHB: #{l.inspect}" }
+      #hbc.chunk_cache.each{|l| puts "CH: #{l.inspect}" }
     }
 
     hbc.stop_bg
-    #dn.stop_bg
+    dn.stop_bg
   end
 end
 
