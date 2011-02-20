@@ -29,6 +29,7 @@ module GroupNonce
 
   def bootstrap
     permo <= local_id
+    super
   end
 
   declare
@@ -52,12 +53,13 @@ module SimpleNonce
 
   def bootstrap
     permo <= [[self.object_id << 16]]
+    super
   end
 
   declare
   def fiddle
     # ignore IP for now
-    nonce <= permo.map{|p| @budtime.to_s or [p.ident + @budtime] }
+    nonce <= permo.map{|p| [p.ident + @budtime] }
     #nonce <= localtick.map{|l| [(@port << 16) + @budtime]  }
   end
 end
@@ -73,6 +75,7 @@ module NNonce
 
   def bootstrap
     storage <= [[0]]
+    super
   end
 
   declare
