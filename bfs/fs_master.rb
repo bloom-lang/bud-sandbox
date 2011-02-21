@@ -23,8 +23,7 @@ module KVSFS
   include FSProtocol
   include BasicKVS
 
-  def bootstrap
-    super
+  bootstrap do
     # replace with nonce reference?
     puts "BOOTZ"
     kvput <+ [[ip_port, '/', 23646, []]]
@@ -92,9 +91,8 @@ module FS
   include Serializer
   include SimpleNonce
 
-  def bootstrap
+  bootstrap do
     file <+ [[0, '/']]
-    super
   end
 
   state {

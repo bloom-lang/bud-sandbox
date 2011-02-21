@@ -27,9 +27,8 @@ module GroupNonce
     scratch :mcnt, [] => [:cnt]
   }
 
-  def bootstrap
+  bootstrap do
     permo <= local_id
-    super
   end
 
   declare
@@ -51,9 +50,8 @@ module SimpleNonce
     table :permo, [] => [:ident]
   }
 
-  def bootstrap
+  bootstrap do
     permo <= [[self.object_id << 16]]
-    super
   end
 
   declare
@@ -73,9 +71,8 @@ module NNonce
     table :storage, [], [:ident]
   }
 
-  def bootstrap
+  bootstrap do
     storage <= [[0]]
-    super
   end
 
   declare
@@ -94,7 +91,7 @@ module SNNonce
     scratch :storage, [], [:ident]
   }
 
-  def bootstrap
+  bootstrap do
     storage <= [[0]]
   end
 

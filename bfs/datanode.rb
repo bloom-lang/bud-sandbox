@@ -17,13 +17,12 @@ module BFSDatanode
     #periodic :dirscan_timer, 3 
   }
 
-  def bootstrap
+  bootstrap do
     # fake; we'd read these from the fs
     # in the original bfs, we actually polled a directory, b/c
     # the chunks were written by an external process.
     #local_chunks <+ [[1, 1, 1], [1, 2, 1], [1, 3, 1]]
     # fix!!
-    super
     puts "BOOT DN: #{@data_port}"
     #return_address <+ [["localhost:#{@data_port}"]]
   end

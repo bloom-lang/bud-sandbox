@@ -19,7 +19,7 @@ module Serializer
     scratch :top, [:ident]
   }
 
-  def bootstrap
+  bootstrap do
     #localtick <~ [[@budtime]]
   end
 

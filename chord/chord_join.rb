@@ -22,11 +22,9 @@ module ChordJoin
     Math.log(x)/Math.log(2)
   end
 
-  def bootstrap
-    super
+  bootstrap do
     offsets <= [(1..log2(@maxkey)).map{|o| o}]
   end
-
 
   declare
   def join_rules_proxy
