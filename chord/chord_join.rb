@@ -63,7 +63,7 @@ module ChordJoin
     end
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
-    pred_req <= join([me,offsets]).map do |m,o|
+    pred_req <~ join([me,offsets]).map do |m,o|
       [m.start - 2**o.val, o.val]
     end
     # upon pred_resp, send a finger_upd message to the node that was found to point here
