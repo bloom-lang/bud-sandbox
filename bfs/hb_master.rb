@@ -8,12 +8,12 @@ module HBMaster
 
   state {
     table :chunk_cache, [:node, :file, :chunkid]
-    scratch :chunk_cache_nodes, [:node]
-    scratch :chunk_summary, [:payload]
+    #scratch :chunk_cache_nodes, [:node]
+    table :chunk_cache_nodes, [:node]
 
     # at any given time, :available will contain a list of datanodes in preference order.
     # for now, arbitrary
-    scratch :available, [] => [:pref_list]
+    table :available, [] => [:pref_list]
   }
 
   declare 

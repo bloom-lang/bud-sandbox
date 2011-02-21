@@ -54,23 +54,29 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
-  def test_client
-    dn = new_datanode(65432)
-    dn2= new_datanode(65432)
+  def ntest_client
+    dn = new_datanode(11117, 65432)
+    dn2= new_datanode(11118, 65432)
     b = CFSC.new(:port => "65432", :visualize => 3)
     b.run_bg
 
-    sleep 3
+    sleep 6
 
     s = BFSShell.new("localhost:65432")
     s.run_bg
     s.dispatch_command(["mkdir", "/foo"])
     s.dispatch_command(["mkdir", "/bar"])
     s.dispatch_command(["mkdir", "/baz"])
+    s.sync_do{}
     s.dispatch_command(["mkdir", "/foo/bam"])
     s.dispatch_command(["create", "/peter"])
 
-    s.dispatch_command(["append", "/peter"])
+    s.sync_do{}
+    rd = File.open("/usr/share/dict/words", "r")
+    s.dispatch_command(["append", "/peter"], rd)
+    puts "about to put"
+    rd.close  
+
     s.dispatch_command(["ls", "/"])
 
     sleep 4
@@ -90,47 +96,41 @@ class TestBFS < Test::Unit::TestCase
   
   end
 
-  def test_fsmaster
+  def ntest_fsmaster
     b = FSC.new(:dump => true)
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg
   end
   
-  def new_datanode(master_port)
-    dn = DN.new(:visualize => 3)
+  def new_datanode(dp, master_port)
+    dn = DN.new(dp, {:visualize => 3})
     dn.add_member <+ [["localhost:#{master_port}", 1]]
     dn.run_bg
     return dn
   end
 
   def test_addchunks
-    dn = new_datanode(65432)
-    dn2 = new_datanode(65432)
+    dn = new_datanode(11112, 65432)
+    #dn2 = new_datanode(11113, 65432)
 
-    b = CFSC.new(:port => "65432", :visualize => 3)
+    b = CFSC.new(:port => "65432")#, :visualize => 3)
     b.run_bg
-    sleep 5
+    #sleep 5
     do_basic_fs_tests(b)
-
-    puts "AOK"
     do_addchunks(b)
-
-    #b.rem_av.each do |a|
-    #  puts "AV: #{a.inspect}"
-    #end 
 
     b.chunk.each do |a|
       puts "CC: #{a.inspect}"
     end 
     dn.stop_bg
-    dn2.stop_bg
+    #dn2.stop_bg
     b.stop_bg
   end
 
-  def test_chunked_fsmaster
-    dn = new_datanode(65432)
-    dn2 = new_datanode(65432)
+  def ntest_chunked_fsmaster
+    dn = new_datanode(11114, 65432)
+    dn2 = new_datanode(11115, 65432)
     b = CFSC.new(:port => 65432, :dump => true)
     b.run_bg
     sleep 3
@@ -218,8 +218,8 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def test_datanode
-    dn = new_datanode(45637)
+  def ntest_datanode
+    dn = new_datanode(11116, 45637)
 
     hbc = HBA.new(:port => 45637, :dump => true)
     hbc.run_bg
@@ -237,7 +237,8 @@ class TestBFS < Test::Unit::TestCase
     sleep 3
 
     hbc.sync_do {
-      assert_equal(3, hbc.chunk_cache.length)
+      hbc.chunk_cache.each{|c| puts "CC: #{c.inspect}" } 
+      assert_equal(1, hbc.chunk_cache.length)
       #hbc.last_heartbeat.each{|l| puts "LHB: #{l.inspect}" }
       #hbc.chunk_cache.each{|l| puts "CH: #{l.inspect}" }
     }

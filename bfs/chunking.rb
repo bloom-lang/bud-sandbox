@@ -52,11 +52,17 @@ module ChunkedKVSFS
     end
 
     stdio <~ "Warning: no available datanodes" if available.empty?
-    stdio <~ kvget_response.map{|r| ["kvg_r: #{r.inspect}, al #{available.length}"] }
+    stdio <~ kvget_response.map{|r| ["#{budtime} kvg_r: #{r.inspect}, al #{available.length} (chunkcachec #{chunk_cache.length})" ] }
     
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
-    fsret <= minted_chunk.map{ |r, a, v, n| puts "mINted chunk : @#{@budtime} #{n.ident} for #{a.file}" or [r.reqid, true, [n.ident, v.pref_list]] }
+    fsret <= minted_chunk.map{ |r, a, v, n| puts "mINted chunk : @#{@budtime} #{n.ident} for #{a.file} with preflist #{v.pref_list.inspect}" or [r.reqid, true, [n.ident, v.pref_list]] }
+
+    fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|
+      if available.empty?
+        [r.reqid, false, "empty datanode set!"]
+      end
+    end
       
   end
 end
