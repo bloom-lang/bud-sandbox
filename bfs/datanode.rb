@@ -11,7 +11,7 @@ module BFSDatanode
   include StaticMembership
 
   state {
-    table :local_chunks, [:file, :ident, :size]
+    table :local_chunks, [:chunkid, :size]
     table :data_port, [] => [:port]
     scratch :chunk_summary, [:payload]
     #periodic :dirscan_timer, 3 
@@ -21,11 +21,8 @@ module BFSDatanode
     # fake; we'd read these from the fs
     # in the original bfs, we actually polled a directory, b/c
     # the chunks were written by an external process.
-    #local_chunks <+ [[1, 1, 1], [1, 2, 1], [1, 3, 1]]
-    # fix!!
+    local_chunks <+ [[-1, -1]]
     super
-    puts "BOOT DN: #{@data_port}"
-    #return_address <+ [["localhost:#{@data_port}"]]
   end
 
   declare 
@@ -35,16 +32,17 @@ module BFSDatanode
     #  [-1, d, 1]
     #end
 
-    local_chunks <= hb_timer.map do
-      Dir.new(DATADIR).map do |d|
-        #unless d =~ /^\./
-          #puts "do chunk with #{d}" or [-1, d.to_i, 1] 
-        #end
-      end
-    end
+    #local_chunks <= hb_timer.map do
+    #  Dir.new(DATADIR).map do |d|
+    #    #unless d =~ /^\./
+    #      puts "do chunk with #{d}" or [-1, d.to_i, 1] 
+    #    #end
+    #  end
+    #end
     
-    chunk_summary <= local_chunks.map{|c| [[c.file, c.ident]] } 
-    payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
+    #chunk_summary <= local_chunks.map{|c| [[c.file, c.ident]] } 
+    #payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
+    payload <= local_chunks.group(nil, accum(local_chunks.chunkid))
 
   end
 
@@ -56,14 +54,15 @@ module BFSDatanode
     # fix!
     # I should be able to do this in bootstrap, but it appears racy 
     return_address <+ [["localhost:#{@data_port}"]]
+    #return_address <= [["localhost:#{@data_port}"]]
     start_datanode_server(dataport)
   end
 
   def start_datanode_server(port)
     Thread.new do     
-      server = TCPServer.open(port)
+      @dn_server = TCPServer.open(port)
       loop {
-        client = server.accept
+        client = @dn_server.accept
         puts "GOT A CLIENT: #{client.inspect}"
         Thread.new do 
   
@@ -74,7 +73,8 @@ module BFSDatanode
           elems = header.split(",")
           chunkid = elems.shift
           nextnode = elems.shift
-          chunkfile = File.open("#{DATADIR}/#{chunkid}", "w")
+          puts "chunkid is #{chunkid}"
+          chunkfile = File.open("#{DATADIR}/#{chunkid.to_i.to_s}", "w")
           data = client.read(CHUNKSIZE)
           #puts "write data #{data}"
           chunkfile.write data
@@ -85,5 +85,11 @@ module BFSDatanode
         end
       }
     end
+  end
+
+  def stop_datanode
+    # unsafe, unsage
+    @dn_server.close
+    stop_bg
   end
 end

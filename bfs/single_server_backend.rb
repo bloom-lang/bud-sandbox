@@ -17,14 +17,14 @@ class DN
 end
 
 
-dn = DN.new(23456, {})
-dn.add_member <+ [["localhost:12345", 1]]
-dn.run_bg
+#dn = DN.new(23456, {})
+#dn.add_member <+ [["localhost:12345", 1]]
+#dn.run_bg
 
 s = Servy.new(:port => 12345)
-s.run_bg
+s.run
 
-while true do
-  sleep 1
-end
+#while true do
+#  sleep 1
+#end
 

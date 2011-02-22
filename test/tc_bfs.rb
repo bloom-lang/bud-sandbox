@@ -54,10 +54,54 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
-  def ntest_client
+  def test_directorystuff1
+    b = CFSC.new(:port => "65432")
+    b.run_bg
+    s = BFSShell.new("localhost:65432")
+    s.run_bg
+
+    s.dispatch_command(["mkdir", "/foo"])
+    s.dispatch_command(["mkdir", "/bar"])
+    s.dispatch_command(["mkdir", "/baz"])
+
+
+    s.dispatch_command(["mkdir", "/foo/1"])
+    s.dispatch_command(["mkdir", "/foo/1/2"])
+    s.dispatch_command(["mkdir", "/foo/1/2/3"])
+
+
+    s.dispatch_command(["create", "/bar/f1"])
+    s.dispatch_command(["create", "/bar/f2"])
+    s.dispatch_command(["create", "/bar/f3"])
+    s.dispatch_command(["create", "/bar/f4"])
+    s.dispatch_command(["create", "/bar/f5"])
+    s.dispatch_command(["create", "/foo/1/2/3/nugget"])
+
+
+    s.dispatch_command(["ls", "/"])
+    s.dispatch_command(["ls", "/foo"])
+    s.dispatch_command(["ls", "/bar"])
+
+    dump_internal_state(b)
+    b.stop_bg
+    s.stop_bg
+  end
+  
+  def ntest_getchunks1
+    b = CFSC.new(:port => "65432")
+    b.run_bg
+    s = BFSShell.new("localhost:65432")
+    s.run_bg
+
+    s.dispatch_command(["create", "foobar"])
+    s.dispatch_command(["read", "/foobar"])
+
+  end  
+
+  def test_client
     dn = new_datanode(11117, 65432)
     dn2= new_datanode(11118, 65432)
-    b = CFSC.new(:port => "65432", :visualize => 3)
+    b = CFSC.new(:port => "65432")
     b.run_bg
 
     sleep 6
@@ -74,29 +118,36 @@ class TestBFS < Test::Unit::TestCase
     s.sync_do{}
     rd = File.open("/usr/share/dict/words", "r")
     s.dispatch_command(["append", "/peter"], rd)
-    puts "about to put"
     rd.close  
 
     s.dispatch_command(["ls", "/"])
 
+    s.dispatch_command(["read", "peter"])
+
     sleep 4
 
-    b.sync_do {
-      b.remember_resp.each do |r|
+    return  
+
+    dump_internal_state(b)
+    sleep  4
+    dn.stop_datanode
+    dn2.stop_bg
+    s.stop_bg
+    b.stop_bg
+  
+  end
+  
+  def dump_internal_state(rt)
+    rt.sync_do {
+      rt.remember_resp.each do |r|
         puts "REM: #{r.inspect}"
       end
       
-      b.kvstate.each{ |k| puts "kvstate: #{k.inspect}" }
+      rt.kvstate.each{ |k| puts "kvstate: #{k.inspect}" }
     }
-
-    sleep  4
-    dn.stop_bg
-    dn2.stop_bg
-    s.stop_bg
-  
   end
 
-  def ntest_fsmaster
+  def test_fsmaster
     b = FSC.new(:dump => true)
     b.run_bg
     do_basic_fs_tests(b)
@@ -123,12 +174,12 @@ class TestBFS < Test::Unit::TestCase
     b.chunk.each do |a|
       puts "CC: #{a.inspect}"
     end 
-    dn.stop_bg
+    dn.stop_datanode
     #dn2.stop_bg
     b.stop_bg
   end
 
-  def ntest_chunked_fsmaster
+  def nnnnnntest_chunked_fsmaster
     dn = new_datanode(11114, 65432)
     dn2 = new_datanode(11115, 65432)
     b = CFSC.new(:port => 65432, :dump => true)
@@ -148,7 +199,7 @@ class TestBFS < Test::Unit::TestCase
       end
     }
     b.stop_bg
-    dn.stop_bg
+    dn.stop_datanode
     dn2.stop_bg
   end
 
@@ -218,23 +269,24 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def ntest_datanode
+  def test_datanode
     dn = new_datanode(11116, 45637)
+
+    dn.run_bg
 
     hbc = HBA.new(:port => 45637, :dump => true)
     hbc.run_bg
     hbc.sync_do {} 
 
-    dn.run_bg
 
-    sleep 3
+    sleep 5
+  
+    puts "OK"
     
     #dn.sync_do  {
     #  dn.payload.each{|p| puts "PL: #{p.inspect}" }
     #  dn.member.each{|m| puts "DNM: #{m.inspect}" } 
     #}
-
-    sleep 3
 
     hbc.sync_do {
       hbc.chunk_cache.each{|c| puts "CC: #{c.inspect}" } 
@@ -244,7 +296,7 @@ class TestBFS < Test::Unit::TestCase
     }
 
     hbc.stop_bg
-    dn.stop_bg
+    dn.stop_datanode
   end
 end
 

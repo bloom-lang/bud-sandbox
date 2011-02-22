@@ -7,9 +7,12 @@ module ChunkedFSProtocol
   include FSProtocol
 
   state {
-    interface :input, :fschunklocations, [:reqid, :file, :chunkid]
+    interface :input, :fschunklist, [:reqid, :file]
+    interface :input, :fschunklocations, [:reqid, :chunkid]
     interface :input, :fsnewchunk, [:reqid, :file]
     interface :input, :fsaddchunk, [:reqid, :file]
+
+    scratch :chunklist_buffer, [:reqid, :file, :chunkid]
   }
 end
 
@@ -28,13 +31,51 @@ module ChunkedKVSFS
 
   declare
   def getchunks
+    kvget <= fschunklist.map{ |l| [l.reqid, l.file] }
+    fsret <= fschunklist.map do |l|
+      unless kvget_response.map{ |r| r.reqid}.include? l.reqid
+        [l.reqid, false, "file #{l.file} not found"]
+      end
+    end 
+
+    
+    #j_lookup = join [fschunklist, kvget_response], [fschunklist.reqid, kvget_response.reqid]
+    #j_get_chunk = leftjoin [j_lookup, chunk], [j_lookup.file, chunk.file]
+
+    #fsret <= j_get_chunk.map do |l, r, c|
+    #  [l.reqid, false, "file #{file} is empty"] if c.nil?
+    #end
+
+
+
+    #fsret <= j_get_chunk.map do |l, r, c|
+    #  [l.reqid, true, 
+    #end
+    
+    # of course, it is possible that a file exists which is empty (or for which we haven't yet
+    # received any chunk notifications).  Read empty file = fail.
+    #j_get_chunk = join [fschunklist, kvget_response], [fschunklist.reqid, kvget_response.reqid]
+    #fsret <= j_get_chunk.map do |r, k|
+    #  unless chunk.map{ |c| c.file}.include? r.file
+    #    [r.reqid, false, "file #{r.file} has no data"]
+    #  end
+    #end
+
+    #j_get_chunk2 = join [j_get_chunk, chunk], [j_get_chunk.file, chunk.file]
+    #fsret <= j_get_chunk2.group do |g, c|
+    #  [
+    #end
+  end
+
+  declare 
+  def getnodes
     fsret <= fschunklocations.map do |l|
-      unless chunk_cache.map{|c| [c.file, c.chunkid]}.include? [l.file, l.chunkid]
+      unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
         puts "EMPTY for #{l.inspect}" or [l.reqid, false, nil]
       end
     end
 
-    chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.file, chunk_cache.file], [fschunklocations.chunkid, chunk_cache.chunkid]
+    chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
     chunk_buffer <= chunkjoin.map{|l, c| puts "CHUNKBUFFER" or [l.reqid, c.node] }
     # what a hassle
     ##fsret <= chunk_buffer.group([chunk_buffer.reqid, true], accum(chunk_buffer.host))

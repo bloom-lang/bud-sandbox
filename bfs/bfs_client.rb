@@ -108,6 +108,13 @@ class BFSShell
     do_create(args, true)
   end
 
+  def do_read(args)
+    reqid = 1 + rand(10000000)
+    sync_do{ request <+ [[reqid, :getchunks, args]] }
+    res = slightly_less_ugly(reqid)
+    puts "RES is #{res}"
+  end
+
   def do_append(args, fh)
     ret = true
     while ret
