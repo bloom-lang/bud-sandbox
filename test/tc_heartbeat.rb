@@ -8,7 +8,7 @@ class HB
   include HeartbeatAgent
   include StaticMembership
 
-  def bootstrap
+  bootstrap do
     payload <+ [['foo']]
     payload <+ [['foo']]
     payload <+ [['foo']]

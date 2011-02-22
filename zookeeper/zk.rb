@@ -11,11 +11,10 @@ class ZooMember < Bud
     @z = Zookeeper.new(ZK_ADDR)
   end
 
-  def state
-    
+  state do
   end
 
-  def bootstrap
+  bootstrap do
   end
 
   declare

@@ -22,11 +22,9 @@ module ChordJoin
     Math.log(x)/Math.log(2)
   end
 
-  def bootstrap
-    super
+  bootstrap do
     offsets <= [(1..log2(@maxkey)).map{|o| o}]
   end
-
 
   declare
   def join_rules_proxy
@@ -63,7 +61,7 @@ module ChordJoin
     end
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
-    pred_req <= join([me,offsets]).map do |m,o|
+    pred_req <~ join([me,offsets]).map do |m,o|
       [m.start - 2**o.val, o.val]
     end
     # upon pred_resp, send a finger_upd message to the node that was found to point here

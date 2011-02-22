@@ -56,10 +56,9 @@ class BFSShell
     watched_ids <- snc.map{ |r, w| w }
   end
   
-  def bootstrap
+  bootstrap do
     master << [@master]
     #my_queue << [@queue]
-    super
   end
 
   def dispatch_command(args, filehandle=nil)

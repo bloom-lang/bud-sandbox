@@ -30,8 +30,7 @@ module KVSFS
     scratch :make, [:reqid, :name, :path, :dir, :data]
   }
 
-  def bootstrap
-    super
+  bootstrap do
     # replace with nonce reference?
     kvput <+ [[ip_port, '/', 23646, []]]
   end
@@ -61,10 +60,62 @@ module KVSFS
       end
     end
 
+<<<<<<< HEAD
     dir_exists = join [make, kvget_response], [make.reqid, kvget_response.reqid]
     # update dir entry
     kvput <+ dir_exists.map do |c, r|
       [ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
+=======
+    mkdir_exists = join [fsmkdir, kvget_response], [fsmkdir.reqid, kvget_response.reqid]
+    kvput <= mkdir_exists.map do |c, r|
+      puts "DO it with #{r.inspect}" or [ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
+    end
+    kvput <= mkdir_exists.map do |c, r|
+      [ip_port, c.path.sub("/", "") + '/' + c.name, c.reqid, []]
+    end
+
+    fsret <= mkdir_exists.map{ |c, r| [c.reqid, true, nil] }
+  end
+end
+
+
+####### 
+# fold; aborted 'pure' FS below
+
+module FS 
+  include FSProtocol
+  include Serializer
+  include SimpleNonce
+
+  bootstrap do
+    file <+ [[0, '/']]
+  end
+
+  state {
+    table :file, [:fid, :name]
+    table :dir, [:dir, :contained]
+    table :fqpath, [:fid, :path]
+
+    scratch :cr, [:reqid, :loc, :name]
+    scratch :lookup, [:reqid, :path]
+    scratch :result, [:reqid, :fid]
+  }
+
+  declare
+  def view
+    fqpath <= [[0, '/']]
+    fqpath <= join([dir, fqpath, file], [dir.dir, fqpath.fid], [dir.contained, file.fid]).map do |d, p, f|
+      puts "path now " + p.inspect or [f.fid, p.path + '/' + f.name] unless f.name == '/'
+    end 
+  end
+  
+  declare
+  def elless
+    lookup <= fsls
+
+    dataj = join([result, dir, file], [result.fid, dir.dir], [dir.contained, file.fid])
+    fsret <= join([result, dir, file], [result.fid, dir.dir], [dir.contained, file.fid]).map do |r, d, f| 
+      puts "DATA: " + f.name or [r.reqid, true, f.name] 
     end
 
     kvput <= dir_exists.map do |c, r|

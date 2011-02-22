@@ -9,7 +9,7 @@ class MT
   include StaticMembership
   include TimeMoves
   
-  def bootstrap
+  bootstrap do
     add_member <+ [['arr', 1]]
     add_member <+ [['farr', 2]]
   end
@@ -20,7 +20,7 @@ class MT2
   include StaticMembership
   include TimeMoves
   
-  def bootstrap
+  bootstrap do
     add_member <+ [['arr', 1]]
     add_member <+ [['farr', 2]]
   end
