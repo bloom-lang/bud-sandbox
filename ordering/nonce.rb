@@ -96,6 +96,7 @@ module SNNonce
 
   def bootstrap
     storage <= [[0]]
+    super
   end
 
   declare
