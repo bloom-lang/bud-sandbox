@@ -46,9 +46,8 @@ class BFSShell
   }
 
   declare
-  def persistence
+  def synchronization
     remember_response <= response.map{|r| puts "remember #{r.inspect}, with watched_ids #{watched_ids.length} and my_queue #{my_queue.length}" or r }
-
     snc = join [remember_response, watched_ids, my_queue], [remember_response.reqid, watched_ids.reqid]
     hollow <= snc.map do |r, w, q|
       puts "Enqueue #{r.inspect}" or [q.queue.push r]
@@ -58,7 +57,6 @@ class BFSShell
   
   bootstrap do
     master << [@master]
-    #my_queue << [@queue]
   end
 
   def dispatch_command(args, filehandle=nil)
@@ -168,6 +166,8 @@ class BFSShell
   def do_ls(args)
     reqid = 1 + rand(10000000)
     sync_do{ request <+ [[reqid, :ls, args[0]]] }
+    res = slightly_less_ugly(reqid)
+    return res.response
   end
 
 end

@@ -78,7 +78,8 @@ class TestBFS < Test::Unit::TestCase
     s.dispatch_command(["create", "/foo/1/2/3/nugget"])
 
 
-    s.dispatch_command(["ls", "/"])
+    one = s.dispatch_command(["ls", "/"])
+    puts "ONE is #{one}"
     s.dispatch_command(["ls", "/foo"])
     s.dispatch_command(["ls", "/bar"])
 
@@ -87,26 +88,15 @@ class TestBFS < Test::Unit::TestCase
     s.stop_bg
   end
   
-  def ntest_getchunks1
-    b = CFSC.new(:port => "65432")
-    b.run_bg
-    s = BFSShell.new("localhost:65432")
-    s.run_bg
-
-    s.dispatch_command(["create", "foobar"])
-    s.dispatch_command(["read", "/foobar"])
-
-  end  
-
   def test_client
-    dn = new_datanode(11117, 65432)
-    dn2= new_datanode(11118, 65432)
-    b = CFSC.new(:port => "65432")
+    dn = new_datanode(11117, 65433)
+    dn2= new_datanode(11118, 65433)
+    b = CFSC.new(:port => "65433")
     b.run_bg
 
-    sleep 6
+    sleep 2
 
-    s = BFSShell.new("localhost:65432")
+    s = BFSShell.new("localhost:65433")
     s.run_bg
     s.dispatch_command(["mkdir", "/foo"])
     s.dispatch_command(["mkdir", "/bar"])
@@ -147,7 +137,7 @@ class TestBFS < Test::Unit::TestCase
     }
   end
 
-  def test_fsmaster
+  def ntest_fsmaster
     b = FSC.new(:dump => true)
     b.run_bg
     do_basic_fs_tests(b)
@@ -161,7 +151,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def test_addchunks
+  def ntest_addchunks
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 

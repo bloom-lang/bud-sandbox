@@ -22,7 +22,7 @@ module BFSDatanode
     # in the original bfs, we actually polled a directory, b/c
     # the chunks were written by an external process.
     local_chunks <+ [[-1, -1]]
-    super
+    #super
   end
 
   declare 
