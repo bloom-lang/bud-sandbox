@@ -63,7 +63,7 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do{ assert_equal(1, v.kvstate.length) }
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
 
-    v.sync_do{ v.kvget <= [[1234, 'foo']] }
+    v.sync_do{ v.kvget <+ [[1234, 'foo']] }
     s.sync_do{ 
       assert_equal(1, v.kvget_response.length)
       assert_equal("bak", v.kvget_response.first[1])
