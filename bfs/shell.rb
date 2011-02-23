@@ -6,5 +6,9 @@ require 'bfs/bfs_client'
 c = BFSShell.new("localhost:12345")
 c.run_bg
 
-c.dispatch_command(ARGV)
+res = c.dispatch_command(ARGV)
+
+
+puts "Result:\n#{res.inspect}"
+
 sleep 1

@@ -37,8 +37,8 @@ module KVSFS
   
   declare 
   def elles
-    kvget <= fsls.map{ |l| puts "got ls" or [l.reqid, l.path] } 
-    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| [r.reqid, true, r.value] }
+    kvget <= fsls.map{ |l| puts "got ls #{l.inspect}" or [l.reqid, l.path] } 
+    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| puts "ls resp: #{r.value.inspect}" or  [r.reqid, true, r.value] }
     fsret <= fsls.map do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
         [l.reqid, false, nil]
@@ -63,7 +63,7 @@ module KVSFS
     dir_exists = join [make, kvget_response], [make.reqid, kvget_response.reqid]
     # update dir entry
     kvput <= dir_exists.map do |c, r|
-      [ip_port, clean_path(c.path), c.reqid+1, r.value.clone.push(c.name)]
+      [ip_port, c.path, c.reqid+1, r.value.clone.push(c.name)]
     end
 
     kvput <= dir_exists.map do |c, r|

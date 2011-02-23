@@ -50,9 +50,10 @@ class BFSShell
     remember_response <= response.map{|r| puts "remember #{r.inspect}, with watched_ids #{watched_ids.length} and my_queue #{my_queue.length}" or r }
     snc = join [remember_response, watched_ids, my_queue], [remember_response.reqid, watched_ids.reqid]
     hollow <= snc.map do |r, w, q|
-      puts "Enqueue #{r.inspect}" or [q.queue.push r]
+      puts "Enqueue #{r.inspect} (on a Q of length #{q.length})" or [q.queue.push r]
     end
     watched_ids <- snc.map{ |r, w| w }
+    remember_response <- snc.map{ |r, w| w }
   end
   
   bootstrap do
@@ -156,10 +157,14 @@ class BFSShell
     puts "SLu"
     sync_do { watched_ids <+ [[reqid]] }
     puts "WAIT"
-    sync_do {}
+    #sync_do {}
     sync_do {}
     res = @queue.pop
-    puts "POPPED OFF #{res.inspect}! "
+    puts "waiting for #{reqid}, POPPED OFF #{res.inspect}! "
+    if res.reqid != reqid
+      puts "ahem, popped off the wrong id...  chucking it."
+      res = slightly_less_ugly(reqid)
+    end
     return res
   end
 
