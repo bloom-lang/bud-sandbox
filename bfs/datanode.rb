@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bud'
+require 'backports'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
 
@@ -27,22 +28,15 @@ module BFSDatanode
 
   declare 
   def hblogic
-    #canijoin = [dirscan_timer, Dir.new(DATADIR)]
-    #local_chunks <= canijoin.map do |t, d|
-    #  [-1, d, 1]
-    #end
+    chunk_summary <= hb_timer.map do |t|
+      [Dir.new(DATADIR).to_a.map{|d| d.to_i unless d =~ /\./}] if chunk_summary.empty?
+    end
+    
 
-    #local_chunks <= hb_timer.map do
-    #  Dir.new(DATADIR).map do |d|
-    #    #unless d =~ /^\./
-    #      puts "do chunk with #{d}" or [-1, d.to_i, 1] 
-    #    #end
-    #  end
-    #end
     
     #chunk_summary <= local_chunks.map{|c| [[c.file, c.ident]] } 
-    #payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
-    payload <= local_chunks.group(nil, accum(local_chunks.chunkid))
+    payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
+    #payload <= local_chunks.group(nil, accum(local_chunks.chunkid))
 
   end
 

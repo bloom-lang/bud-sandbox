@@ -70,7 +70,7 @@ module KVSFS
       if c.dir 
         [ip_port, clean_path(c.path) + c.name, c.reqid, []]
       else
-        [ip_port, clean_path(c.path) + c.name, c.reqid, nil]
+        [ip_port, clean_path(c.path) + c.name, c.reqid, "LEAF"]
       end
     end
 

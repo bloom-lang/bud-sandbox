@@ -28,7 +28,7 @@ module HBMaster
       end 
     end
   
-    chunk_cache_nodes <= chunk_cache.map{ |cc| [cc.node] }
+    chunk_cache_nodes <= chunk_cache.map{ |cc| puts "CHUNK CACHE: #{cc.inspect}" or [cc.node] }
     available <= chunk_cache_nodes.group(nil, accum(chunk_cache.node))
     stdio <~ available.map{ |a| ["avail: #{a.inspect}"] } 
   end

@@ -108,8 +108,14 @@ class BFSShell
 
   def do_read(args)
     reqid = 1 + rand(10000000)
-    sync_do{ request <+ [[reqid, :getchunks, args]] }
+    sync_do{ request <+ [[reqid, :getchunks, args[0]]] }
     res = slightly_less_ugly(reqid)
+    res.response.sort{|a, b| a <=> b}.each do |chk|
+      reqid = 1 + rand(10000000)
+      sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
+      res = slightly_less_ugly(reqid)
+      puts "IN read, getchunklocations returned #{res.inspect}"
+    end
     puts "RES is #{res}"
   end
 
