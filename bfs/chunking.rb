@@ -25,46 +25,34 @@ module ChunkedKVSFS
   state {
     # master copy.  every chunk we ever tried to create metadata for.
     table :chunk, [:chunkid, :file, :siz]
-    scratch :chunk_buffer, [:reqid, :host]
-    scratch :chunk_buffer2, [:reqid, :hostlist]
+    scratch :chunk_buffer, [:reqid, :chunkid]
+    scratch :chunk_buffer2, [:reqid, :chunklist]
+    scratch :host_buffer, [:reqid, :host]
+    scratch :host_buffer2, [:reqid, :hostlist]
+    scratch :lookup, [:reqid, :file]
   }
+
+  declare 
+  def lookups
+    lookup <= fschunklist
+    lookup <= fsaddchunk
+
+    kvget <= lookup.map{ |a| puts "look up file: #{a.inspect}" or [a.reqid, a.file] } 
+    fsret <= lookup.map do |a|
+      unless kvget_response.map{ |r| r.reqid}.include? a.reqid
+        puts "file lookup fail" or [a.reqid, false, "File not found: #{a.file}"]
+      end
+    end
+  end
 
   declare
   def getchunks
-    kvget <= fschunklist.map{ |l| [l.reqid, l.file] }
-    fsret <= fschunklist.map do |l|
-      unless kvget_response.map{ |r| r.reqid}.include? l.reqid
-        [l.reqid, false, "file #{l.file} not found"]
-      end
-    end 
+    chunk_buffer <= join([fschunklist, kvget_response, chunk], [fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]).map{ |l, r, c| [l.reqid, c.chunkid] }
+    chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
+    fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
 
-    
-    #j_lookup = join [fschunklist, kvget_response], [fschunklist.reqid, kvget_response.reqid]
-    #j_get_chunk = leftjoin [j_lookup, chunk], [j_lookup.file, chunk.file]
+    # handle case of empty file / haven't heard about chunks yet
 
-    #fsret <= j_get_chunk.map do |l, r, c|
-    #  [l.reqid, false, "file #{file} is empty"] if c.nil?
-    #end
-
-
-
-    #fsret <= j_get_chunk.map do |l, r, c|
-    #  [l.reqid, true, 
-    #end
-    
-    # of course, it is possible that a file exists which is empty (or for which we haven't yet
-    # received any chunk notifications).  Read empty file = fail.
-    #j_get_chunk = join [fschunklist, kvget_response], [fschunklist.reqid, kvget_response.reqid]
-    #fsret <= j_get_chunk.map do |r, k|
-    #  unless chunk.map{ |c| c.file}.include? r.file
-    #    [r.reqid, false, "file #{r.file} has no data"]
-    #  end
-    #end
-
-    #j_get_chunk2 = join [j_get_chunk, chunk], [j_get_chunk.file, chunk.file]
-    #fsret <= j_get_chunk2.group do |g, c|
-    #  [
-    #end
   end
 
   declare 
@@ -76,22 +64,14 @@ module ChunkedKVSFS
     end
 
     chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
-    chunk_buffer <= chunkjoin.map{|l, c| puts "CHUNKBUFFER" or [l.reqid, c.node] }
+    host_buffer <= chunkjoin.map{|l, c| puts "CHUNKBUFFER" or [l.reqid, c.node] }
     # what a hassle
-    ##fsret <= chunk_buffer.group([chunk_buffer.reqid, true], accum(chunk_buffer.host))
-    chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.host))
-    fsret <= chunk_buffer2.map{|c| [c.reqid, true, c.hostlist] }
+    host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
+    fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
   end
 
   declare
   def addchunks
-    kvget <= fsaddchunk.map{ |a| puts "look up chunk: #{a.inspect}" or [a.reqid, a.file] } 
-    fsret <= fsaddchunk.map do |a|
-      unless kvget_response.map{ |r| r.reqid}.include? a.reqid
-        puts "chunk lookup fail" or [a.reqid, false, nil]
-      end
-    end
-
     stdio <~ "Warning: no available datanodes" if available.empty?
     stdio <~ kvget_response.map{|r| ["#{budtime} kvg_r: #{r.inspect}, al #{available.length} (chunkcachec #{chunk_cache.length})" ] }
     
