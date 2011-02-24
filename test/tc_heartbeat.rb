@@ -15,7 +15,6 @@ class HB
     add_member <+ [[ "localhost:46362" ]]
     add_member <+ [[ "localhost:46363" ]]
     add_member <+ [[ "localhost:46364" ]]
-    super
   end
 end
 
