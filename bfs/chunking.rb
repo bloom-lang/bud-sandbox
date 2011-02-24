@@ -76,7 +76,7 @@ module ChunkedKVSFS
   declare
   def addchunks
     stdio <~ "Warning: no available datanodes" if available.empty?
-    stdio <~ kvget_response.map{|r| ["#{budtime} kvg_r: #{r.inspect}, al #{available.length} (chunkcachec #{chunk_cache.length})" ] }
+    #stdio <~ kvget_response.map{|r| ["#{budtime} kvg_r: #{r.inspect}, al #{available.length} (chunkcachec #{chunk_cache.length})" ] }
     
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }

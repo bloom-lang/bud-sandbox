@@ -5,8 +5,6 @@ require 'timeout'
 require 'bfs/bfs_client_proto'
 require 'bfs/data_protocol'
 
-CHUNKSIZE = 100000
-
 module BFSClient
   include BFSClientProtocol
 
@@ -137,7 +135,7 @@ class BFSShell
     sync_do{ request <+ [[reqid, :append, args[0]]] }
     # block for response....
     ret = slightly_less_ugly(reqid)
-    raise "add chunk metadata failed" unless ret[1]
+    raise "add chunk metadata failed: #{ret.inspect}" unless ret[1]
     
     chunkid = ret[2][0]
     preflist = ret[2][1]

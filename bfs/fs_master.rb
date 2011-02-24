@@ -37,8 +37,8 @@ module KVSFS
   
   declare 
   def elles
-    kvget <= fsls.map{ |l| puts "got ls #{l.inspect}" or [l.reqid, l.path] } 
-    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| puts "ls resp: #{r.value.inspect}" or  [r.reqid, true, r.value] }
+    kvget <= fsls.map{ |l| [l.reqid, l.path] } 
+    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| [r.reqid, true, r.value] }
     fsret <= fsls.map do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
         [l.reqid, false, nil]
@@ -51,12 +51,12 @@ module KVSFS
     make <= fscreate.map{ |c| [c.reqid, c.name, c.path, false, c.data] }
     make <= fsmkdir.map{ |m| [m.reqid, m.name, m.path, true, nil] }
 
-    stdio <~ make.map{|m| ["MAKE: #{m.inspect}"] }
+    #stdio <~ make.map{|m| ["MAKE: #{m.inspect}"] }
 
-    kvget <= make.map{ |c| puts "get #{c.inspect}" or [c.reqid, c.path] }    
+    kvget <= make.map{ |c| [c.reqid, c.path] }    
     fsret <= make.map do |c|
       unless kvget_response.map{ |r| r.reqid}.include? c.reqid
-        puts "ONO #{c.inspect}" or [c.reqid, false, "parent path #{c.path} for #{c.file} does not exist"]
+        [c.reqid, false, "parent path #{c.path} for #{c.file} does not exist"]
       end
     end
 
