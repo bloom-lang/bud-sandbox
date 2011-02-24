@@ -117,6 +117,7 @@ class BFSShell
       sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
       res = slightly_less_ugly(reqid)
       puts "IN read, getchunklocations returned #{res.inspect}"
+      puts "res2 is *#{res[2]}*"
       chunk = DataProtocolClient.read_chunk(chk, res[2])
       puts "OUTPUT::: CHUNK::: #{chunk}"
     end

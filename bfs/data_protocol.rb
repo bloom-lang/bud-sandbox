@@ -17,16 +17,19 @@ class DataProtocolClient
   end
 
   def DataProtocolClient::read_chunk(chunkid, nodelist)
+  
+    puts "OH CHUNKID IS *#{chunkid}*"
     nodelist.each do |node|
       args = ["read", chunkid]
       host, port = node.split(":")
-
       begin
         s = TCPSocket.open(host, port)
         s.puts(args.join(","))
         ret = s.read(CHUNKSIZE)
         s.close
+        return ret
       rescue
+        puts "EXCEPTION ON READ: #{$!}"
         # go around the loop again.
       end
     end 
@@ -85,7 +88,7 @@ class DataProtocolServer
   end
 
   def dispatch_dn(cli)
-    header = cli.gets
+    header = cli.gets.chomp
     elems = header.split(",")
     type = elems.shift
     chunkid = elems.shift
@@ -108,12 +111,15 @@ class DataProtocolServer
   
   def do_read(chunkid, cli)
     begin
-      fp = File.open("#{DATADIR}/#{chunkid}", "r")
+      fp = File.open("#{DATADIR}/#{chunkid.to_s}", "r")
       chunk = fp.read(CHUNKSIZE)
       fp.close
-      cli.send(chunk)
+      cli.write(chunk)
+      cli.close
+      puts "DONE WRITE"
     rescue
-      puts "FILE NOT FOUND: #{chunkid} (error #{$!})"
+      puts "FILE NOT FOUND: *#{chunkid}* (error #{$!})"
+      puts "try to ls #{DATADIR}"
       cli.close
     end
   end
