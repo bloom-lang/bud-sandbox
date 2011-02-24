@@ -73,12 +73,12 @@ class TestVoting < Test::Unit::TestCase
     t2.sync_do{ assert_equal([1,'me for king', 'localhost:12316'], t2.waiting_ballots.first) }
     t3.sync_do{ assert_equal([1,'me for king', 'localhost:12316'], t3.waiting_ballots.first) }
     t.sync_do{ t2.cast_vote <+ [[1, "hell yes"]] }
-    sleep 1
+    sleep 2
 
     t.sync_do{ assert_equal([1, 'hell yes', 1], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'in flight'], t.vote_status.first) }
     t3.sync_do{ t3.cast_vote <+ [[1, "hell yes"]] }
-    sleep 1
+    sleep 2
 
     t.sync_do{ assert_equal([1, 'hell yes', 2], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'hell yes'], t.vote_status.first) }
