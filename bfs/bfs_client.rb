@@ -1,7 +1,9 @@
 require 'rubygems'
 require 'bud'
 require 'backports'
+require 'timeout'
 require 'bfs/bfs_client_proto'
+require 'bfs/data_protocol'
 
 CHUNKSIZE = 100000
 
@@ -15,10 +17,10 @@ module BFSClient
   declare
   def cglue
     # every request involves some communication with the master.
-    request_msg <~ join([request, master]).map{|r, m| puts "send rm" or [m.master, ip_port, r.reqid, r.rtype, r.arg] }
+    request_msg <~ join([request, master]).map{|r, m| [m.master, ip_port, r.reqid, r.rtype, r.arg] }
   
     response <= response_msg.map do |r|
-      puts "RESP" or [r.reqid, r.status, r.response]
+      [r.reqid, r.status, r.response]
     end 
     stdio <~ response.map{|r| ["response: #{r.inspect}"] }
   end
@@ -53,7 +55,7 @@ class BFSShell
       puts "Enqueue #{r.inspect} (on a Q of length #{q.length})" or [q.queue.push r]
     end
     watched_ids <- snc.map{ |r, w| w }
-    remember_response <- snc.map{ |r, w| w }
+    remember_response <- snc.map{ |r, w| r }
   end
   
   bootstrap do
@@ -61,9 +63,9 @@ class BFSShell
   end
 
   def dispatch_command(args, filehandle=nil)
-    puts "args is #{args} type #{args.class} len #{args.length}"
+    #puts "args is #{args} type #{args.class} len #{args.length}"
     op = args.shift
-    puts "op is #{op} class #{op.class}"
+    #puts "op is #{op} class #{op.class}"
     case op
       when "ls" then
         do_ls(args)
@@ -92,10 +94,10 @@ class BFSShell
   def do_create(args, is_dir)
     file = args[0]
     (file, path) = get_base_and_path(args[0])
-    puts "got file #{file}, path #{path}"
+    #puts "got file #{file}, path #{path}"
     reqid = 1 + rand(10000000)
     if is_dir
-      puts "MKDIR TIME"
+      #puts "MKDIR TIME"
       sync_do{ request <+ [[reqid, :mkdir, [file, path]]] }
     else 
       sync_do{ request <+ [[reqid, :create, [file, path]]] }
@@ -115,6 +117,8 @@ class BFSShell
       sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
       res = slightly_less_ugly(reqid)
       puts "IN read, getchunklocations returned #{res.inspect}"
+      chunk = DataProtocolClient.read_chunk(chk, res[2])
+      puts "OUTPUT::: CHUNK::: #{chunk}"
     end
     puts "RES is #{res}"
   end
@@ -133,40 +137,23 @@ class BFSShell
     sync_do{ request <+ [[reqid, :append, args[0]]] }
     # block for response....
     ret = slightly_less_ugly(reqid)
-    puts "response is #{ret.inspect}"
     raise "add chunk metadata failed" unless ret[1]
+    
     chunkid = ret[2][0]
     preflist = ret[2][1]
-    puts "chunkid is #{chunkid}.  preflist is #{preflist}"
-    send_stream(chunkid, preflist, fh)
-  end
-
-  def send_stream(chunkid, prefs, fh)
-    copy = prefs.clone
-    first = copy.shift
-    host, port = first.split(":")
-    copy.unshift(chunkid) 
-    s = TCPSocket.open(host, port)
-    s.puts(copy.join(","))
-    chunk = fh.read(CHUNKSIZE) 
-    if chunk.nil?
-      s.close
-      return false
-    else
-      s.write(chunk)
-      s.close
-      return true
-    end
+    #puts "chunkid is #{chunkid}.  preflist is #{preflist}"
+    DataProtocolClient.send_stream(chunkid, preflist, fh)
   end
 
   def slightly_less_ugly(reqid)
-    puts "SLu"
     sync_do { watched_ids <+ [[reqid]] }
-    puts "WAIT"
-    #sync_do {}
     sync_do {}
-    res = @queue.pop
-    puts "waiting for #{reqid}, POPPED OFF #{res.inspect}! "
+    puts "WAIT"
+    res = nil
+    Timeout::timeout(5) do
+      res = @queue.pop
+    end
+    puts "DONE waiting for #{reqid}, POPPED OFF #{res.inspect}! "
     if res.reqid != reqid
       puts "ahem, popped off the wrong id...  chucking it."
       res = slightly_less_ugly(reqid)

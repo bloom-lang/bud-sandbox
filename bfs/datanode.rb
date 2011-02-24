@@ -3,9 +3,7 @@ require 'bud'
 require 'backports'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
-
-DATADIR = "/tmp/bloomfs"
-CHUNKSIZE = 100000
+require 'bfs/data_protocol'
 
 module BFSDatanode
   include HeartbeatAgent
@@ -22,7 +20,7 @@ module BFSDatanode
     # fake; we'd read these from the fs
     # in the original bfs, we actually polled a directory, b/c
     # the chunks were written by an external process.
-    local_chunks <+ [[-1, -1]]
+    chunk_summary <+ [[-1, -1]]
     #super
   end
 
@@ -31,59 +29,22 @@ module BFSDatanode
     chunk_summary <= hb_timer.map do |t|
       [Dir.new(DATADIR).to_a.map{|d| d.to_i unless d =~ /\./}] if chunk_summary.empty?
     end
-    
-
-    
-    #chunk_summary <= local_chunks.map{|c| [[c.file, c.ident]] } 
-    payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
-    #payload <= local_chunks.group(nil, accum(local_chunks.chunkid))
+    #payload <= chunk_summary.group(nil, accum(chunk_summary.payload))
+    payload <= chunk_summary#.group(nil, accum(chunk_summary.payload))
 
   end
 
   def initialize(dataport, opts)
     super(opts)
-    @data_port = dataport
-    puts "DATAPORT: #{@data_port}"
-    Dir.mkdir(DATADIR) unless File.directory? DATADIR
+    @dp_server = DataProtocolServer.new(dataport)
     # fix!
     # I should be able to do this in bootstrap, but it appears racy 
-    return_address <+ [["localhost:#{@data_port}"]]
-    #return_address <= [["localhost:#{@data_port}"]]
-    start_datanode_server(dataport)
-  end
-
-  def start_datanode_server(port)
-    Thread.new do     
-      @dn_server = TCPServer.open(port)
-      loop {
-        client = @dn_server.accept
-        puts "GOT A CLIENT: #{client.inspect}"
-        Thread.new do 
-  
-          header = client.gets
-          puts "got header #{header}"
-          # header should contain a chunk id followed by a list of candidate datanodes
-          # already sorted in preference order.
-          elems = header.split(",")
-          chunkid = elems.shift
-          nextnode = elems.shift
-          puts "chunkid is #{chunkid}"
-          chunkfile = File.open("#{DATADIR}/#{chunkid.to_i.to_s}", "w")
-          data = client.read(CHUNKSIZE)
-          #puts "write data #{data}"
-          chunkfile.write data
-          chunkfile.close
-          client.close
-  
-          # (thread)  
-        end
-      }
-    end
+    return_address <+ [["localhost:#{dataport}"]]
   end
 
   def stop_datanode
     # unsafe, unsage
-    @dn_server.close
+    @dp_server.stop_server
     stop_bg
   end
 end

@@ -54,7 +54,7 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
-  def test_directorystuff1
+  def ntest_directorystuff1
     b = CFSC.new(:port => "65432", :visualize => 3)
     b.run_bg
     s = BFSShell.new("localhost:65432")
@@ -96,10 +96,10 @@ class TestBFS < Test::Unit::TestCase
     s.stop_bg
   end
   
-  def ntest_client
+  def test_client
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
-    b = CFSC.new(:port => "65433", :visualize => 3)
+    b = CFSC.new(:port => "65433")#, :visualize => 3)
     b.run_bg
 
     sleep 2
@@ -117,9 +117,10 @@ class TestBFS < Test::Unit::TestCase
     rd = File.open("/usr/share/dict/words", "r")
     s.dispatch_command(["append", "/peter"], rd)
     rd.close  
+
     s.dispatch_command(["ls", "/"])
     s.dispatch_command(["read", "/peter"])
-    sleep 4
+    sleep 2
 
     dump_internal_state(b)
     sleep  4
@@ -140,7 +141,7 @@ class TestBFS < Test::Unit::TestCase
     }
   end
 
-  def test_fsmaster
+  def ntest_fsmaster
     b = FSC.new(:dump => true)
     b.run_bg
     do_basic_fs_tests(b)
@@ -154,7 +155,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def test_addchunks
+  def ntest_addchunks
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
@@ -262,7 +263,7 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def test_datanode
+  def ntest_datanode
     dn = new_datanode(11116, 45637)
 
     dn.run_bg

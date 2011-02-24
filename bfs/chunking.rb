@@ -59,9 +59,12 @@ module ChunkedKVSFS
   def getnodes
     fsret <= fschunklocations.map do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
-        puts "EMPTY for #{l.inspect}" or [l.reqid, false, nil]
+        puts "EMPTY for #{l.inspect}" or [l.reqid, false, "no datanodes found for #{l.chunkid}"]
+        
       end
     end
+
+    #stdio <~ join([fschunklocations, chunk_cache]).map{|a, b| ["CHUNK: #{b.inspect}"] }
 
     chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
     host_buffer <= chunkjoin.map{|l, c| puts "CHUNKBUFFER" or [l.reqid, c.node] }
