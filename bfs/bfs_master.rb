@@ -12,11 +12,11 @@ module BFSMasterServer
   declare
   def mglue
     rendez <= request_msg
-    stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
+    #stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
     fscreate <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "create" }
     fsmkdir <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "mkdir" }
-    fsls <= request_msg.map{ |r| puts "ls request" or [r.reqid, r.args] if r.rtype == "ls" } 
-    fsaddchunk <= request_msg.map{ |r| puts "append request" or [r.reqid, r.args] if r.rtype == "append" } 
+    fsls <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "ls" } 
+    fsaddchunk <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "append" } 
     fschunklist <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunks" }       
     fschunklocations <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunklocations" }       
 

@@ -17,8 +17,6 @@ class DataProtocolClient
   end
 
   def DataProtocolClient::read_chunk(chunkid, nodelist)
-  
-    puts "OH CHUNKID IS *#{chunkid}*"
     nodelist.each do |node|
       args = ["read", chunkid]
       host, port = node.split(":")
@@ -100,11 +98,9 @@ class DataProtocolServer
   end
 
   def do_pipeline(chunkid, preflist, cli)
-    puts "PIPELINE"
     puts "chunkid is #{chunkid}"
     chunkfile = File.open("#{DATADIR}/#{chunkid.to_i.to_s}", "w")
     data = cli.read(CHUNKSIZE)
-    #puts "write data #{data}"
     chunkfile.write data
     chunkfile.close
   end
@@ -116,7 +112,6 @@ class DataProtocolServer
       fp.close
       cli.write(chunk)
       cli.close
-      puts "DONE WRITE"
     rescue
       puts "FILE NOT FOUND: *#{chunkid}* (error #{$!})"
       puts "try to ls #{DATADIR}"

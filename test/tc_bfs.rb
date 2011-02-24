@@ -16,7 +16,7 @@ module FSUtil
 
   declare
   def remz
-    remember_resp <= fsret.map{|r| puts "RET" or r}
+    remember_resp <= fsret
     #rem_av <= available
   end
 end
@@ -122,8 +122,7 @@ class TestBFS < Test::Unit::TestCase
     s.dispatch_command(["read", "/peter"])
     sleep 2
 
-    dump_internal_state(b)
-    sleep  4
+    #dump_internal_state(b)
     dn.stop_datanode
     dn2.stop_bg
     s.stop_bg

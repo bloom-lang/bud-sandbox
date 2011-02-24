@@ -22,7 +22,7 @@ module BFSClient
     response <= response_msg.map do |r|
       [r.reqid, r.status, r.response]
     end 
-    stdio <~ response.map{|r| ["response: #{r.inspect}"] }
+    #stdio <~ response.map{|r| ["response: #{r.inspect}"] }
   end
 end
 
@@ -49,10 +49,12 @@ class BFSShell
 
   declare
   def synchronization
-    remember_response <= response.map{|r| puts "remember #{r.inspect}, with watched_ids #{watched_ids.length} and my_queue #{my_queue.length}" or r }
+    #remember_response <= response.map{|r| puts "remember #{r.inspect}, with watched_ids #{watched_ids.length} and my_queue #{my_queue.length}" or r }
+    remember_response <= response
     snc = join [remember_response, watched_ids, my_queue], [remember_response.reqid, watched_ids.reqid]
     hollow <= snc.map do |r, w, q|
-      puts "Enqueue #{r.inspect} (on a Q of length #{q.length})" or [q.queue.push r]
+      #puts "Enqueue #{r.inspect} (on a Q of length #{q.length})" or [q.queue.push r]
+      [q.queue.push r]
     end
     watched_ids <- snc.map{ |r, w| w }
     remember_response <- snc.map{ |r, w| r }
@@ -116,21 +118,18 @@ class BFSShell
       reqid = 1 + rand(10000000)
       sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
       res = slightly_less_ugly(reqid)
-      puts "IN read, getchunklocations returned #{res.inspect}"
-      puts "res2 is *#{res[2]}*"
       chunk = DataProtocolClient.read_chunk(chk, res[2])
-      puts "OUTPUT::: CHUNK::: #{chunk}"
+      puts chunk
     end
-    puts "RES is #{res}"
   end
 
   def do_append(args, fh)
     ret = true
     while ret
-      puts "do a chunk"
+      #puts "do a chunk"
       ret = do_a_chunk(args, fh)
     end
-    puts "DONE APPENDING"
+    #puts "DONE APPENDING"
   end
   
   def do_a_chunk(args, fh)
@@ -149,14 +148,14 @@ class BFSShell
   def slightly_less_ugly(reqid)
     sync_do { watched_ids <+ [[reqid]] }
     sync_do {}
-    puts "WAIT"
+    #puts "WAIT"
     res = nil
     Timeout::timeout(5) do
       res = @queue.pop
     end
-    puts "DONE waiting for #{reqid}, POPPED OFF #{res.inspect}! "
+    #puts "DONE waiting for #{reqid}, POPPED OFF #{res.inspect}! "
     if res.reqid != reqid
-      puts "ahem, popped off the wrong id...  chucking it."
+      #puts "ahem, popped off the wrong id...  chucking it."
       res = slightly_less_ugly(reqid)
     end
     return res

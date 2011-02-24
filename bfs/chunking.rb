@@ -37,10 +37,10 @@ module ChunkedKVSFS
     lookup <= fschunklist
     lookup <= fsaddchunk
 
-    kvget <= lookup.map{ |a| puts "look up file: #{a.inspect}" or [a.reqid, a.file] } 
+    kvget <= lookup.map{ |a| [a.reqid, a.file] } 
     fsret <= lookup.map do |a|
       unless kvget_response.map{ |r| r.reqid}.include? a.reqid
-        puts "file lookup fail" or [a.reqid, false, "File not found: #{a.file}"]
+        [a.reqid, false, "File not found: #{a.file}"]
       end
     end
   end
@@ -59,7 +59,7 @@ module ChunkedKVSFS
   def getnodes
     fsret <= fschunklocations.map do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
-        puts "EMPTY for #{l.inspect}" or [l.reqid, false, "no datanodes found for #{l.chunkid}"]
+        [l.reqid, false, "no datanodes found for #{l.chunkid}"]
         
       end
     end
@@ -67,7 +67,7 @@ module ChunkedKVSFS
     #stdio <~ join([fschunklocations, chunk_cache]).map{|a, b| ["CHUNK: #{b.inspect}"] }
 
     chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
-    host_buffer <= chunkjoin.map{|l, c| puts "CHUNKBUFFER" or [l.reqid, c.node] }
+    host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
     # what a hassle
     host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
     fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
@@ -80,7 +80,7 @@ module ChunkedKVSFS
     
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
-    fsret <= minted_chunk.map{ |r, a, v, n| puts "mINted chunk : @#{@budtime} #{n.ident} for #{a.file} with preflist #{v.pref_list.inspect}" or [r.reqid, true, [n.ident, v.pref_list]] }
+    fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list]] }
 
     fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|
       if available.empty?
