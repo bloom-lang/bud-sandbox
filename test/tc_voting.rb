@@ -23,15 +23,20 @@ class VA2 < VA
 end
 
 class TestVoting < Test::Unit::TestCase
+	
+  def initialize(args)
+    @opts = {}
+    super
+  end
 
   def start_kind(kind, port)
     t = nil
-    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(:port => #{port}, :visualize => 3, :tag => #{port})" }
+    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(@opts.merge(:port => #{port}, :tag => #{port}))" }
     return t
   end
 
   def start_three(one, two, three, kind)
-    t = VM.new(:port => one, :dump => true, :visualize => 3)
+    t = VM.new(@opts.merge(:port => one))
     t2 = start_kind(kind, two)
     t3 = start_kind(kind, three)
 
