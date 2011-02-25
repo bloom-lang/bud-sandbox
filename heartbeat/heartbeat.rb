@@ -4,6 +4,8 @@ require 'time'
 #require 'lib/bfs_client'
 require 'membership/membership'
 
+HB_EXPIRE = 4.0
+
 module HeartbeatProtocol
   include MembershipProto
 
@@ -24,6 +26,8 @@ module HeartbeatAgent
     table :payload_buffer, [:payload]
     table :my_address, [] => [:addy]
     periodic :hb_timer, 1
+
+    scratch :to_del, heartbeat_log.schema
   }
 
   declare
@@ -60,19 +64,18 @@ module HeartbeatAgent
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.peer_time, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
     # what's the point of 'peer time' ?
-    heartbeat_log <= duty_cycle.map{|t, h| [h.peer, nil, Time.parse(t.val).to_f, h.payload] }
+    heartbeat_log <+ duty_cycle.map{|t, h| [h.peer, nil, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- duty_cycle.map{|t, h| h } 
   end
 
   declare 
   def current_output
     last_heartbeat <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
-
-    #heartbeat_log <- join([heartbeat_log, highest, hb_timer], [heartbeat_log.peer, highest.peer]).map do |l, h, t|
-      #if h.time > l.time
-      #  puts "delete " + l.inspect + " b/c it's not the highest time " + h.inspect 
-    #    puts "H  is #{h.time} vs. #{l.time}" or l
-      #end
-    #end
+    to_del <= join([heartbeat_log, hb_timer]).map do |log, t|
+      if ((Time.parse(t.val).to_f) - log.time) > HB_EXPIRE
+        log
+      end
+    end
+    heartbeat_log <- to_del
   end 
 end
