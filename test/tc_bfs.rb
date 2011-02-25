@@ -120,11 +120,13 @@ class TestBFS < Test::Unit::TestCase
 
     s.dispatch_command(["ls", "/"])
     s.dispatch_command(["read", "/peter"])
-    sleep 2
-
     #dump_internal_state(b)
     dn.stop_datanode
-    dn2.stop_bg
+
+    # failover
+    s.dispatch_command(["read", "/peter"])
+
+    dn2.stop_datanode
     s.stop_bg
     b.stop_bg
   

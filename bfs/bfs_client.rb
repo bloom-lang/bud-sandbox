@@ -140,7 +140,7 @@ class BFSShell
     chunkid = ret[2][0]
     preflist = ret[2][1]
     #puts "chunkid is #{chunkid}.  preflist is #{preflist}"
-    DataProtocolClient.send_stream(chunkid, preflist, fh)
+    DataProtocolClient.send_stream(chunkid, preflist, DataProtocolClient.chunk_from_fh(fh))
   end
 
   def slightly_less_ugly(reqid)

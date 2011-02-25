@@ -8,7 +8,7 @@ class DataProtocolClient
   # create / continue a pipeline
   # fetch a chunk from the local fs.
   
-  def chunk_from_fh(fh)
+  def DataProtocolClient::chunk_from_fh(fh)
     return fh.read(CHUNKSIZE)
   end
 
@@ -35,7 +35,7 @@ class DataProtocolClient
   end
 
   
-  def DataProtocolClient::send_stream(chunkid, prefs, fh)
+  def DataProtocolClient::send_stream(chunkid, prefs, chunk)
     copy = prefs.clone
     first = copy.shift
     host, port = first.split(":")
@@ -43,7 +43,6 @@ class DataProtocolClient
     copy.unshift "pipeline"
     s = TCPSocket.open(host, port)
     s.puts(copy.join(","))
-    chunk = fh.read(CHUNKSIZE)
     if chunk.nil?
       s.close
       return false
@@ -68,7 +67,9 @@ class DataProtocolServer
   # 3: replicate.  chunkid, preflist. be a client, send local data to another datanode.
 
   def initialize(port)
-    Dir.mkdir(DATADIR) unless File.directory? DATADIR 
+    @dir = "#{DATADIR}/#{port}"
+    Dir.mkdir(DATADIR) unless File.directory? DATADIR
+    Dir.mkdir(@dir) unless File.directory? @dir
     start_datanode_server(port)
   end
 
@@ -99,22 +100,27 @@ class DataProtocolServer
 
   def do_pipeline(chunkid, preflist, cli)
     puts "chunkid is #{chunkid}"
-    chunkfile = File.open("#{DATADIR}/#{chunkid.to_i.to_s}", "w")
+    chunkfile = File.open("#{@dir}/#{chunkid.to_i.to_s}", "w")
     data = cli.read(CHUNKSIZE)
     chunkfile.write data
     chunkfile.close
+    
+    # synchronous for now...
+    if preflist.length > 0
+      DataProtocolClient.send_stream(chunkid, preflist, data)
+    end
   end
   
   def do_read(chunkid, cli)
     begin
-      fp = File.open("#{DATADIR}/#{chunkid.to_s}", "r")
+      fp = File.open("#{@dir}/#{chunkid.to_s}", "r")
       chunk = fp.read(CHUNKSIZE)
       fp.close
       cli.write(chunk)
       cli.close
     rescue
       puts "FILE NOT FOUND: *#{chunkid}* (error #{$!})"
-      puts "try to ls #{DATADIR}"
+      puts "try to ls #{@dir}"
       cli.close
     end
   end
