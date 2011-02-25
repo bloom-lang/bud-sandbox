@@ -47,11 +47,9 @@ class BFSShell
 
   declare
   def synchronization
-    #remember_response <= response.map{|r| puts "remember #{r.inspect}, with watched_ids #{watched_ids.length} and my_queue #{my_queue.length}" or r }
     remember_response <= response
     snc = join [remember_response, watched_ids, my_queue], [remember_response.reqid, watched_ids.reqid]
     hollow <= snc.map do |r, w, q|
-      #puts "Enqueue #{r.inspect} (on a Q of length #{q.length})" or [q.queue.push r]
       [q.queue.push r]
     end
     watched_ids <- snc.map{ |r, w| w }
@@ -63,9 +61,7 @@ class BFSShell
   end
 
   def dispatch_command(args, filehandle=nil)
-    #puts "args is #{args} type #{args.class} len #{args.length}"
     op = args.shift
-    #puts "op is #{op} class #{op.class}"
     case op
       when "ls" then
         do_ls(args)
@@ -76,7 +72,7 @@ class BFSShell
       when "mkdir"
         do_mkdir(args)
       when "read"
-        do_read(args)
+        do_read(args, (filehandle.nil? ? STDOUT : filehandle))
       else
         raise "unknown op: #{op}"
     end
@@ -85,7 +81,13 @@ class BFSShell
   def get_base_and_path(path)
     items = path.split("/")
     return [items.pop, items.length == 1 ? "/" : items.join("/")]
-  end  
+  end 
+
+  def synchronous_request(op, args)
+    reqid = 1 + rand(10000000)
+    sync_do{ request <+ [[reqid, op, args]] }
+    return slightly_less_ugly(reqid)
+  end 
 
   def do_createfile(args)
     do_create(args, false)
@@ -94,13 +96,10 @@ class BFSShell
   def do_create(args, is_dir)
     file = args[0]
     (file, path) = get_base_and_path(args[0])
-    #puts "got file #{file}, path #{path}"
-    reqid = 1 + rand(10000000)
     if is_dir
-      #puts "MKDIR TIME"
-      sync_do{ request <+ [[reqid, :mkdir, [file, path]]] }
+      synchronous_request(:mkdir, [file, path])
     else 
-      sync_do{ request <+ [[reqid, :create, [file, path]]] }
+      synchronous_request(:create, [file, path])
     end
   end
 
@@ -108,33 +107,26 @@ class BFSShell
     do_create(args, true)
   end
 
-  def do_read(args)
-    reqid = 1 + rand(10000000)
-    sync_do{ request <+ [[reqid, :getchunks, args[0]]] }
-    res = slightly_less_ugly(reqid)
+  def do_read(args, fh)
+    res = synchronous_request(:getchunks, args[0])
     res.response.sort{|a, b| a <=> b}.each do |chk|
       reqid = 1 + rand(10000000)
       sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
       res = slightly_less_ugly(reqid)
       chunk = DataProtocolClient.read_chunk(chk, res[2])
-      puts chunk
+      fh.write chunk
     end
   end
 
   def do_append(args, fh)
     ret = true
     while ret
-      #puts "do a chunk"
       ret = do_a_chunk(args, fh)
     end
-    #puts "DONE APPENDING"
   end
   
   def do_a_chunk(args, fh)
-    reqid = 1 + rand(10000000)
-    sync_do{ request <+ [[reqid, :append, args[0]]] }
-    # block for response....
-    ret = slightly_less_ugly(reqid)
+    ret = synchronous_request(:append, args[0])
     raise "add chunk metadata failed: #{ret.inspect}" unless ret[1]
     
     chunkid = ret[2][0]
@@ -146,30 +138,18 @@ class BFSShell
   def slightly_less_ugly(reqid)
     sync_do { watched_ids <+ [[reqid]] }
     sync_do {}
-    #puts "WAIT"
     res = nil
     Timeout::timeout(5) do
       res = @queue.pop
     end
-    #puts "DONE waiting for #{reqid}, POPPED OFF #{res.inspect}! "
     if res.reqid != reqid
-      #puts "ahem, popped off the wrong id...  chucking it."
       res = slightly_less_ugly(reqid)
     end
     return res
   end
 
   def do_ls(args)
-    reqid = 1 + rand(10000000)
-    sync_do{ request <+ [[reqid, :ls, args[0]]] }
-    res = slightly_less_ugly(reqid)
+    res = synchronous_request(:ls, args[0])
     return res.response
   end
-
 end
-
-
-#s = BFSShell.new
-#s.dispatch_command(ARGV)
-
-#sleep 5

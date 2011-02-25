@@ -1,11 +1,13 @@
 require 'rubygems'
 require 'test/unit'
+require 'digest/md5'
 require 'bfs/fs_master'
 require 'bfs/datanode'
 require 'bfs/hb_master'
 require 'bfs/chunking'
 require 'bfs/bfs_master'
 require 'bfs/bfs_client'
+require 'bfs/background'
 
 module FSUtil
   include FSProtocol
@@ -28,10 +30,13 @@ class FSC
 end
 
 class CFSC
+
+  # the completely composed BFS
   include Bud
   include ChunkedKVSFS
   include HBMaster
   include BFSMasterServer
+  include BFSBackgroundTasks
   include StaticMembership
   include FSUtil
 end
@@ -95,7 +100,11 @@ class TestBFS < Test::Unit::TestCase
     b.stop_bg
     s.stop_bg
   end
-  
+
+  def md5_of(name)
+    Digest::MD5.hexdigest(File.read(name))
+  end
+    
   def test_client
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
@@ -119,12 +128,22 @@ class TestBFS < Test::Unit::TestCase
     rd.close  
 
     s.dispatch_command(["ls", "/"])
-    s.dispatch_command(["read", "/peter"])
+    file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
+    fp = File.open(file, "w")
+    s.dispatch_command(["read", "/peter"], fp)
+    fp.close
+   
+    assert_equal(md5_of("/usr/share/dict/words"), md5_of(file)) 
+    
     #dump_internal_state(b)
     dn.stop_datanode
 
     # failover
-    s.dispatch_command(["read", "/peter"])
+    file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
+    fp = File.open(file, "w")
+    s.dispatch_command(["read", "/peter"], fp)
+    fp.close
+    assert_equal(md5_of("/usr/share/dict/words"), md5_of(file)) 
 
     dn2.stop_datanode
     s.stop_bg

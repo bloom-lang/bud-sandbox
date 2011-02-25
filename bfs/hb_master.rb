@@ -33,6 +33,6 @@ module HBMaster
   
     chunk_cache_nodes <= chunk_cache.map{ |cc| [cc.node] }
     available <= chunk_cache_nodes.group(nil, accum(chunk_cache.node))
-    stdio <~ available.map{ |a| ["avail: #{a.inspect}"] } 
+    #stdio <~ available.map{ |a| ["avail: #{a.inspect}"] } 
   end
 end
