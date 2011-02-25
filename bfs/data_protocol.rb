@@ -16,6 +16,21 @@ class DataProtocolClient
     
   end
 
+  def DataProtocolClient::send_replicate(chunkid, target, owner)
+    args = ["replicate", chunkid, target]
+    host, port = owner.split(":")
+    begin
+      s = TCPSocket.open(host, port)
+      s.puts(args.join(","))
+      s.close
+      puts "did request"
+      return
+    rescue
+      puts "(connect #{host}:#{port})EXCEPTION ON READ: #{$!}"
+    end 
+    raise "No datanodes"   
+  end
+
   def DataProtocolClient::read_chunk(chunkid, nodelist)
     nodelist.each do |node|
       args = ["read", chunkid]
@@ -27,7 +42,7 @@ class DataProtocolClient
         s.close
         return ret
       rescue
-        puts "EXCEPTION ON READ: #{$!}"
+        puts "(connect #{host}:#{port})EXCEPTION ON READ: #{$!}"
         # go around the loop again.
       end
     end 
@@ -122,6 +137,19 @@ class DataProtocolServer
       puts "FILE NOT FOUND: *#{chunkid}* (error #{$!})"
       puts "try to ls #{@dir}"
       cli.close
+    end
+  end
+
+  def do_replicate(chunk, target, cli)
+    cli.close
+    begin
+      puts "DO REPLICATE"
+      fp = File.open("#{@dir}/#{chunk}", "r")
+      DataProtocolClient.send_stream(chunk, target, DataProtocolClient.chunk_from_fh(fp))
+      fp.close
+      puts "OK"
+    rescue
+      puts "FAIL: #{$!}"
     end
   end
 

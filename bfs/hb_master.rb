@@ -7,7 +7,8 @@ module HBMaster
   include HeartbeatAgent
 
   state {
-    table :chunk_cache, [:node, :chunkid]
+    #table :chunk_cache, [:node, :chunkid]
+    scratch :chunk_cache, [:node, :chunkid]
     #scratch :chunk_cache_nodes, [:node]
     table :chunk_cache_nodes, [:node]
 

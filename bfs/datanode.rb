@@ -20,7 +20,7 @@ module BFSDatanode
     # fake; we'd read these from the fs
     # in the original bfs, we actually polled a directory, b/c
     # the chunks were written by an external process.
-    chunk_summary <+ [[-1, [-1]]]
+    #chunk_summary <+ [[-1, [-1]]]
     #super
   end
 
