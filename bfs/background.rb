@@ -5,6 +5,10 @@ require 'bfs/data_protocol'
 REP_FACTOR = 2
 
 
+# Background processes for the BFS master.  Right now, this is just firing off replication requests 
+# for chunks whose replication factor is too low.
+
+
 module BFSBackgroundTasks
   include BudModule
 

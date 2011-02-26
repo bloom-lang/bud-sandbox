@@ -5,6 +5,10 @@ require 'timeout'
 require 'bfs/bfs_client_proto'
 require 'bfs/data_protocol'
 
+# The BFS client and shell stand between ruby and BUD.  BSFShell provides dispatch_command() as a synchronous functional interface
+# for FS operations
+
+
 module BFSClient
   include BFSClientProtocol
 
@@ -15,6 +19,8 @@ module BFSClient
   declare
   def cglue
     # every request involves some communication with the master.
+  
+    stdio <~ request.map{|r| ["REQUEST: #{r.inspect}"] }
     request_msg <~ join([request, master]).map{|r, m| [m.master, ip_port, r.reqid, r.rtype, r.arg] }
   
     response <= response_msg.map do |r|
@@ -73,6 +79,8 @@ class BFSShell
         do_mkdir(args)
       when "read"
         do_read(args, (filehandle.nil? ? STDOUT : filehandle))
+      when "rm"
+        do_rm(args)
       else
         raise "unknown op: #{op}"
     end
@@ -94,7 +102,6 @@ class BFSShell
   end
 
   def do_create(args, is_dir)
-    file = args[0]
     (file, path) = get_base_and_path(args[0])
     if is_dir
       synchronous_request(:mkdir, [file, path])
@@ -105,6 +112,11 @@ class BFSShell
 
   def do_mkdir(args)
     do_create(args, true)
+  end
+
+  def do_rm(args)
+    (file, path) = get_base_and_path(args[0])
+    synchronous_request(:rm, [file, path]) 
   end
 
   def do_read(args, fh)
