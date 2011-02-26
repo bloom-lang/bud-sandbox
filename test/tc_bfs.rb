@@ -62,7 +62,7 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
-  def ntest_directorystuff1
+  def test_directorystuff1
     b = CFSC.new(:port => "65432", :visualize => 3)
     b.run_bg
     s = BFSShell.new("localhost:65432")
@@ -196,7 +196,7 @@ class TestBFS < Test::Unit::TestCase
     }
   end
 
-  def ntest_fsmaster
+  def test_fsmaster
     b = FSC.new(:dump => true)
     b.run_bg
     do_basic_fs_tests(b)
@@ -210,7 +210,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def ntest_addchunks
+  def test_addchunks
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
@@ -318,7 +318,7 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def ntest_datanode
+  def test_datanode
     dn = new_datanode(11116, 45637)
 
     dn.run_bg
