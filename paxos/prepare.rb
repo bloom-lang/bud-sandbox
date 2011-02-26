@@ -4,15 +4,21 @@ require 'bud'
 require 'voting/voting'
 
 module PaxosPrepare 
+  include BudModule
   include MajorityVotingMaster
 
-  state {
-    table :local_aru, [], ['host', 'aru']
-    scratch :leader_change, ['host'], ['leader', 'view']
+  state do
+    table :local_aru, [] => [:host, :aru]
+    scratch :leader_change, [:host] => [:leader, :view]
   
-    scratch :prepare, ['view', 'aru']
-    table :quorum, ['view', 'aru']
-  }
+    scratch :prepare, [:view, :aru]
+    table :quorum, [:view, :aru]
+  end
+
+
+  bootstrap do
+    local_aru << [@myloc, 0] #if global_history.empty?
+  end
 
   declare 
   def prep1
@@ -32,31 +38,40 @@ module PaxosPrepare
   declare 
   def establish_quorum
     quorum <= vote_status.map do |v|
+      puts "VOTE_STATUS: #{v.inspect}"
       if v.response.class == Array 
         [ v.response.fetch(0), v.response.fetch(1) ] if v.response.fetch(4) == 'bottom'
       end
     end
+
+    stdio <~ quorum.map{|q| ["QUORUM: #{q.inspect}"] }
   end
+  
 end
 
 module PaxosPrepareAgent 
   include VotingAgent
 
-  state {
-    table :datalist, ['view', 'aru_requested', 'seq', 'update', 'dltype']
-    table :datalist_length, ['aru', 'len']
-    table :global_history, ['host', 'seqno'], ['requestor', 'update']
-    table :last_installed, [], ['view']
-    table :accept, ['view', 'seq', 'update']
-  }
+  state do
+    table :datalist, [:view, :aru_requested, :seq, :update, :dltype]
+    table :datalist_length, [:aru, :len]
+    table :global_history, [:host, :seqno] => [:requestor, :update]
+    table :last_installed, [] => [:view]
+    table :accept, [:view, :seq, :update]
+  end
+
+  bootstrap do
+    last_installed << [0] if global_history.empty?
+  end
 
   declare
   def build_reply
+    stdio <~ ballot.map{|b| ["got ballot: #{b.inspect}"] }
     datalist <= join([ballot, last_installed]).map do |d, l|
-      if d.id > l.view
-        print "AROO\n" or [d.id, d.content, -1, "none", "bottom"]
+      if d.ident > l.view
+        print "AROO\n" or [d.ident, d.content, -1, "none", "bottom"]
       else 
-        print "ACHOO " + d.inspect + ":: " + l.inspect + " vs. " +d.id.to_s + "\n"
+        print "ACHOO " + d.inspect + ":: " + l.inspect + " vs. " +d.ident.to_s + "\n"
       end
     end
 
