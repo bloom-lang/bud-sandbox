@@ -12,9 +12,13 @@ class LE
 end 
 
 class TestLE < Test::Unit::TestCase
+  def initialize(args)
+    @opts = {}
+    super
+  end
 
-  def ntest_le
-    v = LE.new(:port => 10001, :visualize => 3)
+  def test_le
+    v = LE.new(@opts.merge(:port => 10001))
     v.add_member <+ [['127.0.0.1:10001', 1]]
     v.my_id <+ [[1]]
     v.seed <+ [[nil]]
@@ -22,7 +26,7 @@ class TestLE < Test::Unit::TestCase
     v.current_state << ['election', "127.0.0.1:10001", 0, Time.new.to_f, 0.5] 
   
     assert_nothing_raised(RuntimeError) {v.run_bg}
-    sleep 6
+    sleep 3
 
     v.vote_status.each {|s| puts "VOTe StATUS: #{s.inspect}" } 
 
@@ -31,10 +35,12 @@ class TestLE < Test::Unit::TestCase
       puts "CS: #{c.inspect}"
       assert_equal("leader", c.state)
     end
+
+    v.stop_bg
   end
 
   def startup(ip, port, id)
-    rt = LE.new(:ip => ip, :port => port, :visualize => 3)
+    rt = LE.new(@opts.merge(:ip => ip, :port => port))
     rt.add_member <+ [['localhost:20001']]
     rt.add_member <+ [['localhost:20002']]
     #rt.add_member <+ [['localhost:20003']]
@@ -53,11 +59,29 @@ class TestLE < Test::Unit::TestCase
     v2 = startup("localhost", 20002, 2)  
     #v3 = startup("localhost", 20003, 3)  
 
-    sleep 16
 
-    puts "GOT 1: #{v.current_state.first.inspect}"
-    puts "GOT 2: #{v2.current_state.first.inspect}"
-    #puts "GOT : #{v3.current_state.first.inspect}"
+    sleep 5
+
+    cs1 = nil
+    cs2 = nil
+    v.sync_do {cs1 = v.current_state.first}
+    v2.sync_do {cs2 = v2.current_state.first}
+
+    assert_equal(cs1.leader, cs2.leader)
+
+    case cs1.state 
+      when "leader"
+        assert_equal("follower", cs2.state)
+        assert_equal("localhost:20001", cs2.leader)
+        assert_equal("localhost:20001", cs1.leader)
+      when "follower"
+        assert_equal("leader", cs2.state)
+        assert_equal("localhost:20002", cs2.leader)
+        assert_equal("localhost:20002", cs1.leader)
+    end
+
+    v.stop_bg
+    v2.stop_bg
   end
   
 end
