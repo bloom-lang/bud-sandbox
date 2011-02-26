@@ -149,5 +149,14 @@ class TestBFS < Test::Unit::TestCase
   
   end
   
+  # not the dryest
+  def new_datanode(dp, master_port)
+    dn = DN.new(dp, @opts)
+    dn.add_member <+ [["localhost:#{master_port}", 1]]
+    dn.run_bg
+    return dn
+  end
+
+  
 end
 

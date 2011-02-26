@@ -23,7 +23,6 @@ class DataProtocolClient
       s = TCPSocket.open(host, port)
       s.puts(args.join(","))
       s.close
-      puts "did request"
       return
     rescue
       puts "(connect #{host}:#{port})EXCEPTION ON READ: #{$!}"
@@ -114,7 +113,6 @@ class DataProtocolServer
   end
 
   def do_pipeline(chunkid, preflist, cli)
-    puts "chunkid is #{chunkid}"
     chunkfile = File.open("#{@dir}/#{chunkid.to_i.to_s}", "w")
     data = cli.read(CHUNKSIZE)
     chunkfile.write data
@@ -143,11 +141,9 @@ class DataProtocolServer
   def do_replicate(chunk, target, cli)
     cli.close
     begin
-      puts "DO REPLICATE"
       fp = File.open("#{@dir}/#{chunk}", "r")
       DataProtocolClient.send_stream(chunk, target, DataProtocolClient.chunk_from_fh(fp))
       fp.close
-      puts "OK"
     rescue
       puts "FAIL: #{$!}"
     end

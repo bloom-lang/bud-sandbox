@@ -19,14 +19,13 @@ module BFSClient
   declare
   def cglue
     # every request involves some communication with the master.
-  
-    stdio <~ request.map{|r| ["REQUEST: #{r.inspect}"] }
+    #stdio <~ request.map{|r| ["REQUEST: #{r.inspect}"] }
+    #stdio <~ response.map{|r| ["response: #{r.inspect}"] }
     request_msg <~ join([request, master]).map{|r, m| [m.master, ip_port, r.reqid, r.rtype, r.arg] }
   
     response <= response_msg.map do |r|
       [r.reqid, r.status, r.response]
     end 
-    #stdio <~ response.map{|r| ["response: #{r.inspect}"] }
   end
 end
 
@@ -39,7 +38,7 @@ class BFSShell
     @queue = Queue.new
     # bootstrap?
 
-    super(:dump => true)#, :visualize => 3)
+    super(:dump => true)
     my_queue << [@queue]
   end
 
@@ -94,7 +93,7 @@ class BFSShell
   def synchronous_request(op, args)
     reqid = 1 + rand(10000000)
     sync_do{ request <+ [[reqid, op, args]] }
-    return slightly_less_ugly(reqid)
+    return timed_sync(reqid)
   end 
 
   def do_createfile(args)
@@ -122,9 +121,7 @@ class BFSShell
   def do_read(args, fh)
     res = synchronous_request(:getchunks, args[0])
     res.response.sort{|a, b| a <=> b}.each do |chk|
-      reqid = 1 + rand(10000000)
-      sync_do{ request <+ [[reqid, :getchunklocations, chk]] }
-      res = slightly_less_ugly(reqid)
+      res = synchronous_request(:getchunklocations, chk)
       chunk = DataProtocolClient.read_chunk(chk, res[2])
       fh.write chunk
     end
@@ -140,22 +137,19 @@ class BFSShell
   def do_a_chunk(args, fh)
     ret = synchronous_request(:append, args[0])
     raise "add chunk metadata failed: #{ret.inspect}" unless ret[1]
-    
     chunkid = ret[2][0]
     preflist = ret[2][1]
-    #puts "chunkid is #{chunkid}.  preflist is #{preflist}"
     DataProtocolClient.send_stream(chunkid, preflist, DataProtocolClient.chunk_from_fh(fh))
   end
 
-  def slightly_less_ugly(reqid)
+  def timed_sync(reqid)
     sync_do { watched_ids <+ [[reqid]] }
-    sync_do {}
     res = nil
     Timeout::timeout(5) do
       res = @queue.pop
     end
     if res.reqid != reqid
-      res = slightly_less_ugly(reqid)
+      res = timed_sync(reqid)
     end
     return res
   end
