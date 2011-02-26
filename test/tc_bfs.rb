@@ -62,8 +62,13 @@ class HBA
 end
 
 class TestBFS < Test::Unit::TestCase
+  def initialize(args)
+    @opts = {}
+    `rm -r #{DATADIR}`
+    super
+  end
   def test_directorystuff1
-    b = CFSC.new(:port => "65432", :visualize => 3)
+    b = CFSC.new(@opts.merge(:port => "65432"))
     b.run_bg
     s = BFSShell.new("localhost:65432")
     s.run_bg
@@ -109,7 +114,7 @@ class TestBFS < Test::Unit::TestCase
   end
     
   def test_client
-    b = CFSC.new(:port => "65433")#, :visualize => 3)
+    b = CFSC.new(@opts.merge(:port => "65433"))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
@@ -197,14 +202,14 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_fsmaster
-    b = FSC.new(:dump => true)
+    b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg
   end
   
   def new_datanode(dp, master_port)
-    dn = DN.new(dp, {:visualize => 3})
+    dn = DN.new(dp, @opts)
     dn.add_member <+ [["localhost:#{master_port}", 1]]
     dn.run_bg
     return dn
@@ -214,7 +219,7 @@ class TestBFS < Test::Unit::TestCase
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
-    b = CFSC.new(:port => "65432")#, :visualize => 3)
+    b = CFSC.new(@opts.merge(:port => "65432"))
     b.run_bg
     #sleep 5
     do_basic_fs_tests(b)
@@ -226,30 +231,6 @@ class TestBFS < Test::Unit::TestCase
     dn.stop_datanode
     #dn2.stop_bg
     b.stop_bg
-  end
-
-  def nnnnnntest_chunked_fsmaster
-    dn = new_datanode(11114, 65432)
-    dn2 = new_datanode(11115, 65432)
-    b = CFSC.new(:port => 65432, :dump => true)
-    b.run_bg
-    sleep 3
-    do_basic_fs_tests(b)
-    b.sync_do {  b.fschunklocations <+ [[654, 1, 1]] }
-    sleep 1
-    b.sync_do { 
-      b.chunk_cache.each{|c| puts "CHUNK: #{c.inspect}" } 
-      b.remember_resp.each do |r| 
-        puts "CHYBKRET: #{r.inspect}" 
-        if r.reqid == 654
-          assert(r.status, "command failed")
-          assert_equal(2, r.data.length)
-        end
-      end
-    }
-    b.stop_bg
-    dn.stop_datanode
-    dn2.stop_bg
   end
 
   def assert_resp(inst, reqid, data)
@@ -323,7 +304,7 @@ class TestBFS < Test::Unit::TestCase
 
     dn.run_bg
 
-    hbc = HBA.new(:port => 45637, :dump => true)
+    hbc = HBA.new(@opts.merge(:port => 45637))
     hbc.run_bg
     hbc.sync_do {} 
 
