@@ -7,16 +7,11 @@ module HBMaster
   include HeartbeatAgent
 
   state {
-    #table :chunk_cache, [:node, :chunkid]
     scratch :chunk_cache, [:node, :chunkid]
-    #scratch :chunk_cache_nodes, [:node]
     table :chunk_cache_nodes, [:node]
-
     # at any given time, :available will contain a list of datanodes in preference order.
     # for now, arbitrary
-    #table :available, [] => [:pref_list]
     scratch :available, [] => [:pref_list]
-
     scratch :pl, [:pl]
   }
 
@@ -26,7 +21,6 @@ module HBMaster
     chunk_cache <= last_heartbeat.flat_map do |l| 
       unless l.payload == -1
       l.payload.map do |pay|
-        #puts "unfold PAY #{pay.inspect} (#{pay.class}) vs. #{l.payload.inspect} (#{l.payload.class})" or [l.peer, pay]
         [l.peer, pay]
       end 
       end
