@@ -2,8 +2,7 @@ require 'rubygems'
 require 'bud'
 require 'test/unit'
 require 'time_hack/time_moves'
-#require 'paxos/leader'
-require 'paxos/le3'
+require 'paxos/leader'
 
 class LE
   include Bud
