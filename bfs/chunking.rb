@@ -10,8 +10,6 @@ module ChunkedFSProtocol
     interface :input, :fschunklist, [:reqid, :file]
     interface :input, :fschunklocations, [:reqid, :chunkid]
     interface :input, :fsaddchunk, [:reqid, :file]
-
-    scratch :chunklist_buffer, [:reqid, :file, :chunkid]
   }
 end
 
@@ -51,7 +49,6 @@ module ChunkedKVSFS
     fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
 
     # handle case of empty file / haven't heard about chunks yet
-
   end
 
   declare 
@@ -59,11 +56,8 @@ module ChunkedKVSFS
     fsret <= fschunklocations.map do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
         [l.reqid, false, "no datanodes found for #{l.chunkid}"]
-        
       end
     end
-
-    #stdio <~ join([fschunklocations, chunk_cache]).map{|a, b| ["CHUNK: #{b.inspect}"] }
 
     chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
     host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
@@ -75,17 +69,14 @@ module ChunkedKVSFS
   declare
   def addchunks
     stdio <~ "Warning: no available datanodes" if available.empty?
-    #stdio <~ kvget_response.map{|r| ["#{budtime} kvg_r: #{r.inspect}, al #{available.length} (chunkcachec #{chunk_cache.length})" ] }
-    
+
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
     fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list]] }
-
     fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|
       if available.empty?
         [r.reqid, false, "empty datanode set!"]
       end
     end
-      
   end
 end
