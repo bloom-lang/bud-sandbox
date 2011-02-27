@@ -30,7 +30,7 @@ end
 class TestMembership < Test::Unit::TestCase
 
   def test_mem1
-    mt = MT.new(:visualize => 3, :dump => true)
+    mt = MT.new
     mt.run_bg
     mt.add_member <+ [['foo', 7]]
     sleep 3
@@ -40,7 +40,7 @@ class TestMembership < Test::Unit::TestCase
   end
   
   def test_mem2
-    mt = MT2.new(:visualize => 3, :dump => true)
+    mt = MT2.new
     # should be same as bootstrapping.
     mt.add_member <+ [['arr', 1]]
     mt.add_member <+ [['farr', 2]]

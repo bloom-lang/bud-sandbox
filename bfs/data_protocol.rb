@@ -1,4 +1,4 @@
-CHUNKSIZE = 100000
+CHUNKSIZE = 1000
 DATADIR = '/tmp/bloomfs'
 
 

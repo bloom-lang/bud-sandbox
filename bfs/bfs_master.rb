@@ -13,7 +13,7 @@ module BFSMasterServer
 
   declare
   def mglue
-    #stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
+    stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
 
     rendez <= request_msg
     fscreate <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "create" }

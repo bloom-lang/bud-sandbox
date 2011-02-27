@@ -32,7 +32,7 @@ class TestBEDelivery < Test::Unit::TestCase
 
 
   def test_besteffort_delivery2
-    rd = RED.new(:port => 13333, :visualize => 0)
+    rd = RED.new(:port => 13333)
     #rd = RED.new(:port => 13333)
     rd2 = RED.new(:port => 13334)
     rd.run_bg

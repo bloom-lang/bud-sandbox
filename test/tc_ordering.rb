@@ -34,7 +34,7 @@ end
 class TestSer < Test::Unit::TestCase
 
   def test_group_nonce
-    gn = GN.new(:visualize => 3, :dump => true)
+    gn = GN.new
     gn.my_id <+ [[1]]
     gn.add_member <+ [['foo', 1]]
     gn.add_member <+ [['bar', 2]]
@@ -69,7 +69,7 @@ class TestSer < Test::Unit::TestCase
   end 
 
   def test_serialization
-    st = ST.new(:visualize => 3)
+    st = ST.new
     st.run_bg
 
     st.async_do{ st.enqueue <+ [[1, 'foo']] } 

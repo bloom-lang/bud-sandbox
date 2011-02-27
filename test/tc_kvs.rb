@@ -9,14 +9,14 @@ class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
-    #@opts = {:dump => true, :visualize => 3, :scoping => false}
+    #@opts = {:dump => true, :trace => true, :scoping => false}
     @opts = {}
     super
   end
 
   def test_wl2
     # reliable delivery fails if the recipient is down
-    v = SingleSiteKVS.new#(:visualize => 3)
+    v = SingleSiteKVS.new
     assert_nothing_raised(RuntimeError) {v.run_bg}
     sleep 1
     if v.is_a?  ReliableDelivery

@@ -16,7 +16,7 @@ end
 class TestBEDelivery < Test::Unit::TestCase
 
   def test_besteffort_delivery
-    tt = TT.new(:visualize => 3, :dump => true)
+    tt = TT.new
     tt.run_bg
     tt.set_alarm <+ [['foo', 3]]
     sleep 5

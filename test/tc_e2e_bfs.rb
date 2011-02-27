@@ -30,7 +30,7 @@ end
 
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
-    @opts = {:visualize => 3}
+    @opts = {:trace => true}
     `rm -r #{DATADIR}`
     super
   end

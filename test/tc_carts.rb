@@ -72,7 +72,7 @@ class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
   def test_disorderly_cart
-    program = BCS.new(:port => 23765, :dump => true, :visualize => 3)
+    program = BCS.new(:port => 23765)
     #program = BCS.new(:port => 23765, :dump => true)
     #program = DummyDC.new('localhost', 23765, {'dump' => true})
     #program = DCR.new('localhost', 23765, {'dump' => true, 'scoping' => true})
