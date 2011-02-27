@@ -22,7 +22,6 @@ module FSUtil
   declare
   def remz
     remember_resp <= fsret
-    #rem_av <= available
   end
 end
 
@@ -33,7 +32,6 @@ class FSC
 end
 
 class CFSC
-
   # the completely composed BFS
   include Bud
   include ChunkedKVSFS
@@ -44,7 +42,6 @@ class CFSC
   include FSUtil
 end
 
-
 class DN
   include Bud
   include BFSDatanode
@@ -52,13 +49,8 @@ end
 
 class HBA
   include Bud
-  #include HeartbeatAgent
   include HBMaster
   include StaticMembership
-  # PAA
-  #include FSUtil
-  #include ChunkedKVSFS
-  #include BFSMasterServer
 end
 
 class TestBFS < Test::Unit::TestCase
@@ -76,23 +68,15 @@ class TestBFS < Test::Unit::TestCase
     s.dispatch_command(["mkdir", "/foo"])
     s.dispatch_command(["mkdir", "/bar"])
     s.dispatch_command(["mkdir", "/baz"])
-
-
     s.dispatch_command(["mkdir", "/foo/1"])
     s.dispatch_command(["mkdir", "/foo/1/2"])
     s.dispatch_command(["mkdir", "/foo/1/2/3"])
-
-
     s.dispatch_command(["create", "/bar/f1"])
     s.dispatch_command(["create", "/bar/f2"])
     s.dispatch_command(["create", "/bar/f3"])
     s.dispatch_command(["create", "/bar/f4"])
     s.dispatch_command(["create", "/bar/f5"])
     s.dispatch_command(["create", "/foo/1/2/3/nugget"])
-
-    #b.sync_do { b.kvstate.each {|k| "BACKEDN: #{k.inspect}" } }
-
-
     one = s.dispatch_command(["ls", "/"])
     assert_equal(["foo", "bar", "baz"], one)
     two = s.dispatch_command(["ls", "/foo"])
@@ -183,30 +167,22 @@ class TestBFS < Test::Unit::TestCase
   end     
 
   def do_basic_fs_tests(b)
-
     b.sync_do{ b.fscreate <+ [[3425, 'foo', '/']] } 
     assert_resp(b, 3425, nil)
-
     b.sync_do{ b.fsls <+ [[123, '/']] }
     assert_resp(b, 123, ["foo"])
-
     b.sync_do{ b.fscreate <+ [[3426, 'bar', '/']] } 
     assert_resp(b, 3426, nil)
-
     b.sync_do{ b.fsls <+ [[124, '/']] }
     assert_resp(b, 124, ["foo", "bar"])
-
-
     b.sync_do{ b.fsmkdir <+ [[234, 'sub1', '/']] }
     assert_resp(b, 234, nil)
     b.sync_do{ b.fsmkdir <+ [[235, 'sub2', '/']] }
     assert_resp(b, 235, nil)
-    
     b.sync_do{ b.fsmkdir <+ [[236, 'subsub1', '/sub1']] }
     assert_resp(b, 236, nil)
     b.sync_do{ b.fsmkdir <+ [[237, 'subsub2', '/sub2']] }
     assert_resp(b, 237, nil)
-
     b.sync_do{ b.fsls <+ [[125, '/']] }
     assert_resp(b, 125, ["foo", "bar", "sub1", "sub2"])
     b.sync_do{ b.fsls <+ [[126, '/sub1']] }
@@ -215,9 +191,7 @@ class TestBFS < Test::Unit::TestCase
 
   def test_datanode
     dn = new_datanode(11116, 45637)
-
     dn.run_bg
-
     hbc = HBA.new(@opts.merge(:port => 45637))
     hbc.run_bg
     hbc.sync_do {} 
@@ -225,8 +199,6 @@ class TestBFS < Test::Unit::TestCase
 
     sleep 5
   
-    puts "OK"
-    
     #dn.sync_do  {
     #  dn.payload.each{|p| puts "PL: #{p.inspect}" }
     #  dn.member.each{|m| puts "DNM: #{m.inspect}" } 
