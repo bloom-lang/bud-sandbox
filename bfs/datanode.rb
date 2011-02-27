@@ -12,17 +12,13 @@ module BFSDatanode
   state do
     table :local_chunks, [:chunkid, :size]
     table :data_port, [] => [:port]
-    #scratch :chunk_summary, [:payload]
   end
 
   declare 
   def hblogic
-    #chunk_summary <= hb_timer.map do |t|
     payload <= hb_timer.map do |t|
-      [Dir.new("#{DATADIR}/#{@data_port}").to_a.map{|d| d.to_i unless d =~ /\./}] #if chunk_summary.empty?
+      [Dir.new("#{DATADIR}/#{@data_port}").to_a.map{|d| d.to_i unless d =~ /\./}]
     end
-    #payload <= chunk_summary
-
   end
 
   def initialize(dataport, opts)
@@ -33,7 +29,6 @@ module BFSDatanode
   end
 
   def stop_datanode
-    # unsafe, unsage
     @dp_server.stop_server
     stop_bg
   end
