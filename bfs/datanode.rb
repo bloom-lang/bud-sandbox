@@ -12,15 +12,16 @@ module BFSDatanode
   state do
     table :local_chunks, [:chunkid, :size]
     table :data_port, [] => [:port]
-    scratch :chunk_summary, [:payload]
+    #scratch :chunk_summary, [:payload]
   end
 
   declare 
   def hblogic
-    chunk_summary <= hb_timer.map do |t|
-      [Dir.new("#{DATADIR}/#{@data_port}").to_a.map{|d| d.to_i unless d =~ /\./}] if chunk_summary.empty?
+    #chunk_summary <= hb_timer.map do |t|
+    payload <= hb_timer.map do |t|
+      [Dir.new("#{DATADIR}/#{@data_port}").to_a.map{|d| d.to_i unless d =~ /\./}] #if chunk_summary.empty?
     end
-    payload <= chunk_summary#.group(nil, accum(chunk_summary.payload))
+    #payload <= chunk_summary
 
   end
 

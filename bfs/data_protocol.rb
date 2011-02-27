@@ -12,10 +12,6 @@ class DataProtocolClient
     return fh.read(CHUNKSIZE)
   end
 
-  def send_header()
-    
-  end
-
   def DataProtocolClient::send_replicate(chunkid, target, owner)
     args = ["replicate", chunkid, target]
     host, port = owner.split(":")
@@ -48,7 +44,6 @@ class DataProtocolClient
     raise "No datanodes"   
   end
 
-  
   def DataProtocolClient::send_stream(chunkid, prefs, chunk)
     copy = prefs.clone
     first = copy.shift
@@ -66,13 +61,10 @@ class DataProtocolClient
       return true
     end
   end
-
-
 end
 
 
 class DataProtocolServer
-
   # request types:
   # 1: pipeline.  chunkid, preflist, stream, to_go
   #   - the idea behind to_go is that |preflist| > necessary copies,
@@ -82,6 +74,8 @@ class DataProtocolServer
 
   def initialize(port)
     @dir = "#{DATADIR}/#{port}"
+    @q = Queue.new
+    @q.push false
     Dir.mkdir(DATADIR) unless File.directory? DATADIR
     Dir.mkdir(@dir) unless File.directory? @dir
     start_datanode_server(port)
@@ -96,8 +90,23 @@ class DataProtocolServer
           header = dispatch_dn(client)
           client.close
         end
+        next if conditional_continue
       }
+      puts "OUT OF LOOP"
     end
+  end
+  
+  def conditional_continue
+    ret = @q.pop
+    if ret
+      begin
+        @dn_server.close
+      rescue
+        puts "STOP FAILURE #{$!}"
+      end
+    end
+    @q.push false
+    return ret
   end
 
   def dispatch_dn(cli)
@@ -106,9 +115,12 @@ class DataProtocolServer
     type = elems.shift
     chunkid = elems.shift
     case type
-      when "pipeline" then do_pipeline(chunkid, elems, cli)
-      when "read" then do_read(chunkid, cli)
-      when "replicate" then do_replicate(chunkid, elems, cli)
+      when "pipeline" 
+        do_pipeline(chunkid, elems, cli)
+      when "read"
+        do_read(chunkid, cli)
+      when "replicate"
+        do_replicate(chunkid, elems, cli)
     end
   end
 
@@ -122,6 +134,7 @@ class DataProtocolServer
     if preflist.length > 0
       DataProtocolClient.send_stream(chunkid, preflist, data)
     end
+    cli.close
   end
   
   def do_read(chunkid, cli)
@@ -150,7 +163,7 @@ class DataProtocolServer
   end
 
   def stop_server
-    # unsafe, unsage
-    @dn_server.close
+    @q.pop
+    @q.push true
   end
 end

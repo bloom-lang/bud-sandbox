@@ -29,9 +29,9 @@ module BFSBackgroundTasks
     chunk_cnts_chunk <= chunk_cache.group([chunk_cache.chunkid], count(chunk_cache.node))
     chunk_cnts_host <= chunk_cache.group([chunk_cache.node], count(chunk_cache.chunkid))
 
-    stdio <~ join([bg_timer, chunk_cnts_chunk, chunk_cache, chunk_cnts_host], [chunk_cnts_chunk.chunkid, chunk_cache.chunkid], [chunk_cache.node, chunk_cnts_host.host]).map do |t, c, cc, h| 
-      #["CCC: #{c.inspect}, CC: #{cc.inspect}, H: #{h.inspect}"]
-    end
+    #stdio <~ join([bg_timer, chunk_cnts_chunk, chunk_cache, chunk_cnts_host], [chunk_cnts_chunk.chunkid, chunk_cache.chunkid], [chunk_cache.node, chunk_cnts_host.host]).map do |t, c, cc, h| 
+    #  ["CCC: #{c.inspect}, CC: #{cc.inspect}, H: #{h.inspect}"]
+    #end
 
 
     danger = join [bg_timer, chunk_cnts_chunk, chunk_cache, chunk_cnts_host], [chunk_cache.node, chunk_cnts_host.host]
@@ -56,7 +56,8 @@ module BFSBackgroundTasks
       [d.chunkid, s.host, d.host]
     end
 
-    stdio <~ copy_chunk.map{|c| bg_besteffort_request(c.chunkid, c.owner, c.newreplica) or ["COPY CHUNK: #{c.inspect}"] } 
+    # hack
+    stdio <~ copy_chunk.map{|c| bg_besteffort_request(c.chunkid, c.owner, c.newreplica) } 
 
   end
   

@@ -9,7 +9,6 @@ module ChunkedFSProtocol
   state {
     interface :input, :fschunklist, [:reqid, :file]
     interface :input, :fschunklocations, [:reqid, :chunkid]
-    interface :input, :fsnewchunk, [:reqid, :file]
     interface :input, :fsaddchunk, [:reqid, :file]
 
     scratch :chunklist_buffer, [:reqid, :file, :chunkid]

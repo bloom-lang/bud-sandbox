@@ -117,7 +117,7 @@ class TestBFS < Test::Unit::TestCase
     dn2.stop_datanode
 
 
-    assert_raise(RuntimeError) {s.dispatch_command(["read", "/peter"], fp)}
+    assert_raise(IOError) {s.dispatch_command(["read", "/peter"], fp)}
 
     # resurrect a datanode and its state
     dn3 = new_datanode(11117, 65433)
