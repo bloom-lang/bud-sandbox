@@ -9,27 +9,7 @@ require 'bfs/bfs_master'
 require 'bfs/bfs_client'
 require 'bfs/background'
 
-TEST_FILE='/usr/share/dict/words'
-
-module FSUtil
-  include FSProtocol
-
-  state {
-    table :remember_resp, fsret.key_cols => fsret.cols
-  }
-
-  declare
-  def remz
-    remember_resp <= fsret
-    #rem_av <= available
-  end
-end
-
-class FSC
-  include Bud
-  include KVSFS
-  include FSUtil
-end
+TEST_FILE='/Users/peteralvaro/code/bud-sandbox/foo3'
 
 class CFSC
 
@@ -40,7 +20,6 @@ class CFSC
   include BFSMasterServer
   include BFSBackgroundTasks
   include StaticMembership
-  include FSUtil
 end
 
 
@@ -49,20 +28,9 @@ class DN
   include BFSDatanode
 end
 
-class HBA
-  include Bud
-  #include HeartbeatAgent
-  include HBMaster
-  include StaticMembership
-  # PAA
-  #include FSUtil
-  #include ChunkedKVSFS
-  #include BFSMasterServer
-end
-
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
-    @opts = {}
+    @opts = {:visualize => 3}
     `rm -r #{DATADIR}`
     super
   end
@@ -95,6 +63,7 @@ class TestBFS < Test::Unit::TestCase
     rd.close  
 
     s.sync_do{}
+    sleep 3
 
     s.dispatch_command(["ls", "/"])
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
@@ -123,7 +92,7 @@ class TestBFS < Test::Unit::TestCase
     dn3 = new_datanode(11117, 65433)
     # and an amnesiac
     dn4 = new_datanode(11119, 65433)
-    sleep 3
+    sleep 5
 
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
     fp = File.open(file, "w")
