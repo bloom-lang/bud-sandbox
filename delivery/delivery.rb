@@ -4,18 +4,18 @@ require 'bud'
 module DeliveryProtocol
   include BudModule
 
-  state {
+  state do
     interface input, :pipe_in, [:dst, :src, :ident] => [:payload]
     interface output, :pipe_sent, [:dst, :src, :ident] => [:payload]
-  }
+  end
 end
 
 module BestEffortDelivery
   include DeliveryProtocol
 
-  state {
+  state do
     channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
-  }
+  end
 
   declare
   def snd
