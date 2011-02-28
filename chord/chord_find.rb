@@ -5,13 +5,13 @@ require 'chord/chord_node'
 module ChordFind
   include ChordNode
 
-  state {
+  state do
     interface input, :succ_req, [:key]
     interface output, :succ_resp, [:key] => [:start, :addr]    
     
     channel :find_req, [:@dest, :key, :from]
     channel :find_resp, [:@dest, :key] => [:start, :addr]      
-  }
+  end
   
   def at_successor(event, me, fing)
     fing.index == 0 and in_range(event.key, me.start, fing.succ, true)

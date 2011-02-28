@@ -43,6 +43,12 @@ class LilChord
     end
   end
   
+  def do_join
+    puts "in do_join"
+    stdio <~ [['sending to localhost:12340']]
+    join_req <~ [['localhost:12340', 'localhost:12346', 6]]
+  end
+   
   def do_lookups
     # issue local lookups for 1,2,6
     [1,2,6].each do |num|
