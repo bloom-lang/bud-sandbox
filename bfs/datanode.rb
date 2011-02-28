@@ -21,9 +21,9 @@ module BFSDatanode
     end
   end
 
-  def initialize(dataport, opts)
+  def initialize(dataport=nil, opts={})
     super(opts)
-    @data_port = dataport
+    @data_port = dataport.nil? ? 0 : dataport
     @dp_server = DataProtocolServer.new(dataport)
     return_address <+ [["localhost:#{dataport}"]]
   end
