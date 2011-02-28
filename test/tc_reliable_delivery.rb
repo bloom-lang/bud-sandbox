@@ -26,7 +26,7 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
 
     # transmission not 'complete'
-    rd.sync_do{ assert_equal(0, rd.pipe_perm.length) }
+    rd.sync_do{ assert(rd.pipe_perm.empty?) }
     rd.stop_bg
   end
 
@@ -46,7 +46,7 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
 
     # gc done
-    rd.sync_do{ assert_equal(0, rd.pipe.length) }
+    rd.sync_do{ assert(rd.pipe.empty?) }
     rd.stop_bg
     rd2.stop_bg
   end
