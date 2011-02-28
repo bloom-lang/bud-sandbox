@@ -27,6 +27,8 @@ end
 
 class FSC
   include Bud
+  # PAA
+  include ChunkedKVSFS
   include KVSFS
   include FSUtil
 end
@@ -59,7 +61,7 @@ class TestBFS < Test::Unit::TestCase
     `rm -r #{DATADIR}`
     super
   end
-  def test_directorystuff1
+  def ntest_directorystuff1
     b = CFSC.new(@opts.merge(:port => "65432"))
     b.run_bg
     s = BFSShell.new("localhost:65432")
@@ -115,7 +117,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def test_addchunks
+  def ntest_addchunks
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 

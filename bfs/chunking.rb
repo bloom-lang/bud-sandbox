@@ -68,7 +68,7 @@ module ChunkedKVSFS
 
   declare
   def addchunks
-    stdio <~ "Warning: no available datanodes" if available.empty?
+    #stdio <~ "Warning: no available datanodes" if available.empty?
 
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }

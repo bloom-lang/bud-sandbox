@@ -1,4 +1,4 @@
-CHUNKSIZE = 1000
+CHUNKSIZE = 100000
 DATADIR = '/tmp/bloomfs'
 
 
@@ -85,14 +85,12 @@ class DataProtocolServer
     Thread.new do
       @dn_server = TCPServer.open(port)
       loop {
-        client = @dn_server.accept
-        Thread.new do
+        Thread.start(@dn_server.accept) do |client|
           header = dispatch_dn(client)
           client.close
+          next if conditional_continue
         end
-        next if conditional_continue
       }
-      puts "OUT OF LOOP"
     end
   end
   
@@ -127,6 +125,7 @@ class DataProtocolServer
   def do_pipeline(chunkid, preflist, cli)
     chunkfile = File.open("#{@dir}/#{chunkid.to_i.to_s}", "w")
     data = cli.read(CHUNKSIZE)
+    cli.close
     chunkfile.write data
     chunkfile.close
     
@@ -134,7 +133,7 @@ class DataProtocolServer
     if preflist.length > 0
       DataProtocolClient.send_stream(chunkid, preflist, data)
     end
-    cli.close
+    #cli.close
   end
   
   def do_read(chunkid, cli)

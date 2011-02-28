@@ -9,7 +9,7 @@ require 'bfs/bfs_master'
 require 'bfs/bfs_client'
 require 'bfs/background'
 
-TEST_FILE='/Users/peteralvaro/code/bud-sandbox/foo3'
+TEST_FILE='/usr/share/dict/words'
 
 class CFSC
 
@@ -18,7 +18,7 @@ class CFSC
   include ChunkedKVSFS
   include HBMaster
   include BFSMasterServer
-  include BFSBackgroundTasks
+  #include BFSBackgroundTasks
   include StaticMembership
 end
 
@@ -30,22 +30,91 @@ end
 
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
-    @opts = {:trace => true}
-    `rm -r #{DATADIR}`
+    #@opts = {:trace => true}
+    @opts = {}
+    clean
     super
+  end
+
+  def clean
+    `rm -r #{DATADIR}`
   end
 
   def md5_of(name)
     Digest::MD5.hexdigest(File.read(name))
   end
+  
+  def files_in_dir(dir)
+    Dir.new(dir).entries.length - 2
+  end 
     
+  def test_many_datanodes
+    b = CFSC.new(@opts.merge(:port => "33333"))#, :trace => true))
+    b.run_bg
+    
+    dns = []
+    ports = []
+    (0..10).each do |i|
+      port = 31111 + i
+      ports << port
+      dns << new_datanode(port, 33333)
+    end
+
+    s = BFSShell.new("localhost:33333")
+    s.run_bg
+    sleep 2
+
+
+    s.dispatch_command(["create", "/peter"])
+
+    s.sync_do{}
+    rd = File.open(TEST_FILE, "r")
+    s.dispatch_command(["append", "/peter"], rd)
+    rd.close
+
+    chunk = {}
+    node = {}
+    ports.each do |p|
+      dir = "/tmp/bloomfs/#{p}"
+      #len = files_in_dir(dir)
+      Dir.new(dir).each do |entry|
+        next if entry =~ /^\./
+        unless chunk[entry]
+          chunk[entry] = []
+        end
+        chunk[entry] << p
+  
+        unless node[p]
+          node[p] = []
+        end 
+        node[p] << entry
+      end
+    end     
+  
+    assert_equal(25, chunk.keys.length)
+    chunk.each_pair do |k, v|
+      #puts "C[#{k}] = #{v.inspect}"
+      assert_equal(REP_FACTOR, v.length)
+    end
+
+    node.each_pair do |k, v|
+      #puts "nodes[#{k}] = #{v.inspect}"
+      assert(v.length > 0, "node #{k} has no chunks")
+    end
+
+    dns.each {|d| d.stop_bg }
+    b.stop_bg
+    s.stop_bg
+
+  end
+
   def test_client
     b = CFSC.new(@opts.merge(:port => "65433"))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
-    sleep 2
 
+    sleep 2
 
     s = BFSShell.new("localhost:65433")
     s.run_bg
@@ -63,7 +132,7 @@ class TestBFS < Test::Unit::TestCase
     rd.close  
 
     s.sync_do{}
-    sleep 3
+    sleep 2
 
     s.dispatch_command(["ls", "/"])
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
@@ -120,7 +189,7 @@ class TestBFS < Test::Unit::TestCase
   
   # not the dryest
   def new_datanode(dp, master_port)
-    dn = DN.new(dp, @opts)
+    dn = DN.new(dp, @opts.merge(:tag => "P#{dp}"))
     dn.add_member <+ [["localhost:#{master_port}", 1]]
     dn.run_bg
     return dn
