@@ -149,7 +149,7 @@ class BFSShell
     Timeout::timeout(5) do
       res = @queue.pop
     end
-    # the bud code frequenty (but not always!) enqueues items 2X
+    # the bud code frequently (but not always!) enqueues items 2X
     if res.reqid != reqid
       res = timed_sync(reqid)
     end
