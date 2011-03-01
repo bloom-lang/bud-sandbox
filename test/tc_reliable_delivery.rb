@@ -46,7 +46,7 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
 
     # gc done
-    rd.sync_do{ assert(rd.pipe.empty?) }
+    rd.sync_do{ assert(rd.buf.empty?) }
     rd.stop_bg
     rd2.stop_bg
   end

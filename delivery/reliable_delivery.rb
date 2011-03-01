@@ -3,18 +3,18 @@ require 'bud'
 require 'delivery/delivery'
 
 module ReliableDelivery
-  include  BestEffortDelivery
+  include BestEffortDelivery
 
   state {
-    table :pipe, [:dst, :src, :ident] => [:payload]
+    table :buf, [:dst, :src, :ident] => [:payload]
     channel :ack, [:@src, :dst, :ident]
-    periodic :tock, 2
+    periodic :clock, 2
   }
 
   declare
   def remember
-    pipe <= pipe_in
-    pipe_chan <~ join([pipe, tock]).map {|p, t| p}
+    buf <= pipe_in
+    pipe_chan <~ join([buf, clock]).map {|b, c| b}
   end
 
   declare
@@ -24,8 +24,10 @@ module ReliableDelivery
 
   declare
   def done
-    apj = join [ack, pipe], [ack.ident, pipe.ident]
-    pipe_sent <= apj.map {|a, p| p}
-    pipe <- apj.map {|a, p| p}
+    got_ack = join [ack, buf], [ack.ident, buf.ident]
+    msg_done = got_ack.map {|a, b| b}
+
+    pipe_sent <= msg_done
+    buf <- msg_done
   end
 end
