@@ -11,6 +11,7 @@ module DisorderlyCart
     table :cart_action, [:session, :reqid] => [:item, :action]
     scratch :action_cnt, [:session, :item, :action] => [:cnt]
     scratch :status, [:server, :client, :session, :item] => [:cnt]
+    scratch :stage_resp, [:server, :client, :session] => [:itemlist]
   }
  
   declare
@@ -35,9 +36,17 @@ module DisorderlyCart
       end
     end
 
-    #response_msg <~ status.group([status.client, status.server, status.session], accum((0..(status.cnt)).map{status.item})) 
-    #response_msg <~ status.group([status.client, status.server, status.session], accum([status.item, status.cnt]))
-    response_msg <~ status.group([status.client, status.server, status.session], accum(status.item))
+    out = status.reduce({}) do |memo, i|
+      memo[[i[0],i[1],i[2]]] ||= []
+      i[4].times do 
+        memo[[i[0],i[1],i[2]]] << i[3]
+      end
+      memo
+    end.to_a
+
+    response_msg <~ out.map do |k, v|
+      k << v
+    end
   end
 end
 

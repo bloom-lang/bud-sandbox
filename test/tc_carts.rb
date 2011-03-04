@@ -29,6 +29,7 @@ class BCS
   include Remember
 end
 
+
 class DCR
   include Bud
   include CartClientProtocol
@@ -71,12 +72,19 @@ end
 class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
+
+  def test_destructive_cart
+    prog = DummyDC.new(:port => 32575)
+    cart_test(prog)
+  end
+
   def test_disorderly_cart
     program = BCS.new(:port => 23765)
-    #program = BCS.new(:port => 23765, :dump => true)
-    #program = DummyDC.new('localhost', 23765, {'dump' => true})
-    #program = DCR.new('localhost', 23765, {'dump' => true, 'scoping' => true})
+    cart_test(program)
+  end
 
+  def cart_test(program)
+    program = BCS.new(:port => 23765)
     addy = "#{program.ip}:#{program.port}"
     add_members(program, addy)
     program.run_bg
@@ -88,7 +96,7 @@ class TestCart < Test::Unit::TestCase
     program.sync_do{
       assert_equal(1, program.memo.length)
       #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
-      assert_equal(2, program.memo.first.array.length)
+      assert_equal(4, program.memo.first.array.length)
     }
     program.stop_bg
   end
