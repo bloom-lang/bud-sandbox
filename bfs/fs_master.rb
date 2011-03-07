@@ -13,13 +13,13 @@ require 'ordering/nonce'
 module FSProtocol
   include BudModule
 
-  state {
+  state do
     interface input, :fsls, [:reqid, :path]
     interface input, :fscreate, [] => [:reqid, :name, :path, :data]
     interface input, :fsmkdir, [] => [:reqid, :name, :path]
     interface input, :fsrm, [] => [:reqid, :name, :path]
     interface output, :fsret, [:reqid, :status, :data]
-  }
+  end
 end
 
 
@@ -38,12 +38,16 @@ module KVSFS
   include FSProtocol
   include BasicKVS
   include SimpleNonce
+  include AggAssign
 
-  state {
+  state do
     # in the KVS-backed implementation, we'll use the same routine for creating 
     # files and directories.
     scratch :check_parent_exists, [:reqid, :name, :path, :mtype, :data]
-  }
+    scratch :check_is_empty, [:reqid, :orig_reqid, :name]
+    scratch :can_remove, [:reqid, :orig_reqid, :name]
+
+  end
 
   bootstrap do
     # replace with nonce reference?
@@ -70,17 +74,37 @@ module KVSFS
     kvget <= check_parent_exists.map{ |c| [c.reqid, c.path] }    
     fsret <= check_parent_exists.map do |c|
       unless kvget_response.map{ |r| r.reqid}.include? c.reqid
-        puts "not found" or [c.reqid, false, "parent path #{c.path} for #{c.name} does not exist"]
+        puts "not found #{c.path}" or [c.reqid, false, "parent path #{c.path} for #{c.name} does not exist"]
       end
     end
 
+    # if the block above had no rows, dir_exists will have rows.
     dir_exists = join [check_parent_exists, kvget_response, nonce], [check_parent_exists.reqid, kvget_response.reqid]
+
+    check_is_empty <= join([fsrm, nonce]).map{|m, n| [n.ident, m.reqid, terminate_with_slash(m.path) + m.name] }
+    kvget <= check_is_empty.map{|c| [c.reqid, c.name] }
+    can_remove <= join([kvget_response, check_is_empty], [kvget_response.reqid, check_is_empty.reqid]).map do |r, c|
+      [c.reqid, c.orig_reqid, c.name] if r.value.length == 0
+    end
+
+    fsret <= dir_exists.map do |c, r, n|
+      if c.mtype == :rm
+        unless can_remove.map{|can| can.orig_reqid}.include? c.reqid
+          [c.reqid, false, "directory #{} not empty"]
+        end
+      end
+    end
+      
     # update dir entry
+    # note that it is unnecessary to ensure that a file is created before its corresponding
+    # directory entry, as both inserts into :kvput below will co-occur in the same timestep.
     kvput <= dir_exists.map do |c, r, n|
       if c.mtype == :rm 
-        [ip_port, c.path, n.ident, r.value.clone.reject{|item| item == c.name}]
+        if can_remove.map{|can| can.orig_reqid}.include? c.reqid
+          [ip_port, c.path, n.ident, r.value.clone.reject{|item| item == c.name}]
+        end
       else 
-          [ip_port, c.path, n.ident, r.value.clone.push(c.name)]
+        [ip_port, c.path, n.ident, r.value.clone.push(c.name)]
       end
     end
   
@@ -90,22 +114,29 @@ module KVSFS
           [ip_port, terminate_with_slash(c.path) + c.name, c.reqid, []]
         when :create
           [ip_port, terminate_with_slash(c.path) + c.name, c.reqid, "LEAF"]
-        when :rm
-          # leak children!!
-          puts "RM DIR"
-          [ip_port, terminate_with_slash(c.path) + c.name, c.reqid, "TOMBSTONE"]
       end
     end
 
-    fsret <= dir_exists.map{ |c, r| [c.reqid, true, nil] }
+    # delete entry -- if an 'rm' request, 
+    kvdel <= dir_exists.map do |c, r, n| 
+      if can_remove.map{|can| can.orig_reqid}.include? c.reqid
+        [terminate_with_slash(c.path) + c.name, c.reqid] 
+      end
+    end
+
+    # report success if the parent directory exists (and there are no errors)
+    # were there errors, we'd never reach fixpoint.
+    fsret <= dir_exists.map do |c, r| 
+      unless c.mtype == :rm and ! can_remove.map{|can| can.orig_reqid}.include? c.reqid
+        [c.reqid, true, nil] 
+      end
+    end
+
+  end
+
+  def terminate_with_slash(path)
+    return path[-1..-1] == '/' ? path : path + '/'
   end
   
-  def terminate_with_slash(path)
-    if path =~ /\/\z/
-      return path
-    else
-      return path + "/"
-    end
-  end
 end
 

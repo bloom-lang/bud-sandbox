@@ -103,12 +103,56 @@ class TestBFS < Test::Unit::TestCase
     }
   end
 
-  def test_fsmaster
+  def nntest_fsmaster
     b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg
   end
+
+  def test_rms
+    m = CFSC.new(@opts.merge(:port => 46363))
+    m.run_bg
+    b = BFSShell.new("localhost:46363")
+    b.run_bg
+    
+    b.dispatch_command(['mkdir', '/a'])
+    b.dispatch_command(['mkdir', '/a/b'])
+    b.dispatch_command(['mkdir', '/a/b/c'])
+    b.dispatch_command(['mkdir', '/a/b/c/d'])
+    ret = b.dispatch_command(['rm', '/a'])
+    assert(!ret.status, "rm of non-empty directory should fail")
+
+    ret = b.dispatch_command(['rm', '/a/b'])
+    assert(!ret.status, "rm of non-empty directory should fail")
+    
+    ret = b.dispatch_command(['rm', '/a/b/c/d'])
+    assert(ret.status, "rm of empty directory should succeed")
+
+    ret = b.dispatch_command(['rm', '/a/b/c'])
+    assert(ret.status, "rm of empty directory should succeed")
+  
+    ret = b.dispatch_command(['rm', '/a/b'])
+    assert(ret.status, "rm of empty directory should succeed")
+
+    ret = b.dispatch_command(['ls', '/'])
+    puts "RET is #{ret.inspect}"
+
+
+    m.sync_do{}
+    m.sync_do{}
+    m.sync_do{}
+    m.sync_do{}
+    m.sync_do do 
+      m.kvstate.each do |k|
+        puts "STATE: #{k.inspect}"
+      end
+    end   
+
+    m.stop_bg
+    b.stop_bg
+  end
+  
   
   def new_datanode(dp, master_port)
     dn = DN.new(dp, @opts)
@@ -191,7 +235,7 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def test_datanode
+  def nntest_datanode
     dn = new_datanode(11116, 45637)
     dn.run_bg
     hbc = HBA.new(@opts.merge(:port => 45637))
