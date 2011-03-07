@@ -30,7 +30,6 @@ module ChunkedKVSFS
   }
 
   declare 
-  # TEST RUBYDOCS
   def lookups
     lookup <= fschunklist
     lookup <= fsaddchunk
