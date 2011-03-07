@@ -54,6 +54,7 @@ module PaxosPrepareAgent
 
   state do
     table :datalist, [:view, :aru_requested, :seq, :update, :dltype]
+    scratch :datalist_agg, [:view, :contents]
     table :datalist_length, [:aru, :len]
     table :global_history, [:host, :seqno] => [:requestor, :update]
     table :last_installed, [] => [:view]
@@ -84,24 +85,28 @@ module PaxosPrepareAgent
     end
 
     datalist <= join([datalist, accept]).map do |d, a|
-      if a.seq >= d.aru and d.dltype == "bottom"
+      if a.seq >= d.aru_requested and d.dltype == "bottom"
         [d.view, d.aru_requested, a.seq, a.update, "proposed"]
       else
-        print "oh dear. !" + a.seq.to_s + " >= " + d.aru.to_s + "\n"
+        print "oh dear. !" + a.seq.to_s + " >= " + d.aru_requested.to_s + "\n"
       end
     end
 
-    datalist_length <= datalist.group([datalist.aru_requested], count())
+    datalist_agg <= datalist.group([datalist.view], accum([datalist.aru_requested, datalist.seq, datalist.update, datalist.dltype]))
+    #datalist_length <= datalist.group([datalist.aru_requested], count())
+
+    stdio <~ datalist_agg.map{|d| ["DLA: #{d.inspect}"] } 
   end
 
   declare
   def decide
     dj = join([datalist, datalist_length])
-    cast_vote <+ dj.map do |d, l|
-      print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
-    end
+    #cast_vote <+ dj.map do |d, l|
+    #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
+    #end
+    cast_vote <= datalist_agg.map{|d| [d.view, d.contents] } 
   
-    datalist <- dj.map{|d, l| d}
+    #datalist <- dj.map{|d, l| d}
   end 
 end
 
