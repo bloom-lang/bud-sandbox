@@ -5,7 +5,7 @@ require 'bfs/bfs_client_proto'
 # glues together an implementation of a ChunkedFS with the BFSClientProtocol protocol
 
 module BFSMasterServer
-  include BFSClientProtocol
+  include BFSClientMasterProtocol
     
   state {
     table :rendez, request_msg.schema

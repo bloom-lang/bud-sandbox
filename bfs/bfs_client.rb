@@ -11,10 +11,11 @@ require 'bfs/data_protocol'
 
 module BFSClient
   include BFSClientProtocol
+  include BFSClientMasterProtocol
 
-  state {
+  state do
     table :master, [] => [:master]
-  }
+  end
 
   declare
   def cglue
@@ -42,13 +43,12 @@ class BFSShell
     my_queue << [@queue]
   end
 
-  
-  state {
+  state do
     table :remember_response, response.schema
     table :watched_ids, [:reqid]
     table :my_queue, [] => [:queue]
     scratch :hollow, [:straw]
-  }
+  end
 
   declare
   def synchronization
