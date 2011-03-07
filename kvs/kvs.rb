@@ -6,22 +6,23 @@ require 'delivery/multicast'
 module KVSProtocol
   include BudModule
 
-  state {
+  state do
     #interface input, :kvput, [:client, :key, :reqid] => [:value]
     interface input, :kvput, [:client, :key] => [:reqid, :value]
+    interface input, :kvdel, [:client, :key] => [:reqid]
     interface input, :kvget, [:reqid] => [:key]
     interface output, :kvget_response, [:reqid] => [:key, :value]
-  }
+  end
 end
 
 module BasicKVS
   include KVSProtocol
 
-  state {
+  state do
     table :kvstate, [:key] => [:value]
     #interface input, :kvput_internal, [:client, :key] => [:reqid, :value]
     scratch :kvput_internal, [:client, :key] => [:reqid, :value]
-  }
+  end
 
   declare 
   def mutate
@@ -36,6 +37,11 @@ module BasicKVS
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
     end
+  end
+
+  declare
+  def delete
+    kvstate <- join([kvstate, kvdel], [kvstate.key, kvdel.key]).map {|s, d| s}
   end
 
   # place holder until scoping is fully implemented

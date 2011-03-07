@@ -70,5 +70,18 @@ class TestKVS < Test::Unit::TestCase
 
     v.stop_bg
   end
+
+  def test_del
+    v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')
+    assert_nothing_raised(RuntimeError) {v.run_bg}
+    workload1(v)
+    v.sync_do{ assert_equal(1, v.kvstate.length) }
+    v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
+
+    v.sync_do {v.kvdel <+ [[nil, 'foo', 23525]]}
+    v.sync_do{}
+    v.sync_do { assert_equal(0, v.kvstate.length) }
+    v.stop_bg
+  end
 end
 
