@@ -16,7 +16,7 @@ module FSUtil
   include FSProtocol
 
   state {
-    table :remember_resp, fsret.key_cols => fsret.cols
+    table :remember_resp, fsret.key_cols => fsret.val_cols
   }
 
   declare

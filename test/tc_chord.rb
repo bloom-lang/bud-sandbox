@@ -18,7 +18,7 @@ class LilChord
   end
 
   state {
-    table :succ_cache, succ_resp.key_cols => succ_resp.cols
+    table :succ_cache, succ_resp.key_cols => succ_resp.val_cols
   }
 
   # figure 3(b) from stoica's paper
