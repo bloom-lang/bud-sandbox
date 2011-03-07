@@ -21,7 +21,7 @@ class DataProtocolClient
       s.close
       return
     rescue
-      puts "(connect #{host}:#{port})EXCEPTION ON READ: #{$!}"
+      puts "(connect #{host}:#{port})EXCEPTION ON SEND: #{$!}"
     end 
     raise "No datanodes"   
   end
@@ -37,7 +37,7 @@ class DataProtocolClient
         s.close
         return ret
       rescue
-        puts "(connect #{host}:#{port})EXCEPTION ON READ: #{$!}"
+        puts "(connect #{host}:#{port}, nodelist #{nodelist}) EXCEPTION ON READ: #{$!}"
         # go around the loop again.
       end
     end 

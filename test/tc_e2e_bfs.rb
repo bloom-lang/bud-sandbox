@@ -47,8 +47,22 @@ class TestBFS < Test::Unit::TestCase
   def files_in_dir(dir)
     Dir.new(dir).entries.length - 2
   end 
+
+  def ntest_concurrent_clients
+    b = CFSC.new(@opts.merge(:port => 44444))
+    d1 = new_datanode(41111, 44444)
+    d2 = new_datanode(41111, 44444)
+    s1 = BFSShell.new("localhost:44444")
+    s2 = BFSShell.new("localhost:44444")
+
+    b.run_bg; s1.run_bg; s2.run_bg
+
+    s1.dispatch_command(["create", "/test1"])
+    res = s2.dispatch_command(["ls", "/"])
+    puts "res is #{res}"
+  end
     
-  def test_many_datanodes
+  def ntest_many_datanodes
     b = CFSC.new(@opts.merge(:port => "33333"))#, :trace => true))
     b.run_bg
     
@@ -109,12 +123,12 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_client
-    b = CFSC.new(@opts.merge(:port => "65433"))
+    b = CFSC.new(@opts.merge(:port => "65433"))#, :trace => true))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
 
-    sleep 2
+    sleep 3
 
     s = BFSShell.new("localhost:65433")
     s.run_bg

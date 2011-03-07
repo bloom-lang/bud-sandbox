@@ -30,6 +30,7 @@ module ChunkedKVSFS
   }
 
   declare 
+  # TEST RUBYDOCS
   def lookups
     lookup <= fschunklist
     lookup <= fsaddchunk
@@ -55,7 +56,7 @@ module ChunkedKVSFS
   def getnodes
     fsret <= fschunklocations.map do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
-        [l.reqid, false, "no datanodes found for #{l.chunkid}"]
+        [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache.length}"]
       end
     end
 
