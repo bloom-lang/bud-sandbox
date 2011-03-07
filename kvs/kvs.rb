@@ -9,7 +9,7 @@ module KVSProtocol
   state do
     #interface input, :kvput, [:client, :key, :reqid] => [:value]
     interface input, :kvput, [:client, :key] => [:reqid, :value]
-    interface input, :kvdel, [:client, :key] => [:reqid]
+    interface input, :kvdel, [:key] => [:reqid]
     interface input, :kvget, [:reqid] => [:key]
     interface output, :kvget_response, [:reqid] => [:key, :value]
   end

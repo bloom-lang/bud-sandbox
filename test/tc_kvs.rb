@@ -78,7 +78,7 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do{ assert_equal(1, v.kvstate.length) }
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
 
-    v.sync_do {v.kvdel <+ [[nil, 'foo', 23525]]}
+    v.sync_do {v.kvdel <+ [['foo', 23525]]}
     v.sync_do{}
     v.sync_do { assert_equal(0, v.kvstate.length) }
     v.stop_bg
