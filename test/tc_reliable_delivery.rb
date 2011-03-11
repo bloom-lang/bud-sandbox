@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bud'
+require 'bud/rendezvous'
 require 'test/unit'
 require 'delivery/reliable_delivery'
 
@@ -33,15 +34,14 @@ class TestBEDelivery < Test::Unit::TestCase
 
   def test_besteffort_delivery2
     rd = RED.new(:port => 13333)
-    #rd = RED.new(:port => 13333)
     rd2 = RED.new(:port => 13334)
     rd.run_bg
     rd2.run_bg
+    ren = Rendezvous.new(rd, rd.pipe_sent)
+    
     sendtup = ['localhost:13334', 'localhost:13333', 1, 'foobar']
     rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
-
-    sleep 2
-
+    res = ren.block_on(5)
     # transmission 'complete'
     rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
 
@@ -49,5 +49,6 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.sync_do{ assert(rd.buf.empty?) }
     rd.stop_bg
     rd2.stop_bg
+    ren.stop
   end
 end
