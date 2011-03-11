@@ -1,8 +1,8 @@
 require 'rubygems'
 require 'bud'
 require 'bfs/data_protocol'
+require 'bfs/bfs_config'
 
-REP_FACTOR = 2
 
 
 # Background processes for the BFS master.  Right now, this is just firing off replication requests 

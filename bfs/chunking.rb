@@ -59,6 +59,7 @@ module ChunkedKVSFS
       end
     end
 
+    # chunkjoin will have rows if the block above doesn't.
     chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
     host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
     # what a hassle

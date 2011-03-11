@@ -11,4 +11,3 @@ res = c.dispatch_command(ARGV)
 
 puts "Result:\n#{res.inspect}"
 
-sleep 1

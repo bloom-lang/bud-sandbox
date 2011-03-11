@@ -1,9 +1,11 @@
 require 'rubygems'
 require 'bud'
+require 'bud/rendezvous'
 require 'backports'
 require 'timeout'
 require 'bfs/bfs_client_proto'
 require 'bfs/data_protocol'
+require 'bfs/bfs_config'
 
 # The BFS client and shell stand between ruby and BUD.  BSFShell provides dispatch_command() as a synchronous functional interface
 # for FS operations
@@ -89,8 +91,22 @@ class BFSShell
     items = path.split("/")
     return [items.pop, items.length == 1 ? "/" : items.join("/")]
   end 
-
+  
   def synchronous_request(op, args)
+    reqid = UUID.new.to_s
+    puts "reqid is #{reqid}"
+    ren = Rendezvous.new(self, response)
+    async_do{ request <+ [[reqid, op, args]] }
+    res = ren.block_on(5)
+    ren.stop
+    if res[0] = reqid
+      return res
+    else 
+      puts "GOT (wrong) RES #{res}" 
+    end
+  end
+
+  def synchronous_request_old(op, args)
     reqid = 1 + rand(10000000)
     async_do{ request <+ [[reqid, op, args]] }
     return timed_sync(reqid)
@@ -120,7 +136,7 @@ class BFSShell
 
   def do_read(args, fh)
     res = synchronous_request(:getchunks, args[0])
-    res.response.sort{|a, b| a <=> b}.each do |chk|
+    res[2].sort{|a, b| a <=> b}.each do |chk|
       res = synchronous_request(:getchunklocations, chk)
       chunk = DataProtocolClient.read_chunk(chk, res[2])
       fh.write chunk
@@ -158,6 +174,6 @@ class BFSShell
 
   def do_ls(args)
     res = synchronous_request(:ls, args[0])
-    return res.response
+    return res[2]
   end
 end
