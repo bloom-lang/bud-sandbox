@@ -33,7 +33,6 @@ class TestMembership < Test::Unit::TestCase
     mt = MT.new
     mt.run_bg
     mt.add_member <+ [['foo', 7]]
-    sleep 3
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))
     mt.stop_bg
@@ -47,7 +46,6 @@ class TestMembership < Test::Unit::TestCase
 
     mt.run_bg
     mt.add_member <+ [['foo', 7]]
-    sleep 3
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))
 
