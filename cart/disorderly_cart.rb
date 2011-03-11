@@ -11,7 +11,6 @@ module DisorderlyCart
     table :cart_action, [:session, :reqid] => [:item, :action]
     scratch :action_cnt, [:session, :item, :action] => [:cnt]
     scratch :status, [:server, :client, :session, :item] => [:cnt]
-    scratch :stage_resp, [:server, :client, :session] => [:itemlist]
   }
  
   declare
