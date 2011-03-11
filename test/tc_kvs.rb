@@ -18,9 +18,7 @@ class TestKVS < Test::Unit::TestCase
     # reliable delivery fails if the recipient is down
     v = SingleSiteKVS.new
     assert_nothing_raised(RuntimeError) {v.run_bg}
-    sleep 1
     if v.is_a?  ReliableDelivery
-      sleep 1
       workload1(v)
       assert_equal(0, v.kvstate.length)
     end
