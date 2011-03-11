@@ -121,19 +121,19 @@ class TestBFS < Test::Unit::TestCase
     b.dispatch_command(['mkdir', '/a/b/c'])
     b.dispatch_command(['mkdir', '/a/b/c/d'])
     ret = b.dispatch_command(['rm', '/a'])
-    assert(!ret.status, "rm of non-empty directory should fail")
+    assert(!ret[1], "rm of non-empty directory should fail")
 
     ret = b.dispatch_command(['rm', '/a/b'])
-    assert(!ret.status, "rm of non-empty directory should fail")
+    assert(!ret[1], "rm of non-empty directory should fail")
     
     ret = b.dispatch_command(['rm', '/a/b/c/d'])
-    assert(ret.status, "rm of empty directory should succeed")
+    assert(ret[1], "rm of empty directory should succeed")
 
     ret = b.dispatch_command(['rm', '/a/b/c'])
-    assert(ret.status, "rm of empty directory should succeed")
+    assert(ret[1], "rm of empty directory should succeed")
   
     ret = b.dispatch_command(['rm', '/a/b'])
-    assert(ret.status, "rm of empty directory should succeed")
+    assert(ret[1], "rm of empty directory should succeed")
 
     ret = b.dispatch_command(['ls', '/'])
     puts "RET is #{ret.inspect}"
