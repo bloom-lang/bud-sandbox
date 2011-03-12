@@ -6,11 +6,13 @@ require 'bfs/hb_master'
 module ChunkedFSProtocol
   include FSProtocol
 
-  state {
+  state do
     interface :input, :fschunklist, [:reqid, :file]
     interface :input, :fschunklocations, [:reqid, :chunkid]
     interface :input, :fsaddchunk, [:reqid, :file]
-  }
+    # note that no output interface is defined.
+    # we use :fsret (defined in FSProtocol) for output.
+  end
 end
 
 module ChunkedKVSFS
@@ -19,7 +21,7 @@ module ChunkedKVSFS
   include HBMaster
   include SimpleNonce
 
-  state {
+  state do
     # master copy.  every chunk we ever tried to create metadata for.
     table :chunk, [:chunkid, :file, :siz]
     scratch :chunk_buffer, [:reqid, :chunkid]
@@ -27,7 +29,7 @@ module ChunkedKVSFS
     scratch :host_buffer, [:reqid, :host]
     scratch :host_buffer2, [:reqid, :hostlist]
     scratch :lookup, [:reqid, :file]
-  }
+  end
 
   declare 
   def lookups
@@ -47,7 +49,6 @@ module ChunkedKVSFS
     chunk_buffer <= join([fschunklist, kvget_response, chunk], [fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]).map{ |l, r, c| [l.reqid, c.chunkid] }
     chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
     fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
-
     # handle case of empty file / haven't heard about chunks yet
   end
 
@@ -70,7 +71,6 @@ module ChunkedKVSFS
   declare
   def addchunks
     #stdio <~ "Warning: no available datanodes" if available.empty?
-
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
     fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list]] }
