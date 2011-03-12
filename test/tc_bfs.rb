@@ -33,17 +33,6 @@ class FSC
   include FSUtil
 end
 
-class CFSC
-  # the completely composed BFS
-  include Bud
-  include ChunkedKVSFS
-  include HBMaster
-  include BFSMasterServer
-  include BFSBackgroundTasks
-  include StaticMembership
-  include FSUtil
-end
-
 class DN
   include Bud
   include BFSDatanode
@@ -62,7 +51,7 @@ class TestBFS < Test::Unit::TestCase
     super
   end
   def ntest_directorystuff1
-    b = CFSC.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
     b.run_bg
     s = BFSShell.new("localhost:65432")
     s.run_bg
@@ -111,7 +100,7 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_rms
-    m = CFSC.new(@opts.merge(:port => 46363))
+    m = BFSMasterServer.new(@opts.merge(:port => 46363))
     m.run_bg
     b = BFSShell.new("localhost:46363")
     b.run_bg
@@ -165,7 +154,7 @@ class TestBFS < Test::Unit::TestCase
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
-    b = CFSC.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
     b.run_bg
     #sleep 5
     do_basic_fs_tests(b)

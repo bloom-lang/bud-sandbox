@@ -1,10 +1,12 @@
 require 'rubygems'
 require 'bud'
 require 'bfs/bfs_client_proto'
+require 'bfs/background'
+require 'bfs/chunking'
 
 # glues together an implementation of a ChunkedFS with the BFSClientProtocol protocol
 
-module BFSMasterServer
+module BFSMasterGlue
   include BFSClientMasterProtocol
     
   state {
@@ -33,3 +35,37 @@ module BFSMasterServer
     end
   end 
 end
+
+
+class BFSMasterServer
+  # the completely composed BFS
+  include Bud
+  include ChunkedKVSFS
+  include HBMaster
+  include BFSMasterGlue
+  include BFSBackgroundTasks
+  include StaticMembership
+
+  # and its background tasks
+  def run_bg
+    # EventMachine must be running before we can start a listener
+    super
+    start_background_task_thread
+  end
+
+  def start_background_task_thread
+    meeting = Rendezvous.new(self, self.copy_chunk)
+    Thread.new do 
+      loop do
+        task = meeting.block_on(1000)
+        puts "GOT BG TASK: #{task.inspect}"
+        bg_besteffort_request(task[0], task[1], task[2])
+      end
+    end
+  end
+
+  def bg_besteffort_request(c, o, r)
+    DataProtocolClient.send_replicate(c, r, o)
+  end
+end
+

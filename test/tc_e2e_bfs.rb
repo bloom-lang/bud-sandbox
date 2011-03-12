@@ -11,18 +11,6 @@ require 'bfs/background'
 
 TEST_FILE='/usr/share/dict/words'
 
-class CFSC
-
-  # the completely composed BFS
-  include Bud
-  include ChunkedKVSFS
-  include HBMaster
-  include BFSMasterServer
-  #include BFSBackgroundTasks
-  include StaticMembership
-end
-
-
 class DN
   include Bud
   include BFSDatanode
@@ -49,7 +37,7 @@ class TestBFS < Test::Unit::TestCase
   end 
 
   def ntest_concurrent_clients
-    b = CFSC.new(@opts.merge(:port => 44444))
+    b = BFSMasterServer.new(@opts.merge(:port => 44444))
     d1 = new_datanode(41111, 44444)
     d2 = new_datanode(41111, 44444)
     s1 = BFSShell.new("localhost:44444")
@@ -63,7 +51,7 @@ class TestBFS < Test::Unit::TestCase
   end
     
   def ntest_many_datanodes
-    b = CFSC.new(@opts.merge(:port => "33333"))#, :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
     b.run_bg
     
     dns = []
@@ -123,7 +111,7 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_client
-    b = CFSC.new(@opts.merge(:port => "65433"))#, :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "65433"))#, :trace => true))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
