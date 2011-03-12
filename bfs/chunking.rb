@@ -75,8 +75,8 @@ module ChunkedKVSFS
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
     fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list]] }
     fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|
-      if available.empty?
-        [r.reqid, false, "empty datanode set!"]
+      if available.empty? or available.first.pref_list.length < REP_FACTOR
+        [r.reqid, false, "datanode set cannot satisfy REP_FACTOR = #{REP_FACTOR}"]
       end
     end
   end
