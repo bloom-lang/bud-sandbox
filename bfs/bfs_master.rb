@@ -58,7 +58,6 @@ class BFSMasterServer
     Thread.new do 
       loop do
         task = meeting.block_on(1000)
-        puts "GOT BG TASK: #{task.inspect}"
         bg_besteffort_request(task[0], task[1], task[2])
       end
     end

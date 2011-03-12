@@ -38,11 +38,8 @@ class BFSShell
   
  def initialize(master)
     @master = master
-    @queue = Queue.new
     # bootstrap?
-
     super(:dump => true)
-    my_queue << [@queue]
   end
 
   state do
@@ -52,17 +49,6 @@ class BFSShell
     scratch :hollow, [:straw]
   end
 
-  declare
-  def synchronization
-    remember_response <= response
-    snc = join [remember_response, watched_ids, my_queue], [remember_response.reqid, watched_ids.reqid]
-    hollow <= snc.map do |r, w, q|
-      [q.queue.push r]
-    end
-    watched_ids <- snc.map{ |r, w| w }
-    remember_response <- snc.map{ |r, w| r }
-  end
-  
   bootstrap do
     master << [@master]
   end
