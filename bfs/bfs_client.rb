@@ -94,7 +94,6 @@ class BFSShell
   
   def synchronous_request(op, args)
     reqid = UUID.new.to_s
-    puts "reqid is #{reqid}"
     ren = Rendezvous.new(self, response)
     async_do{ request <+ [[reqid, op, args]] }
     res = ren.block_on(5)
@@ -102,15 +101,9 @@ class BFSShell
     if res[0] = reqid
       return res
     else 
-      puts "GOT (wrong) RES #{res}" 
+      raise "GOT (wrong) RES #{res}" 
     end
   end
-
-  def synchronous_request_old(op, args)
-    reqid = 1 + rand(10000000)
-    async_do{ request <+ [[reqid, op, args]] }
-    return timed_sync(reqid)
-  end 
 
   def do_createfile(args)
     do_create(args, false)
@@ -157,19 +150,6 @@ class BFSShell
     preflist = ret[2][1]
     sendlist = preflist.sort_by{rand}[0..REP_FACTOR-1]
     DataProtocolClient.send_stream(chunkid, sendlist, DataProtocolClient.chunk_from_fh(fh))
-  end
-
-  def timed_sync(reqid)
-    async_do { watched_ids <+ [[reqid]] }
-    res = nil
-    Timeout::timeout(5) do
-      res = @queue.pop
-    end
-    # the bud code frequently (but not always!) enqueues items 2X
-    if res.reqid != reqid
-      res = timed_sync(reqid)
-    end
-    return res
   end
 
   def do_ls(args)

@@ -19,7 +19,7 @@ module ChunkedKVSFS
   include ChunkedFSProtocol
   include KVSFS
   include HBMaster
-  include SimpleNonce
+  include TimestepNonce
 
   state do
     # master copy.  every chunk we ever tried to create metadata for.

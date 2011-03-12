@@ -39,7 +39,7 @@ module GroupNonce
   end
 end
 
-module SimpleNonce
+module TimestepNonce
   include NonceProto
 
   # we don't need any state: just salt in address and local time.
@@ -51,7 +51,7 @@ module SimpleNonce
   }
 
   bootstrap do
-    permo <= [[self.object_id << 16]]
+    permo <= [[Time.new.to_i << 16]]
   end
 
   declare

@@ -37,7 +37,7 @@ end
 module KVSFS
   include FSProtocol
   include BasicKVS
-  include SimpleNonce
+  include TimestepNonce
   include AggAssign
 
   state do

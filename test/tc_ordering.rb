@@ -22,7 +22,7 @@ end
 
 class SN
   include Bud
-  include SimpleNonce
+  include TimestepNonce
 end
 
 class GN
