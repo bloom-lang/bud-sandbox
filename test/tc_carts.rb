@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bud'
+require 'bud/rendezvous'
 require 'test/unit'
 require 'test/cart_workloads'
 require 'time_hack/time_moves'
@@ -93,10 +94,8 @@ class TestCart < Test::Unit::TestCase
     add_members(program, addy)
     program.run_bg
     run_cart(program)
-
-    sleep 4
-    #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
-
+    sleep 1
+    program.sync_do{}
     program.sync_do{
       assert_equal(1, program.memo.length)
       #program.memo.each {|m| puts "MEMO: #{m.inspect}" }
