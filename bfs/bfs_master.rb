@@ -9,9 +9,9 @@ require 'bfs/chunking'
 module BFSMasterGlue
   include BFSClientMasterProtocol
     
-  state {
+  state do
     table :rendez, request_msg.schema
-  }
+  end
 
   declare
   def mglue
