@@ -86,7 +86,6 @@ class DataProtocolServer
       loop {
         Thread.start(@dn_server.accept) do |client|
           header = dispatch_dn(client)
-          #client.close
           next if conditional_continue
         end
       }
@@ -156,7 +155,6 @@ class DataProtocolServer
       fp.close
     rescue
       puts "FAIL: #{$!}"
-      ##fp.close
     end
   end
 
