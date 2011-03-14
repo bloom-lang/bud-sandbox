@@ -30,16 +30,20 @@ module BFSClient
       [r.reqid, r.status, r.response]
     end 
   end
+
+  def BFSClient::gen_id
+    UUID.new.to_s
+  end
 end
 
 class BFSShell
   include Bud
   include BFSClient
   
- def initialize(master)
+ def initialize(master, opts = {})
     @master = master
     # bootstrap?
-    super(:dump => true)
+    super(opts)
   end
 
   state do
@@ -79,10 +83,10 @@ class BFSShell
   end 
   
   def synchronous_request(op, args)
-    reqid = UUID.new.to_s
+    reqid = gen_id
     ren = Rendezvous.new(self, response)
     async_do{ request <+ [[reqid, op, args]] }
-    res = ren.block_on(5)
+    res = ren.block_on(15)
     ren.stop
     if res[0] = reqid
       return res

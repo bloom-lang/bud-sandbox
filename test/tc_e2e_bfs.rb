@@ -50,7 +50,7 @@ class TestBFS < Test::Unit::TestCase
     puts "res is #{res}"
   end
     
-  def ntest_many_datanodes
+  def test_many_datanodes
     b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
     b.run_bg
     
@@ -62,9 +62,9 @@ class TestBFS < Test::Unit::TestCase
       dns << new_datanode(port, 33333)
     end
 
-    s = BFSShell.new("localhost:33333")
+    s = BFSShell.new("localhost:33333", @opts)
     s.run_bg
-    sleep 2
+    sleep 6
 
 
     s.dispatch_command(["create", "/peter"])
@@ -96,7 +96,11 @@ class TestBFS < Test::Unit::TestCase
     assert_equal(25, chunk.keys.length)
     chunk.each_pair do |k, v|
       #puts "C[#{k}] = #{v.inspect}"
-      assert_equal(REP_FACTOR, v.length)
+      #assert_equal(REP_FACTOR, v.length)
+      assert(v.length >= REP_FACTOR, "low replication: #{v.length} for #{k}")
+      if v.length > REP_FACTOR 
+        puts "\texpeced #{REP_FACTOR}, got #{v.length} for #{k}"
+      end
     end
 
     node.each_pair do |k, v|
@@ -104,7 +108,7 @@ class TestBFS < Test::Unit::TestCase
       assert(v.length > 0, "node #{k} has no chunks")
     end
 
-    dns.each {|d| d.stop_bg }
+    dns.each {|d| d.stop_datanode }
     b.stop_bg
     s.stop_bg
 
@@ -116,7 +120,7 @@ class TestBFS < Test::Unit::TestCase
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
 
-    sleep 3
+    sleep 6
 
     s = BFSShell.new("localhost:65433")
     s.run_bg
@@ -134,7 +138,7 @@ class TestBFS < Test::Unit::TestCase
     rd.close  
 
     s.sync_do{}
-    sleep 2
+    sleep 4
 
     s.dispatch_command(["ls", "/"])
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
@@ -163,7 +167,8 @@ class TestBFS < Test::Unit::TestCase
     dn3 = new_datanode(11117, 65433)
     # and an amnesiac
     dn4 = new_datanode(11119, 65433)
-    sleep 5
+    # this is a lot of slack.  but necessary given wider duty cycles.
+    sleep 12
 
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
     fp = File.open(file, "w")
@@ -176,13 +181,11 @@ class TestBFS < Test::Unit::TestCase
 
     # and run off the replica
     
-    
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
     fp = File.open(file, "w")
     s.dispatch_command(["read", "/peter"], fp)
     fp.close
     assert_equal(md5_of(TEST_FILE), md5_of(file)) 
-
 
     s.stop_bg
     b.stop_bg

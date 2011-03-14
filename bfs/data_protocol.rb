@@ -1,6 +1,4 @@
-CHUNKSIZE = 100000
-DATADIR = '/tmp/bloomfs'
-
+require 'bfs/bfs_config'
 
 class DataProtocolClient
   # useful things:
@@ -15,6 +13,7 @@ class DataProtocolClient
   def DataProtocolClient::send_replicate(chunkid, target, owner)
     args = ["replicate", chunkid, target]
     host, port = owner.split(":")
+    puts "send_replicate: #{chunkid}, #{target}, #{owner}"
     begin
       s = TCPSocket.open(host, port)
       s.puts(args.join(","))
@@ -23,7 +22,7 @@ class DataProtocolClient
     rescue
       puts "(connect #{host}:#{port})EXCEPTION ON SEND: #{$!}"
     end 
-    raise "No datanodes"   
+    raise "failed to replicate"
   end
 
   def DataProtocolClient::read_chunk(chunkid, nodelist)
@@ -87,7 +86,7 @@ class DataProtocolServer
       loop {
         Thread.start(@dn_server.accept) do |client|
           header = dispatch_dn(client)
-          client.close
+          #client.close
           next if conditional_continue
         end
       }
@@ -133,7 +132,6 @@ class DataProtocolServer
     if preflist.length > 0
       DataProtocolClient.send_stream(chunkid, preflist, data)
     end
-    #cli.close
   end
   
   def do_read(chunkid, cli)
@@ -158,6 +156,7 @@ class DataProtocolServer
       fp.close
     rescue
       puts "FAIL: #{$!}"
+      ##fp.close
     end
   end
 

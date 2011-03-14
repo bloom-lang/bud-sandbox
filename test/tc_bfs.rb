@@ -50,7 +50,7 @@ class TestBFS < Test::Unit::TestCase
     `rm -r #{DATADIR}`
     super
   end
-  def ntest_directorystuff1
+  def test_directorystuff1
     b = BFSMasterServer.new(@opts.merge(:port => "65432"))
     b.run_bg
     s = BFSShell.new("localhost:65432")
@@ -77,7 +77,7 @@ class TestBFS < Test::Unit::TestCase
     four = s.dispatch_command(["ls", "/foo/1/2"])
     assert_equal(["3"], four)
 
-    dump_internal_state(b)
+    #dump_internal_state(b)
     b.stop_bg
     s.stop_bg
   end
@@ -92,7 +92,7 @@ class TestBFS < Test::Unit::TestCase
     }
   end
 
-  def nntest_fsmaster
+  def test_fsmaster
     b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
@@ -150,7 +150,7 @@ class TestBFS < Test::Unit::TestCase
     return dn
   end
 
-  def ntest_addchunks
+  def tnest_addchunks
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
@@ -224,7 +224,7 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def nntest_datanode
+  def test_datanode
     dn = new_datanode(11116, 45637)
     dn.run_bg
     hbc = HBA.new(@opts.merge(:port => 45637))
@@ -232,7 +232,7 @@ class TestBFS < Test::Unit::TestCase
     hbc.sync_do {} 
 
 
-    sleep 5
+    sleep 6
   
     #dn.sync_do  {
     #  dn.payload.each{|p| puts "PL: #{p.inspect}" }

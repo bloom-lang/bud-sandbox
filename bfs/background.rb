@@ -14,11 +14,12 @@ module BFSBackgroundTasks
 
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
-    periodic :bg_timer, 1
+    periodic :bg_timer, 3
     scratch :chunk_cnts_chunk, [:chunkid, :replicas]
     scratch :chunk_cnts_host, [:host, :chunks]
     scratch :candidate_nodes, [:chunkid, :host, :chunks]
     scratch :best_dest, [:chunkid, :host]
+    scratch :chosen_dest, [:chunkid, :host]
     scratch :sources, [:chunkid, :host]
     scratch :best_src, [:chunkid, :host]
   end
@@ -37,10 +38,11 @@ module BFSBackgroundTasks
       end
     end
 
-    best_dest <= candidate_nodes.argagg(:min, [candidate_nodes.chunkid, candidate_nodes.host], candidate_nodes.chunks)
+    best_dest <= candidate_nodes.argagg(:min, [candidate_nodes.chunkid], candidate_nodes.chunks)
+    chosen_dest <= best_dest.group([best_dest.chunkid], choose(best_dest.host))
     sources <= join([chunk_cache, candidate_nodes], [chunk_cache.chunkid, candidate_nodes.chunkid]).map{|c, cn| [c.chunkid, c.node]}
     best_src <= sources.group([sources.chunkid], choose(sources.host))
-    copy_chunk <= join([best_dest, best_src], [best_dest.chunkid, best_src.chunkid]).map do |d, s|
+    copy_chunk <= join([chosen_dest, best_src], [chosen_dest.chunkid, best_src.chunkid]).map do |d, s|
       [d.chunkid, s.host, d.host]
     end
   end

@@ -17,7 +17,11 @@ module BFSDatanode
   declare 
   def hblogic
     payload <= hb_timer.map do |t|
-      [Dir.new("#{DATADIR}/#{@data_port}").to_a.map{|d| d.to_i unless d =~ /\./}]
+      dir = Dir.new("#{DATADIR}/#{@data_port}")
+      #files = dir.to_a.find_all{|d| !(d =~ /^\./)}.map{|d| d.to_i }
+      files = dir.to_a.map{|d| d.to_i unless d =~ /^\./}.uniq!
+      dir.close
+      [files]
     end
   end
 

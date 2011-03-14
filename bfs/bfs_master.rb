@@ -15,7 +15,7 @@ module BFSMasterGlue
 
   declare
   def mglue
-    #stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
+    stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
 
     rendez <= request_msg
     fscreate <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "create" }
@@ -58,6 +58,7 @@ class BFSMasterServer
     Thread.new do 
       loop do
         task = meeting.block_on(1000)
+        puts "MIGRATE: #{task.inspect}"
         bg_besteffort_request(task[0], task[1], task[2])
       end
     end

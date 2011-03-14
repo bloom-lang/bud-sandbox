@@ -1,1 +1,3 @@
 REP_FACTOR = 2
+CHUNKSIZE = 100000
+DATADIR = '/tmp/bloomfs'
