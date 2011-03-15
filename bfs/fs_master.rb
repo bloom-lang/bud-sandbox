@@ -51,7 +51,7 @@ module KVSFS
 
   bootstrap do
     # replace with nonce reference?
-    kvput <+ [[nil, '/', gen_id, []]]
+    kvput <= [[nil, '/', gen_id, []]]
   end
   
   declare 
