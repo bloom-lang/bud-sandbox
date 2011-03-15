@@ -10,19 +10,50 @@ module BFSDatanode
   include StaticMembership
 
   state do
-    table :local_chunks, [:chunkid, :size]
-    table :data_port, [] => [:port]
+    scratch :dir_contents, [:file, :time]
+    table :last_dir_contents, [:file, :time]
+    scratch :to_payload, [:file, :time]
   end
 
   declare 
   def hblogic
-    payload <= hb_timer.map do |t|
+    dir_contents <= hb_timer.flat_map do |t|
       dir = Dir.new("#{DATADIR}/#{@data_port}")
-      #files = dir.to_a.find_all{|d| !(d =~ /^\./)}.map{|d| d.to_i }
       files = dir.to_a.map{|d| d.to_i unless d =~ /^\./}.uniq!
       dir.close
-      [files]
+      files.map {|f| [f, Time.parse(t.val).to_f]}
     end
+
+    to_payload <= dir_contents.map do |c|
+      c unless last_dir_contents.map{|l| l.file}.include? c.file
+    end
+
+    #jdc = join([dir_contents, last_dir_contents], [dir_contents.file, last_dir_contents.file])
+    #payload <= jdc.map do |c, l|
+    #  # every 10 seconds we resend the whole list
+    #  if c.time - l.time > 10
+    #    puts "REDO COMPLETE: #{c}" or c
+    #  end
+    #end
+    #last_dir_contents <- jdc.map {|c, l| l}
+
+
+    #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
+    #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
+    last_dir_contents <- join([hb_timer, last_dir_contents]).map do |t, c|
+      #c if (Time.parse(t.val).to_f - c.time) > 10
+      if (Time.parse(t.val).to_f - c.time) > 4
+        puts "RESEND" or c
+      else
+        []
+      end
+    end
+
+    last_dir_contents <+ to_payload
+    last_dir_contents <- join([to_payload, last_dir_contents], [to_payload.file, last_dir_contents.file]).map {|d, l| l}
+
+    stdio <~ payload.inspected
+    payload <= to_payload.group(nil, accum(to_payload.file))
   end
 
   def initialize(dataport=nil, opts={})

@@ -36,21 +36,53 @@ class TestBFS < Test::Unit::TestCase
     Dir.new(dir).entries.length - 2
   end 
 
-  def ntest_concurrent_clients
+  def nntest_concurrent_clients
     b = BFSMasterServer.new(@opts.merge(:port => 44444))
     d1 = new_datanode(41111, 44444)
-    d2 = new_datanode(41111, 44444)
+    d2 = new_datanode(41112, 44444)
     s1 = BFSShell.new("localhost:44444")
     s2 = BFSShell.new("localhost:44444")
 
     b.run_bg; s1.run_bg; s2.run_bg
 
+    sleep 6
+
     s1.dispatch_command(["create", "/test1"])
-    res = s2.dispatch_command(["ls", "/"])
-    puts "res is #{res}"
+    #res = s2.dispatch_command(["ls", "/"])
+    s2.dispatch_command(["create", "/test2"])
+
+    
+
+    Thread.new do 
+      rd = File.open(TEST_FILE, "r")
+      s1.dispatch_command(["append", "/test1"], rd)
+      rd.close
+    end
+
+    rd2 = File.open(TEST_FILE, "r")
+    s2.dispatch_command(["append", "/test2"], rd2)
+    rd2.close
+
+    sleep 6
+
+
+    file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
+    fp = File.open(file, "w")
+    s1.dispatch_command(["read", "/test1"], fp)
+    fp.close
+    assert_equal(md5_of(TEST_FILE), md5_of(file))
+
+
+    file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
+    fp = File.open(file, "w")
+    s2.dispatch_command(["read", "/test2"], fp)
+    fp.close
+    assert_equal(md5_of(TEST_FILE), md5_of(file))
+    
+    
   end
     
-  def test_many_datanodes
+  def ntest_many_datanodes
     b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
     b.run_bg
     

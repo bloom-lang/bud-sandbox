@@ -42,7 +42,6 @@ class BFSShell
   
  def initialize(master, opts = {})
     @master = master
-    # bootstrap?
     super(opts)
   end
 

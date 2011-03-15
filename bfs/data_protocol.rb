@@ -5,6 +5,12 @@ class DataProtocolClient
   # get a chunk (memory) from a filehandle
   # create / continue a pipeline
   # fetch a chunk from the local fs.
+
+  # TODO: minimize ruby native code
+  # The data protocol is based on the BFS-overlog design.
+  # While clients and datanodes are both running BUD instances,
+  # they communicate not via BUD tuples but via a custom transfer
+  # protocol (below).  Much of this logic can be refactored into BUD.
   
   def DataProtocolClient::chunk_from_fh(fh)
     return fh.read(CHUNKSIZE)

@@ -28,6 +28,7 @@ module HeartbeatAgent
     periodic :hb_timer, 2
 
     scratch :to_del, heartbeat_log.schema
+    scratch :last_heartbeat_stg, last_heartbeat.schema
   end
 
   declare
@@ -71,7 +72,8 @@ module HeartbeatAgent
   declare 
   def current_output
     #stdio <~ last_heartbeat.inspected
-    last_heartbeat <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
+    last_heartbeat_stg <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
+    last_heartbeat <= last_heartbeat_stg.group([last_heartbeat_stg.peer, last_heartbeat_stg.time], choose(last_heartbeat_stg.payload))
     to_del <= join([heartbeat_log, hb_timer]).map do |log, t|
       if ((Time.parse(t.val).to_f) - log.time) > HB_EXPIRE
         log
