@@ -10,8 +10,8 @@ class MT
   include TimeMoves
   
   bootstrap do
-    add_member <+ [['arr', 1]]
-    add_member <+ [['farr', 2]]
+    add_member <= [['arr', 1]]
+    add_member <= [['farr', 2]]
   end
 end
 
@@ -21,8 +21,8 @@ class MT2
   include TimeMoves
   
   bootstrap do
-    add_member <+ [['arr', 1]]
-    add_member <+ [['farr', 2]]
+    add_member <= [['arr', 1]]
+    add_member <= [['farr', 2]]
   end
 end
 
@@ -32,6 +32,7 @@ class TestMembership < Test::Unit::TestCase
   def test_mem1
     mt = MT.new
     mt.run_bg
+    # XXX: broken!
     mt.add_member <+ [['foo', 7]]
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))
@@ -45,6 +46,7 @@ class TestMembership < Test::Unit::TestCase
     mt.add_member <+ [['farr', 2]]
 
     mt.run_bg
+    # XXX: broken!
     mt.add_member <+ [['foo', 7]]
     assert_equal(2, mt.member.length)
     assert(!( mt.member.map{|m| m.host}.include? "foo"))

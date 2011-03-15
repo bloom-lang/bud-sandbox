@@ -93,7 +93,6 @@ module SNNonce
 
   bootstrap do
     storage <= [[0]]
-    super
   end
 
   declare
