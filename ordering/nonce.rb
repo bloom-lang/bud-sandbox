@@ -68,18 +68,18 @@ module NNonce
   include NonceProto
 
   state {
-    table :storage, [], [:ident]
+    table :storage_tab, [], [:ident]
   }
 
   bootstrap do
-    storage <= [[0]]
+    storage_tab <= [[0]]
   end
 
   declare
   def logic
-    storage <+ storage.map {|s| [s.ident + 1]}
-    storage <- storage
-    nonce <= storage
+    storage_tab <+ storage_tab.map {|s| [s.ident + 1]}
+    storage_tab <- storage_tab
+    nonce <= storage_tab
   end
 end
 
@@ -88,17 +88,16 @@ module SNNonce
   include NonceProto
 
   state {
-    scratch :storage, [], [:ident]
+    scratch :storage_tab, [], [:ident]
   }
 
   bootstrap do
-    storage <= [[0]]
-    super
+    storage_tab <= [[0]]
   end
 
   declare
   def logic
-    nonce <= storage
-    storage <+ storage.map {|s| puts "BUMP " + s.inspect or [s.ident + 1]}
+    nonce <= storage_tab
+    storage_tab <+ storage_tab.map {|s| puts "BUMP " + s.inspect or [s.ident + 1]}
   end
 end

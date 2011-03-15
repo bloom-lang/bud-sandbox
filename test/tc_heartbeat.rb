@@ -9,12 +9,12 @@ class HB
   include StaticMembership
 
   bootstrap do
-    payload <+ [['foo']]
-    payload <+ [['foo']]
-    payload <+ [['foo']]
-    add_member <+ [[ "localhost:46362" ]]
-    add_member <+ [[ "localhost:46363" ]]
-    add_member <+ [[ "localhost:46364" ]]
+    payload <= [['foo']]
+    payload <= [['foo']]
+    payload <= [['foo']]
+    add_member <= [[ "localhost:46362" ]]
+    add_member <= [[ "localhost:46363" ]]
+    add_member <= [[ "localhost:46364" ]]
   end
 end
 
