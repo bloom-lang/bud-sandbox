@@ -15,7 +15,7 @@ module Serializer
   include SerializerProto
 
   state {
-    table :storage, [:ident, :payload]
+    table :storage_tab, [:ident, :payload]
     scratch :top, [:ident]
   }
 
@@ -25,8 +25,8 @@ module Serializer
 
   declare 
   def logic
-    storage <= enqueue
-    top <= storage.group(nil, min(storage.ident))
+    storage_tab <= enqueue
+    top <= storage_tab.group(nil, min(storage_tab.ident))
   end
   
   #declare
@@ -37,11 +37,11 @@ module Serializer
 
   declare
   def actions
-    deq = join [storage, top, dequeue], [storage.ident, top.ident]
+    deq = join [storage_tab, top, dequeue], [storage_tab.ident, top.ident]
     dequeue_resp <+ deq.map do |s, t, d|
       [d.reqid, s.ident, s.payload]
     end
-    storage <- deq.map {|s, t, d| s }
+    storage_tab <- deq.map {|s, t, d| s }
     #localtick <= deq.map{|s, t, d| d }
   end
 end
