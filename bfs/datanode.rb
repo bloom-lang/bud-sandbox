@@ -28,6 +28,8 @@ module BFSDatanode
       c unless last_dir_contents.map{|l| l.file}.include? c.file
     end
 
+    to_payload <= [[nil, -1]]
+
     #jdc = join([dir_contents, last_dir_contents], [dir_contents.file, last_dir_contents.file])
     #payload <= jdc.map do |c, l|
     #  # every 10 seconds we resend the whole list
@@ -41,12 +43,8 @@ module BFSDatanode
     #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
     #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
     last_dir_contents <- join([hb_timer, last_dir_contents]).map do |t, c|
-      #c if (Time.parse(t.val).to_f - c.time) > 10
-      if (Time.parse(t.val).to_f - c.time) > 4
-        puts "RESEND" or c
-      else
-        []
-      end
+      #puts "DEL #{c.inspect}" or c if (Time.parse(t.val).to_f - c.time) > 10
+      c if (Time.parse(t.val).to_f - c.time) > 10
     end
 
     last_dir_contents <+ to_payload

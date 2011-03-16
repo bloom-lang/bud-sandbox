@@ -32,6 +32,7 @@ class DataProtocolClient
   end
 
   def DataProtocolClient::read_chunk(chunkid, nodelist)
+    fail = 0
     nodelist.each do |node|
       args = ["read", chunkid]
       host, port = node.split(":")
@@ -43,10 +44,11 @@ class DataProtocolClient
         return ret
       rescue
         puts "(connect #{host}:#{port}, nodelist #{nodelist}) EXCEPTION ON READ: #{$!}"
+        fail += 1
         # go around the loop again.
       end
     end 
-    raise "No datanodes"   
+    raise "No datanodes.  #{fail} failed attempts"   
   end
 
   def DataProtocolClient::send_stream(chunkid, prefs, chunk)

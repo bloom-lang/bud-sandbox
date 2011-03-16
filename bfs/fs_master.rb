@@ -50,7 +50,7 @@ module KVSFS
   end
 
   bootstrap do
-    kvput <+ [[nil, '/', gen_id, []]]
+    kvput << [nil, '/', gen_id, []]
   end
   
   declare 

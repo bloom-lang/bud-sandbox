@@ -192,7 +192,6 @@ class TestBFS < Test::Unit::TestCase
 
     dn2.stop_datanode
 
-
     assert_raise(IOError) {s.dispatch_command(["read", "/peter"], fp)}
 
     # resurrect a datanode and its state
@@ -210,6 +209,8 @@ class TestBFS < Test::Unit::TestCase
 
     # kill the memory node
     dn3.stop_datanode
+
+    sleep 9
 
     # and run off the replica
     

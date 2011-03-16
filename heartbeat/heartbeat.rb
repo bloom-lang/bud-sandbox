@@ -64,7 +64,6 @@ module HeartbeatAgent
   def reckon
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
-    # PAA: <+ ---> <=
     heartbeat_log <= duty_cycle.map{|t, h| [h.peer, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- duty_cycle.map{|t, h| h } 
   end

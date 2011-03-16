@@ -15,9 +15,9 @@ TEST_FILE='/usr/share/dict/words'
 module FSUtil
   include FSProtocol
 
-  state {
+  state do
     table :remember_resp, fsret.key_cols => fsret.val_cols
-  }
+  end
 
   declare
   def remz
@@ -51,7 +51,7 @@ class TestBFS < Test::Unit::TestCase
     super
   end
   def test_directorystuff1
-    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts.merge(:port => "65432", :trace => true))
     b.run_bg
     s = BFSShell.new("localhost:65432")
     s.run_bg
@@ -93,7 +93,7 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_fsmaster
-    b = FSC.new(@opts)
+    b = FSC.new(@opts.merge(:trace => true))
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg
@@ -125,7 +125,6 @@ class TestBFS < Test::Unit::TestCase
     assert(ret[1], "rm of empty directory should succeed")
 
     ret = b.dispatch_command(['ls', '/'])
-    puts "RET is #{ret.inspect}"
 
 
     m.sync_do{}
@@ -184,7 +183,6 @@ class TestBFS < Test::Unit::TestCase
     c2 = addchunk(b, "/foo", 6789)
     c3 = addchunk(b, "/foo", 67891)
     c4 = addchunk(b, "/foo", 67892)
-    puts "I got #{c1.inspect}, #{c2.inspect}, #{c3.inspect}, #{c4.inspect} "
   end
 
   def addchunk(b, name, id)
@@ -203,6 +201,7 @@ class TestBFS < Test::Unit::TestCase
 
   def do_basic_fs_tests(b)
     b.sync_do{ b.fscreate <+ [[3425, 'foo', '/']] } 
+
     assert_resp(b, 3425, nil)
     b.sync_do{ b.fsls <+ [[123, '/']] }
     assert_resp(b, 123, ["foo"])
@@ -224,7 +223,7 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 
-  def test_datanode
+  def ntest_datanode
     dn = new_datanode(11116, 45637)
     dn.run_bg
     hbc = HBA.new(@opts.merge(:port => 45637))
