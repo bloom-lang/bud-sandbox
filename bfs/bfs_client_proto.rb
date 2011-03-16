@@ -16,3 +16,10 @@ module BFSClientMasterProtocol
     channel :response_msg, [:@source, :master, :reqid, :status, :response]
   end
 end
+
+module BFSHBProtocol
+  include BudModule
+  state do
+    channel :hb_ack
+  end
+end

@@ -4,15 +4,21 @@ require 'backports'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
 require 'bfs/data_protocol'
+require 'bfs/bfs_client_proto'
 
 module BFSDatanode
   include HeartbeatAgent
   include StaticMembership
+  include TimestepNonce
+  include BFSHBProtocol
 
   state do
     scratch :dir_contents, [:file, :time]
-    table :last_dir_contents, [:file, :time]
-    scratch :to_payload, [:file, :time]
+    table :last_dir_contents, [:nonce, :file, :time]
+    scratch :to_payload, [:nonce, :file, :time]
+    scratch :payload_buff, [:nonce, :payload]
+
+    table :server_knows, [:file]
   end
 
   declare 
@@ -24,34 +30,23 @@ module BFSDatanode
       files.map {|f| [f, Time.parse(t.val).to_f]}
     end
 
-    to_payload <= dir_contents.map do |c|
-      c unless last_dir_contents.map{|l| l.file}.include? c.file
+    to_payload <= join([dir_contents, nonce]).map do |c, n|
+      unless server_knows.map{|s| s.file}.include? c.file
+        [n.ident, c.file, c.time]
+      end
     end
-
-    to_payload <= [[nil, -1]]
-
-    #jdc = join([dir_contents, last_dir_contents], [dir_contents.file, last_dir_contents.file])
-    #payload <= jdc.map do |c, l|
-    #  # every 10 seconds we resend the whole list
-    #  if c.time - l.time > 10
-    #    puts "REDO COMPLETE: #{c}" or c
-    #  end
-    #end
-    #last_dir_contents <- jdc.map {|c, l| l}
-
-
-    #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
-    #last_dir_contents <- join([last_dir_contents, hb_timer]).map do |c, t|
-    last_dir_contents <- join([hb_timer, last_dir_contents]).map do |t, c|
-      #puts "DEL #{c.inspect}" or c if (Time.parse(t.val).to_f - c.time) > 10
-      c if (Time.parse(t.val).to_f - c.time) > 10
-    end
-
+    # base case
+    to_payload <= nonce.map {|n| [n.ident, nil, -1]}
+    # remember the stuff we cast
     last_dir_contents <+ to_payload
-    last_dir_contents <- join([to_payload, last_dir_contents], [to_payload.file, last_dir_contents.file]).map {|d, l| l}
-
-    stdio <~ payload.inspected
-    payload <= to_payload.group(nil, accum(to_payload.file))
+    # if we get an ack, permanently remember
+    acked_contents = join([hb_ack, last_dir_contents], [hb_ack.val, last_dir_contents.nonce])
+    server_knows <= acked_contents.map {|a, c| [c.file]}
+    # and clean up the cache
+    last_dir_contents <- acked_contents.map{|a, c| c}
+    # turn a set into an array
+    payload_buff <= to_payload.group([to_payload.nonce], accum(to_payload.file))
+    payload <= payload_buff.map {|b| [[b.nonce, b.payload]]}
   end
 
   def initialize(dataport=nil, opts={})

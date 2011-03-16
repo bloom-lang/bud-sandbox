@@ -12,7 +12,7 @@ module HeartbeatProtocol
   state do
     interface input, :payload, [] => [:payload]
     interface input, :return_address, [] => [:addy]
-    interface output, :last_heartbeat, [:peer] => [:time, :payload]
+    interface output, :last_heartbeat, [:peer] => [:sender, :time, :payload]
   end
 end
 
@@ -20,9 +20,9 @@ module HeartbeatAgent
   include HeartbeatProtocol
 
   state do
-    channel :heartbeat, [:@dst, :src, :payload]
-    table :heartbeat_buffer, [:peer, :payload]
-    table :heartbeat_log, [:peer, :time, :payload]
+    channel :heartbeat, [:@dst, :src, :sender, :payload]
+    table :heartbeat_buffer, [:peer, :sender, :payload]
+    table :heartbeat_log, [:peer, :sender, :time, :payload]
     table :payload_buffer, [:payload]
     table :my_address, [] => [:addy]
     periodic :hb_timer, 2
@@ -41,14 +41,14 @@ module HeartbeatAgent
   def announce
     heartbeat <~ join([hb_timer, member, payload_buffer, my_address]).map do |t, m, p, r|
       unless m.host == r.addy 
-       [m.host, r.addy, p.payload]
+       [m.host, r.addy, ip_port, p.payload]
       end
     end
 
     heartbeat <~ join([hb_timer, member, payload_buffer]).map do |t, m, p|
       if my_address.empty?
         unless m.host == ip_port
-          [m.host, ip_port, p.payload]
+          [m.host, ip_port, ip_port, p.payload]
         end
       end
     end
@@ -62,9 +62,9 @@ module HeartbeatAgent
 
   declare 
   def reckon
-    heartbeat_buffer <= heartbeat.map{|h| [h.src, h.payload] }
+    heartbeat_buffer <= heartbeat.map{|h| [h.src, h.sender, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
-    heartbeat_log <= duty_cycle.map{|t, h| [h.peer, Time.parse(t.val).to_f, h.payload] }
+    heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- duty_cycle.map{|t, h| h } 
   end
 
@@ -72,7 +72,7 @@ module HeartbeatAgent
   def current_output
     #stdio <~ last_heartbeat.inspected
     last_heartbeat_stg <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
-    last_heartbeat <= last_heartbeat_stg.group([last_heartbeat_stg.peer, last_heartbeat_stg.time], choose(last_heartbeat_stg.payload))
+    last_heartbeat <= last_heartbeat_stg.group([last_heartbeat_stg.peer, last_heartbeat_stg.sender, last_heartbeat_stg.time], choose(last_heartbeat_stg.payload))
     to_del <= join([heartbeat_log, hb_timer]).map do |log, t|
       if ((Time.parse(t.val).to_f) - log.time) > HB_EXPIRE
         log

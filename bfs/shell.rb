@@ -8,6 +8,5 @@ c.run_bg
 
 res = c.dispatch_command(ARGV)
 
-
 puts "Result:\n#{res.inspect}"
 

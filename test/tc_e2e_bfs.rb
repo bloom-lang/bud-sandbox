@@ -148,6 +148,7 @@ class TestBFS < Test::Unit::TestCase
 
   def test_client
     b = BFSMasterServer.new(@opts.merge(:port => "65433"))#, :trace => true))
+    #b = BFSMasterServer.new(@opts.merge(:port => "65433", :trace => true))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
@@ -210,7 +211,7 @@ class TestBFS < Test::Unit::TestCase
     # kill the memory node
     dn3.stop_datanode
 
-    sleep 9
+    sleep 12
 
     # and run off the replica
     
