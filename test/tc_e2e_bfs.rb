@@ -82,7 +82,7 @@ class TestBFS < Test::Unit::TestCase
     
   end
     
-  def test_many_datanodes
+  def nntest_many_datanodes
     b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
     b.run_bg
     
