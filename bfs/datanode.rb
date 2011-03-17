@@ -17,7 +17,6 @@ module BFSDatanode
     table :last_dir_contents, [:nonce, :file, :time]
     scratch :to_payload, [:nonce, :file, :time]
     scratch :payload_buff, [:nonce, :payload]
-
     table :server_knows, [:file]
   end
 
