@@ -1,11 +1,6 @@
 require 'bfs/bfs_config'
 
 class DataProtocolClient
-  # useful things:
-  # get a chunk (memory) from a filehandle
-  # create / continue a pipeline
-  # fetch a chunk from the local fs.
-
   # TODO: minimize ruby native code
   # The data protocol is based on the BFS-overlog design.
   # While clients and datanodes are both running BUD instances,

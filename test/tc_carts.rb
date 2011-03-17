@@ -74,7 +74,7 @@ class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
   def test_replicated_destructive_cart
-    prog = DCR.new(:port => 53525)
+    prog = DCR.new(:port => 53525, :trace => true)
     cart_test(prog)
   end
 
@@ -89,7 +89,7 @@ class TestCart < Test::Unit::TestCase
   end
 
   def cart_test(program)
-    program = BCS.new(:port => 23765)
+    #program = BCS.new(:port => 23765)
     addy = "#{program.ip}:#{program.port}"
     add_members(program, addy)
     program.run_bg

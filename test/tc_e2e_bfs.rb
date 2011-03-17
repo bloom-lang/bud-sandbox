@@ -36,7 +36,7 @@ class TestBFS < Test::Unit::TestCase
     Dir.new(dir).entries.length - 2
   end 
 
-  def nntest_concurrent_clients
+  def ntest_concurrent_clients
     b = BFSMasterServer.new(@opts.merge(:port => 44444))
     d1 = new_datanode(41111, 44444)
     d2 = new_datanode(41112, 44444)
@@ -141,7 +141,7 @@ class TestBFS < Test::Unit::TestCase
 
   end
 
-  def ntest_client
+  def test_client
     b = BFSMasterServer.new(@opts.merge(:port => "65433"))#, :trace => true))
     #b = BFSMasterServer.new(@opts.merge(:port => "65433", :trace => true))
     b.run_bg
@@ -210,6 +210,7 @@ class TestBFS < Test::Unit::TestCase
     fp.close
     assert_equal(md5_of(TEST_FILE), md5_of(file)) 
 
+    dn4.stop_datanode
     s.stop_bg
     b.stop_bg
   
