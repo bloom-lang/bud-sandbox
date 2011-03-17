@@ -88,7 +88,7 @@ class TestBFS < Test::Unit::TestCase
     
     dns = []
     ports = []
-    (0..10).each do |i|
+    (0..6).each do |i|
       port = 31111 + i
       ports << port
       dns << new_datanode(port, 33333)
