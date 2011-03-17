@@ -17,8 +17,7 @@ module HBMaster
     periodic :master_duty_cycle, MASTER_DUTY_CYCLE
   end
 
-  declare 
-  def hblogic
+  bloom :hblogic do
     #stdio <~ last_heartbeat.inspected
     chunk_cache <= join([master_duty_cycle, last_heartbeat]).flat_map do |d, l| 
       unless l.payload[1].nil?

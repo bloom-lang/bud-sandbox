@@ -21,8 +21,7 @@ module BFSDatanode
     table :server_knows, [:file]
   end
 
-  declare 
-  def hblogic
+  bloom :hblogic do
     dir_contents <= hb_timer.flat_map do |t|
       dir = Dir.new("#{DATADIR}/#{@data_port}")
       files = dir.to_a.map{|d| d.to_i unless d =~ /^\./}.uniq!

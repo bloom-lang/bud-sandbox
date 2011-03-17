@@ -26,8 +26,7 @@ module BFSBackgroundTasks
     scratch :cc_demand, chunk_cache.schema
   end
 
-  declare
-  def replication
+  bloom :replication do
     cc_demand <= join([bg_timer, chunk_cache]).map {|t, c| c}
 
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))

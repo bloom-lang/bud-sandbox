@@ -19,8 +19,7 @@ module FSUtil
     table :remember_resp, fsret.key_cols => fsret.val_cols
   end
 
-  declare
-  def remz
+  bloom :remz do
     remember_resp <= fsret
   end
 end
