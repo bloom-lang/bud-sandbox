@@ -6,6 +6,7 @@ require 'timeout'
 require 'bfs/bfs_client_proto'
 require 'bfs/data_protocol'
 require 'bfs/bfs_config'
+require 'timeout'
 
 # The BFS client and shell stand between ruby and BUD.  BSFShell provides dispatch_command() as a synchronous functional interface
 # for FS operations
@@ -63,7 +64,7 @@ class BFSShell
     (0..CLIENT_RETRIES).each do |i|
       begin
         return dispatch_command_internal(args, filehandle)
-      rescue(BFSClientError)
+      rescue BFSClientError, Timeout::Error
         puts "Error: #{$!}"
         sleep 1
         puts "retrying..." if i < CLIENT_RETRIES
