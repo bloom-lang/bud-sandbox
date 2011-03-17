@@ -16,9 +16,8 @@ module ChordFind
   def at_successor(event, me, fing)
     fing.index == 0 and in_range(event.key, me.start, fing.succ, true)
   end
-  
-  declare 
-  def find_recursive
+
+  bloom :find_recursive do
     # convert local successor requests into local find_events
     find_event <= succ_req.map{|s| [s.key, ip_port]}
     

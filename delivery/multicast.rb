@@ -8,25 +8,23 @@ require 'membership/membership.rb'
 module MulticastProtocol
   include MembershipProto
 
-  state {
+  state do
     interface input, :send_mcast, [:ident] => [:payload]
     interface output, :mcast_done, [:ident] => [:payload]
-  }
+  end
 end
 
 module Multicast
   include MulticastProtocol
   include DeliveryProtocol
 
-  declare
-  def snd_mcast
+  bloom :snd_mcast do
     pipe_in <= join([send_mcast, member]).map do |s, m|
       [m.host, @ip_port, s.ident, s.payload]
     end
   end
 
-  declare
-  def done_mcast
+  bloom :done_mcast do
     # override me
     mcast_done <= pipe_sent.map{|p| [p.ident, p.payload] }
   end
@@ -43,18 +41,15 @@ module ReliableMulticast
   include VotingAgent
   include Multicast
 
-  declare
-  def start_mcast
+  bloom :start_mcast do
     begin_vote <= send_mcast.map{|s| [s.ident, s] }
   end
 
-  declare
-  def agency
+  bloom :agency do
     cast_vote <= join([pipe_sent, waiting_ballots], [pipe_sent.ident, waiting_ballots.ident]).map{|p, b| [b.ident, b.content]}
   end
 
-  declare
-  def done_mcast
+  bloom :done_mcast do
     mcast_done <= vote_status.map do |v|
       "VEE: " + v.inspect
     end

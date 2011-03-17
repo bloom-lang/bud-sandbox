@@ -31,16 +31,14 @@ module HeartbeatAgent
     scratch :last_heartbeat_stg, last_heartbeat.schema
   end
 
-  declare
-  def selfness
+  bloom :selfness do
     my_address <+ return_address
     my_address <- join([my_address, return_address]).map{ |m, r| puts "update my addresss" or m }
   end
 
-  declare 
-  def announce
+  bloom :announce do
     heartbeat <~ join([hb_timer, member, payload_buffer, my_address]).map do |t, m, p, r|
-      unless m.host == r.addy 
+      unless m.host == r.addy
        [m.host, r.addy, ip_port, p.payload]
       end
     end
@@ -53,23 +51,20 @@ module HeartbeatAgent
       end
     end
   end
-  
-  declare
-  def buffer
+
+  bloom :buffer do
     payload_buffer <+ payload
     payload_buffer <- join([payload_buffer, payload]).map{|b, p| b }
-  end 
+  end
 
-  declare 
-  def reckon
+  bloom :reckon do
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.sender, h.payload] }
     duty_cycle = join [hb_timer, heartbeat_buffer]
     heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
-    heartbeat_buffer <- duty_cycle.map{|t, h| h } 
+    heartbeat_buffer <- duty_cycle.map{|t, h| h }
   end
 
-  declare 
-  def current_output
+  bloom :current_output do
     #stdio <~ last_heartbeat.inspected
     last_heartbeat_stg <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
     last_heartbeat <= last_heartbeat_stg.group([last_heartbeat_stg.peer, last_heartbeat_stg.sender, last_heartbeat_stg.time], choose(last_heartbeat_stg.payload))
@@ -79,5 +74,5 @@ module HeartbeatAgent
       end
     end
     heartbeat_log <- to_del
-  end 
+  end
 end

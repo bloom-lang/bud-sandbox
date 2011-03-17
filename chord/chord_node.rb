@@ -21,9 +21,7 @@ module ChordNode
     end
   end
 
-
-  declare
-  def node_views
+  bloom :node_views do
     # for each find_event for an id, find index of the closest finger
     # start by finding all fingers with IDs between this node and the search key
     candidate <= join([find_event,finger,me]).map do |e,f,m|

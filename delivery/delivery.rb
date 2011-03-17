@@ -17,13 +17,11 @@ module BestEffortDelivery
     channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
   end
 
-  declare
-  def snd
+  bloom :snd do
     pipe_chan <~ pipe_in
   end
 
-  declare
-  def done
+  bloom :done do
     # vacuous ackuous.  override me!
     pipe_sent <= pipe_in
   end

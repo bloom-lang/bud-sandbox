@@ -24,29 +24,25 @@ module BasicKVS
     scratch :kvput_internal, [:client, :key] => [:reqid, :value]
   end
 
-  declare 
-  def mutate
+  bloom :mutate do
     kvstate <+ kvput_internal.map{ |s|  [s.key, s.value] } 
     prev = join [kvstate, kvput_internal], [kvstate.key, kvput_internal.key]
     kvstate <- prev.map { |b, s| b }
   end
 
-  declare
-  def get
+  bloom :get do
     getj = join([kvget, kvstate], [kvget.key, kvstate.key])
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
     end
   end
 
-  declare
-  def delete
+  bloom :delete do
     kvstate <- join([kvstate, kvdel], [kvstate.key, kvdel.key]).map {|s, d| s}
   end
 
   # place holder until scoping is fully implemented
-  declare 
-  def local_indir
+  bloom :local_indir do
     kvput_internal <= kvput
   end
 end
@@ -56,13 +52,12 @@ module ReplicatedKVS
   include BasicKVS
   include MulticastProtocol
 
-  #state {
+  #state do
   #  # override kvput
   #  interface input, :kvput_in, [:client, :key] => [:reqid, :value]
-  #}
+  #end
 
-  declare
-  def local_indir
+  bloom :local_indir do
     # if I am the master, multicast store requests
     send_mcast <= kvput.map do |k| 
       unless member.include? [k.client]
