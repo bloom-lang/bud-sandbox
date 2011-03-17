@@ -7,9 +7,8 @@ class TT
   include Bud
   include ProgressTimer
 
-  declare
-  def lcl_process
-    stdio <~ alarm.map{|a| [ "ALRM: " + a.inspect ] }
+  bloom do
+    stdio <~ alarm.map {|a| [ "ALRM: " + a.inspect ]}
   end
 end
 

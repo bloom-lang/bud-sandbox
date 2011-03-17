@@ -13,8 +13,7 @@ end
 
 class VA2 < VA
   # override the default
-  declare
-  def decide
+  bloom :decide do
     cast_vote <= waiting_ballots.map{|b| b if 1 == 2 }
   end
 end
