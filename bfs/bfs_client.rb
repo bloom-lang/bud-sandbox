@@ -36,6 +36,9 @@ module BFSClient
   end
 end
 
+class BFSClientError < RuntimeError
+end
+
 class BFSShell
   include Bud
   include BFSClient
@@ -57,20 +60,34 @@ class BFSShell
   end
 
   def dispatch_command(args, filehandle=nil)
-    op = args.shift
+    (0..CLIENT_RETRIES).each do |i|
+      begin
+        return dispatch_command_internal(args, filehandle)
+      rescue(BFSClientError)
+        puts "Error: #{$!}"
+        sleep 1
+        puts "retrying..." if i < CLIENT_RETRIES
+      end
+    end
+    raise
+  end
+
+  def dispatch_command_internal(args, filehandle=nil)
+    copy = args.clone
+    op = copy.shift
     case op
       when "ls" then
-        do_ls(args)
+        do_ls(copy)
       when "create"
-        do_createfile(args)
+        do_createfile(copy)
       when "append"
-        do_append(args, (filehandle.nil? ? STDIN : filehandle))
+        do_append(copy, (filehandle.nil? ? STDIN : filehandle))
       when "mkdir"
-        do_mkdir(args)
+        do_mkdir(copy)
       when "read"
-        do_read(args, (filehandle.nil? ? STDOUT : filehandle))
+        do_read(copy, (filehandle.nil? ? STDOUT : filehandle))
       when "rm"
-        do_rm(args)
+        do_rm(copy)
       else
         raise "unknown op: #{op}"
     end
@@ -85,12 +102,16 @@ class BFSShell
     reqid = gen_id
     ren = Rendezvous.new(self, response)
     async_do{ request <+ [[reqid, op, args]] }
-    res = ren.block_on(15)
+    begin
+      res = ren.block_on(15)
+    rescue
+      raise BFSClientError, $!
+    end
     ren.stop
     if res[0] = reqid
       return res
     else 
-      raise "GOT (wrong) RES #{res}" 
+      raise BFSClientError, "GOT (wrong) RES #{res}" 
     end
   end
 
@@ -117,11 +138,15 @@ class BFSShell
   end
 
   def do_read(args, fh)
-    res = synchronous_request(:getchunks, args[0])
-    res[2].sort{|a, b| a <=> b}.each do |chk|
-      res = synchronous_request(:getchunklocations, chk)
-      chunk = DataProtocolClient.read_chunk(chk, res[2])
-      fh.write chunk
+    begin 
+      res = synchronous_request(:getchunks, args[0])
+      res[2].sort{|a, b| a <=> b}.each do |chk|
+        res = synchronous_request(:getchunklocations, chk)
+        chunk = DataProtocolClient.read_chunk(chk, res[2])
+        fh.write chunk
+      end
+    rescue
+      raise BFSClientError, $!
     end
   end
 
@@ -134,7 +159,7 @@ class BFSShell
   
   def do_a_chunk(args, fh)
     ret = synchronous_request(:append, args[0])
-    raise "add chunk metadata failed: #{ret.inspect}" unless ret[1]
+    raise BFSClientError, "add chunk metadata failed: #{ret.inspect}" unless ret[1]
     chunkid = ret[2][0]
     preflist = ret[2][1]
     sendlist = preflist.sort_by{rand}[0..REP_FACTOR-1]
