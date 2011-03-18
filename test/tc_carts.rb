@@ -68,7 +68,7 @@ end
 class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
-  def test_replicated_destructive_cart
+  def ntest_replicated_destructive_cart
     prog = DCR.new(:port => 53525, :trace => true)
     cart_test(prog)
   end
