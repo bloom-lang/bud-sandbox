@@ -2,12 +2,10 @@ require 'rubygems'
 require 'test/unit'
 require 'bud'
 require 'membership/membership'
-require 'time_hack/time_moves'
 
 class MT
   include Bud
   include StaticMembership
-  include TimeMoves
   
   bootstrap do
     add_member <= [['arr', 1]]
@@ -18,7 +16,6 @@ end
 class MT2
   include Bud
   include StaticMembership
-  include TimeMoves
   
   bootstrap do
     add_member <= [['arr', 1]]

@@ -1,13 +1,11 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'time_hack/time_moves'
 require 'paxos/leader'
 
 class LE
   include Bud
   include LeaderElection
-  include TimeMoves
 end 
 
 class TestLE < Test::Unit::TestCase
