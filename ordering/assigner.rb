@@ -7,25 +7,24 @@ require 'ordering/serializer'
 module AssignerProto
   include BudModule
 
-  state {
+  state do
     interface input, :dump, [:payload]
     interface output, :pickup, [:ident] => [:payload]
-  }
+  end
 end
 
 module Assigner
   include AssignerProto
   include SerializerProto
 
-  declare 
-  def logos 
+  bloom :logos do
     enqueue <= dump.map do |d|
       [d.join(","), d]
     end
 
     dequeue <= localtick
 
-    pickup <= dequeue_resp.map{|r| [r.ident, r.payload] } 
+    pickup <= dequeue_resp.map{|r| [r.ident, r.payload] }
   end
 end
 
@@ -33,13 +32,12 @@ end
 module AggAssign
   include AssignerProto
 
-  state {
+  state do
     scratch :holder, [:array]
     scratch :holder2, [:array]
-  }
-  
-  declare 
-  def grouping
+  end
+
+  bloom :grouping do
     holder <= dump.group(nil, accum(dump.payload))
     #stdio <~ holder.map{|h| ["HOLD: #{h.inspect}"] }
     pickup <= holder.flat_map do |h|

@@ -6,13 +6,12 @@ require 'delivery/multicast'
 module TestState
   include StaticMembership
 
-  state {
+  state do
     table :mcast_done_perm, [:ident] => [:payload]
     table :rcv_perm, [:ident] => [:payload]
-  }
+  end
 
-  declare
-  def mem
+  bloom :mem do
     mcast_done_perm <= mcast_done.map{|d| d }
     rcv_perm <= pipe_chan.map{|r| [r.ident, r.payload] }
   end

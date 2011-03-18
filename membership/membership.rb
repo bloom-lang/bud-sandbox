@@ -4,19 +4,18 @@ require 'bud'
 module MembershipProto
   include BudModule
 
-  state {
+  state do
     interface input, :add_member, [:host] => [:ident]
     interface input, :my_id, [] => [:ident]
     table :member, [:host] => [:ident]
     table :local_id, [] => [:ident]
-  }
+  end
 end
 
 module StaticMembership
   include MembershipProto
 
-  declare
-  def member_logic
+  bloom :member_logic do
     member <= add_member.map do |m|
       if @budtime == 0
         m

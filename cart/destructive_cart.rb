@@ -9,8 +9,7 @@ module DestructiveCart
   include CartProtocol
   include KVSProtocol
 
-  declare
-  def queueing
+  bloom :queueing do
     kvget <= action_msg.map {|a| puts "test" or [a.reqid, a.session] }
     kvput <= action_msg.map do |a| 
       if a.action == "Add" and not kvget_response.map{|b| b.key}.include? a.session
@@ -28,8 +27,7 @@ module DestructiveCart
     end
   end
 
-  declare
-  def finish
+  bloom :finish do
     kvget <= checkout_msg.map{|c| [c.reqid, c.session] }
     lookup = join([kvget_response, checkout_msg], [kvget_response.key, checkout_msg.session])
     response_msg <~ lookup.map do |r, c|

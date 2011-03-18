@@ -17,9 +17,9 @@ class LilChord
     super
   end
 
-  state {
+  state do
     table :succ_cache, succ_resp.key_cols => succ_resp.val_cols
-  }
+  end
 
   # figure 3(b) from stoica's paper
   # interface input, :find_event, ['key', 'from']
@@ -56,8 +56,7 @@ class LilChord
     end
   end
 
-  declare
-  def persist_resps
+  bloom :persist_resps do
     succ_cache <= succ_resp
     # stdio <~ succ_resp.map{|s| [s.inspect]}
   end

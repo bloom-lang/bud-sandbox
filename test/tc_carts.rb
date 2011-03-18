@@ -11,12 +11,11 @@ require 'cart/destructive_cart'
 module Remember
   include BudModule
 
-  state {
+  state do
     table :memo, [:client, :server, :session, :array]
-  }
+  end
 
-  declare
-  def memm
+  bloom :memm do
     memo <= response_msg
   end
 end
@@ -51,21 +50,20 @@ class DummyDC
   include BasicKVS
   include Remember
 
-  state {
+  state do
     table :members, [:peer]
-  }
+  end
 end
 
 class BCSC
   include Bud
   include CartClient
 
-  state {
+  state do
     table :cli_resp_mem, [:@client, :server, :session, :item, :cnt]
-  }
+  end
 
-  declare
-  def memmy
+  bloom :memmy do
     cli_resp_mem <= response_msg
   end
 end

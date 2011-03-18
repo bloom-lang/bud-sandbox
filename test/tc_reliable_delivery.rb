@@ -12,8 +12,7 @@ class RED
     table :pipe_perm, [:dst, :src, :ident, :payload]
   end
 
-  declare
-  def recall
+  bloom :recall do
     pipe_perm <= pipe_sent
   end
 end
@@ -30,7 +29,6 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.sync_do{ assert(rd.pipe_perm.empty?) }
     rd.stop_bg
   end
-
 
   def test_besteffort_delivery2
     rd = RED.new(:port => 13333)

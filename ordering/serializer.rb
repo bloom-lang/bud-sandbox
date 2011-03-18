@@ -4,39 +4,36 @@ require 'bud'
 module SerializerProto
   include BudModule
 
-  state {
+  state do
     interface input, :enqueue, [:ident] =>  [:payload]
     interface input, :dequeue, [] => [:reqid]
     interface output, :dequeue_resp, [:reqid] => [:ident, :payload]
-  }
+  end
 end
 
 module Serializer
   include SerializerProto
 
-  state {
+  state do
     table :storage_tab, [:ident, :payload]
     scratch :top, [:ident]
-  }
+  end
 
   bootstrap do
     #localtick <~ [[@budtime]]
   end
 
-  declare 
-  def logic
+  bloom :logic do
     storage_tab <= enqueue
     top <= storage_tab.group(nil, min(storage_tab.ident))
   end
   
-  #declare
-  #def clock
+  #bloom :clock do
   #  localtick <~ enqueue.map{|s| [s] }
   #  localtick <~ dequeue.map{|s| [s] }
   #end
 
-  declare
-  def actions
+  bloom :actions do
     deq = join [storage_tab, top, dequeue], [storage_tab.ident, top.ident]
     dequeue_resp <+ deq.map do |s, t, d|
       [d.reqid, s.ident, s.payload]

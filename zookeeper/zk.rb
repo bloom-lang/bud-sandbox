@@ -17,8 +17,7 @@ class ZooMember < Bud
   bootstrap do
   end
 
-  declare
-  def logic
+  bloom do
   end
 end
 

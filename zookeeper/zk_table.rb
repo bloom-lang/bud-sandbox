@@ -7,8 +7,7 @@ class ZkTableTest < Bud
     #periodic :tik, 1
   end
 
-  declare
-  def other
+  bloom do
     stdio <~ foo.map{|f| ["ZK: k = #{f.key}"]}
     stdio <~ foo.map{|f| ["ZK: k = " + f.key]}
     #foo <~ tik.map{|t| ["tik_" + t.val, "time = " + t.val]}
