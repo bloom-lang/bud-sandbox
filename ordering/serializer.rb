@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module SerializerProto
-  include BudModule
-
   state do
     interface input, :enqueue, [:ident] =>  [:payload]
     interface input, :dequeue, [] => [:reqid]

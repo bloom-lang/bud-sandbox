@@ -3,8 +3,6 @@ require 'bud'
 require 'membership/membership'
 
 module VoteMasterProto
-  include BudModule
-
   state do
     interface input, :begin_vote, [:ident, :content]
     interface output, :victor, [:ident, :content, :response]
@@ -12,16 +10,12 @@ module VoteMasterProto
 end
 
 module VoteAgentProto
-  include BudModule
-
   state do
     interface input, :cast_vote, [:ident, :response]
   end
 end
 
 module VoteInterface
-  include BudModule
-
   # channels used by both ends of the voting protocol
   # paa: TODO: figure out the right way to mix in state
   state do

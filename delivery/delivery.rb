@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module DeliveryProtocol
-  include BudModule
-
   state do
     interface input, :pipe_in, [:dst, :src, :ident] => [:payload]
     interface output, :pipe_sent, [:dst, :src, :ident] => [:payload]

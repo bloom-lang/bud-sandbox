@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module CartProtocol
-  include BudModule
-
   state do
     # PAA -- took the '@'s off all occurrences of :server below
     channel :action_msg, 
@@ -16,8 +14,6 @@ module CartProtocol
 end
 
 module CartClientProtocol
-  include BudModule
-
   state do
     interface input, :client_checkout, [:server, :session, :reqid]
     interface input, :client_action, [:server, :session, :reqid] => [:item, :action]

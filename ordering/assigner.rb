@@ -5,8 +5,6 @@ require 'backports'
 require 'ordering/serializer'
 
 module AssignerProto
-  include BudModule
-
   state do
     interface input, :dump, [:payload]
     interface output, :pickup, [:ident] => [:payload]

@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module ChordNode
-  include BudModule
-
   state do
     interface input, :find_event, [:key, :from]
     interface output, :closest, [:key] => [:index, :start, :hi, :succ, :succ_addr]

@@ -7,17 +7,15 @@ require 'timers/progress_timer'
 require 'time'
 
 module LeaderElection
-  include BudModule
   include MajorityVotingMaster
   include VotingAgent
   include GroupNonce
   include StaticMembership
   include ProgressTimer
 
-
-  # disorderly leader election.
-  # desired end result for each node: carry out a round of voting for a particular id (the highest we've seen)
-  # till a round succeeds.
+  # disorderly leader election.  desired end result for each node: carry out a
+  # round of voting for a particular id (the highest we've seen) till a round
+  # succeeds.
 
   # reactions:
   # * progress timer fires.  increment view id, and start voting

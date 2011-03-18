@@ -4,8 +4,6 @@ require 'delivery/reliable_delivery'
 require 'delivery/multicast'
 
 module KVSProtocol
-  include BudModule
-
   state do
     #interface input, :kvput, [:client, :key, :reqid] => [:value]
     interface input, :kvput, [:client, :key] => [:reqid, :value]

@@ -5,8 +5,6 @@ require 'time'
 # there are different ways to do this.  this one only sends one "alarm", then GCs.
 
 module ProgressTimerProto
-  include BudModule
-
   state do
     interface :input, :set_alarm, [:name, :time_out]
     interface :input, :del_alarm, [:name]

@@ -2,7 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module BFSClientProtocol
-  include BudModule
   state do
     interface input, :request, [:reqid] => [:rtype, :arg]
     interface output, :response, [:reqid] => [:status, :response]
@@ -10,7 +9,6 @@ module BFSClientProtocol
 end
 
 module BFSClientMasterProtocol
-  include BudModule
   state do
     channel :request_msg, [:@master, :source, :reqid, :rtype, :args]
     channel :response_msg, [:@source, :master, :reqid, :status, :response]
@@ -18,7 +16,6 @@ module BFSClientMasterProtocol
 end
 
 module BFSHBProtocol
-  include BudModule
   state do
     channel :hb_ack
   end

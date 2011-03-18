@@ -9,10 +9,7 @@ require 'ordering/nonce'
 
 
 # FSProtocol is the basic filesystem input/output contract.
-
 module FSProtocol
-  include BudModule
-
   state do
     interface input, :fsls, [:reqid, :path]
     interface input, :fscreate, [] => [:reqid, :name, :path, :data]
@@ -33,7 +30,6 @@ end
 # * looking up the parent path
 # * updating the parent path
 # * creating an entry for the file or directory
-
 module KVSFS
   include FSProtocol
   include BasicKVS
@@ -46,7 +42,6 @@ module KVSFS
     scratch :check_parent_exists, [:reqid, :name, :path, :mtype, :data]
     scratch :check_is_empty, [:reqid, :orig_reqid, :name]
     scratch :can_remove, [:reqid, :orig_reqid, :name]
-
   end
 
   bootstrap do
@@ -134,6 +129,4 @@ module KVSFS
   def terminate_with_slash(path)
     return path[-1..-1] == '/' ? path : path + '/'
   end
-
 end
-

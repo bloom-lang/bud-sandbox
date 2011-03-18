@@ -29,8 +29,6 @@ class ReliableReplicatedKVS
 end
 
 module ReplicatedMeteredGlue
-  include BudModule
-
   # we have mixed in KVSMetering and ReplicatedKVS,
   # both of which implement indirection.  we need to 
   # compose these!

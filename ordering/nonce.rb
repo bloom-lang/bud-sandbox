@@ -6,8 +6,6 @@ require 'membership/membership'
 # one unary tuple per timestep.  using it correctly to assign unique ids
 # to arbitrary streams will require installing serializers
 module NonceProto
-  include BudModule
-
   state do
     interface input, :seed, []
     interface output, :nonce, [] => [:ident]

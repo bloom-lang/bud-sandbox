@@ -9,8 +9,6 @@ require 'cart/destructive_cart'
 
 
 module Remember
-  include BudModule
-
   state do
     table :memo, [:client, :server, :session, :array]
   end

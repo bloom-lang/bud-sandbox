@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module MembershipProto
-  include BudModule
-
   state do
     interface input, :add_member, [:host] => [:ident]
     interface input, :my_id, [] => [:ident]

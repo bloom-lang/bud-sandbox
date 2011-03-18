@@ -4,7 +4,6 @@ require 'bud'
 require 'voting/voting'
 
 module PaxosPrepare 
-  include BudModule
   include MajorityVotingMaster
 
   state do

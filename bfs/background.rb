@@ -3,15 +3,9 @@ require 'bud'
 require 'bfs/data_protocol'
 require 'bfs/bfs_config'
 
-
-
-# Background processes for the BFS master.  Right now, this is just firing off replication requests 
-# for chunks whose replication factor is too low.
-
-
+# Background processes for the BFS master.  Right now, this is just firing off
+# replication requests for chunks whose replication factor is too low.
 module BFSBackgroundTasks
-  include BudModule
-
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
     periodic :bg_timer, MASTER_DUTY_CYCLE
