@@ -1,5 +1,6 @@
-Bloom Filesystem
+Bloom^ Filesystem
 ---------------------------------------------------------------------------
+
 BFS implements a chunked, distributed filesystem (mostly) in the Bloom 
 language.  BFS is architecturally based on BOOMFS, which is itself based on 
 the Google Filesystem (GFS).  As in GFS, a single master node manages 
@@ -18,8 +19,8 @@ BFS is structured as follows:
 FSMaster implements the basic filesystem metadata operations defined in 
 FSProtocol.  FSMaster uses the KVSProtocol, storing FS metadata in a flat 
 namedspace.  As GFS is a central master system, we choose BasicKVS from the 
-implementations of KVSProtocol that the library provides, though one of the 
-varieties of replicated KVS is a simple change.
+implementations of KVSProtocol that the library provides, though using 
+one of the varieties of replicated KVS instead is a simple change.
 
 ChunkedFSMaster extends FSMaster to add operations specific to chunked data 
 storage: specifically, the ability to generate new chunk identifiers, to 
@@ -45,3 +46,7 @@ master over a Bud channel.  Communication with storage nodes uses the
 BFSDataProtocol.
 
 BFSMaster glues together the ChunkedFSMaster API with the BFSClient API.
+
+
+---------------------------------------------------------------------------
+^ Coming soon: BUD, an alpha release of the Bloom language. (3/25/2011)
