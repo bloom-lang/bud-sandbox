@@ -3,7 +3,6 @@ require 'bud'
 require 'bud/rendezvous'
 require 'test/unit'
 require 'test/cart_workloads'
-require 'time_hack/time_moves'
 require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
 
@@ -74,7 +73,7 @@ class TestCart < Test::Unit::TestCase
     cart_test(prog)
   end
 
-  def test_destructive_cart
+  def ntest_destructive_cart
     prog = DummyDC.new(:port => 32575)
     cart_test(prog)
   end
