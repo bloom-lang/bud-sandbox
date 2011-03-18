@@ -26,9 +26,7 @@ module ChordJoin
     offsets <= [(1..log2(@maxkey)).map{|o| o}]
   end
 
-
-  declare
-  def join_rules_proxy
+  bloom :join_rules_proxy do
     # an existing member serves as a proxy for the new node that wishes to join.
     # when it receives a join req from new node, it requests successors on the new
     # node's behalf
@@ -48,8 +46,7 @@ module ChordJoin
     # end
   end
 
-  declare
-  def join_rules_successor
+  bloom :join_rules_successor do
     # at successor, upon receiving finger_table_req, ship finger table entries directly to new node
     finger_table_resp <~ join([finger_table_req, finger]).map do |ftreq, f|
       # finger tuple prefixed with requestor_addr
@@ -57,8 +54,7 @@ module ChordJoin
     end
   end
 
-  declare
-  def join_rules_new_node
+  bloom :join_rules_new_node do
     # at new member, install finger entries
     # stdio <~ finger_table_resp.inspected
     finger <= finger_table_resp.map do |f|
@@ -78,8 +74,7 @@ module ChordJoin
     end
   end
 
-  declare
-  def join_rules_referers
+  bloom :join_rules_referers do
     # update finger entries upon a finger_upd if the new one works: insert new, delete old
     # XXX would be nice to have an update pattern in Bloom for this
     stdio <~ finger_upd.inspected

@@ -2,8 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module DeliveryProtocol
-  include BudModule
-
   state do
     interface input, :pipe_in, [:dst, :src, :ident] => [:payload]
     interface output, :pipe_sent, [:dst, :src, :ident] => [:payload]
@@ -17,13 +15,11 @@ module BestEffortDelivery
     channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
   end
 
-  declare
-  def snd
+  bloom :snd do
     pipe_chan <~ pipe_in
   end
 
-  declare
-  def done
+  bloom :done do
     # vacuous ackuous.  override me!
     pipe_sent <= pipe_in
   end

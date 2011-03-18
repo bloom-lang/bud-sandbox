@@ -20,8 +20,7 @@ module BFSClient
     table :master, [] => [:master]
   end
 
-  declare
-  def cglue
+  bloom :cglue do
     # every request involves some communication with the master.
     #stdio <~ request.map{|r| ["REQUEST: #{r.inspect}"] }
     #stdio <~ response.map{|r| ["response: #{r.inspect}"] }

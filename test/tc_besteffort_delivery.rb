@@ -7,20 +7,18 @@ class BED
   include Bud
   include BestEffortDelivery
   
-  state {
+  state do
     table :pipe_chan_perm, [:dst, :src, :ident, :payload]
     table :pipe_sent_perm, [:dst, :src, :ident, :payload]
-  }
+  end
 
-  declare
-  def lcl_process
+  bloom do
     pipe_sent_perm <= pipe_sent
     pipe_chan_perm <= pipe_chan
   end
 end
 
 class TestBEDelivery < Test::Unit::TestCase
-
   def test_besteffort_delivery
     rd = BED.new
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']

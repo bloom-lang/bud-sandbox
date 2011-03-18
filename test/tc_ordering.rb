@@ -10,12 +10,11 @@ class ST
   include Bud
   include Serializer
   
-  state {
+  state do
     table :mems, [:reqid, :ident, :payload]
-  }
+  end
 
-  declare 
-  def remem
+  bloom do
     mems <= dequeue_resp
   end
 end

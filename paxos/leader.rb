@@ -7,17 +7,15 @@ require 'timers/progress_timer'
 require 'time'
 
 module LeaderElection
-  include BudModule
   include MajorityVotingMaster
   include VotingAgent
   include GroupNonce
   include StaticMembership
   include ProgressTimer
 
-
-  # disorderly leader election.
-  # desired end result for each node: carry out a round of voting for a particular id (the highest we've seen)
-  # till a round succeeds.
+  # disorderly leader election.  desired end result for each node: carry out a
+  # round of voting for a particular id (the highest we've seen) till a round
+  # succeeds.
 
   # reactions:
   # * progress timer fires.  increment view id, and start voting
@@ -33,8 +31,7 @@ module LeaderElection
     channel :proof, [:@host, :src, :view]
   end
 
-  declare 
-  def decide
+  bloom :decide do
     proofj = join([proof, current_state])
     current_state <+ proofj.map do |p, s|
       if p.view > s.view 
@@ -96,8 +93,6 @@ module LeaderElection
   
     current_state <- join([current_state, packet_in]).map{ |c, p| c }
 
-    localtick <~ victor.map{|v| [ip_port] } 
-
+    localtick <~ victor.map {|v| [ip_port]}
   end
- 
 end

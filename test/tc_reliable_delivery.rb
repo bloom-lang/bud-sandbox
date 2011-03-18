@@ -7,14 +7,13 @@ require 'delivery/reliable_delivery'
 class RED
   include Bud
   include ReliableDelivery
-  
-  state {
+
+  state do
     table :pipe_perm, [:dst, :src, :ident, :payload]
-  }
-  
-  declare 
-  def recall
-    pipe_perm <= pipe_sent 
+  end
+
+  bloom :recall do
+    pipe_perm <= pipe_sent
   end
 end
 
@@ -31,14 +30,13 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.stop_bg
   end
 
-
   def test_besteffort_delivery2
     rd = RED.new(:port => 13333)
     rd2 = RED.new(:port => 13334)
     rd.run_bg
     rd2.run_bg
     ren = Rendezvous.new(rd, rd.pipe_sent)
-    
+
     sendtup = ['localhost:13334', 'localhost:13333', 1, 'foobar']
     rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
     res = ren.block_on(5)

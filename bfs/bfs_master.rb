@@ -13,8 +13,7 @@ module BFSMasterGlue
     table :rendez, request_msg.schema
   end
 
-  declare
-  def mglue
+  bloom :mglue do
     stdio <~ request_msg.map{ |r| ["request: #{r.inspect}"] } 
 
     rendez <= request_msg
@@ -25,11 +24,9 @@ module BFSMasterGlue
     fschunklist <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunks" }       
     fschunklocations <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunklocations" }       
     fsrm <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "rm" }
-
   end
 
-  declare
-  def response_glue
+  bloom :response_glue do
     response_msg <~ join([fsret, rendez], [fsret.reqid, rendez.reqid]).map do |f, r|
       [r.source, r.master, f.reqid, f.status, f.data]
     end

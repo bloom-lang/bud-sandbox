@@ -5,25 +5,22 @@ require 'delivery/delivery'
 module ReliableDelivery
   include BestEffortDelivery
 
-  state {
+  state do
     table :buf, [:dst, :src, :ident] => [:payload]
     channel :ack, [:@src, :dst, :ident]
     periodic :clock, 2
-  }
+  end
 
-  declare
-  def remember
+  bloom :remember do
     buf <= pipe_in
     pipe_chan <~ join([buf, clock]).map {|b, c| b}
   end
 
-  declare
-  def rcv
+  bloom :rcv do
     ack <~ pipe_chan.map {|p| [p.src, p.dst, p.ident]}
   end
 
-  declare
-  def done
+  bloom :done do
     got_ack = join [ack, buf], [ack.ident, buf.ident]
     msg_done = got_ack.map {|a, b| b}
 

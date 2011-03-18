@@ -4,7 +4,6 @@ require 'bud'
 require 'voting/voting'
 
 module PaxosPrepare 
-  include BudModule
   include MajorityVotingMaster
 
   state do
@@ -15,13 +14,11 @@ module PaxosPrepare
     table :quorum, [:view, :aru]
   end
 
-
   bootstrap do
     local_aru << [@myloc, 0] #if global_history.empty?
   end
 
-  declare 
-  def prep1
+  bloom :prep1 do
     # bootstrap these.
     #local_aru << [@myloc, 0] if global_history.empty?
     #last_installed << [0] if global_history.empty?
@@ -35,8 +32,7 @@ module PaxosPrepare
     begin_vote <+ prepare.map{|p| print "put in ballot : " + p.inspect + "\n" or [p.view, p.aru]}
   end
 
-  declare 
-  def establish_quorum
+  bloom :establish_quorum do
     quorum <= vote_status.map do |v|
       puts "VOTE_STATUS: #{v.inspect}"
       if v.response.class == Array 
@@ -65,8 +61,7 @@ module PaxosPrepareAgent
     last_installed << [0] if global_history.empty?
   end
 
-  declare
-  def build_reply
+  bloom :build_reply do
     stdio <~ ballot.map{|b| ["got ballot: #{b.inspect}"] }
     datalist <= join([ballot, last_installed]).map do |d, l|
       if d.ident > l.view
@@ -98,8 +93,7 @@ module PaxosPrepareAgent
     stdio <~ datalist_agg.map{|d| ["DLA: #{d.inspect}"] } 
   end
 
-  declare
-  def decide
+  bloom :decide do
     dj = join([datalist, datalist_length])
     #cast_vote <+ dj.map do |d, l|
     #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]

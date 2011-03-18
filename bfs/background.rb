@@ -3,15 +3,9 @@ require 'bud'
 require 'bfs/data_protocol'
 require 'bfs/bfs_config'
 
-
-
-# Background processes for the BFS master.  Right now, this is just firing off replication requests 
-# for chunks whose replication factor is too low.
-
-
+# Background processes for the BFS master.  Right now, this is just firing off
+# replication requests for chunks whose replication factor is too low.
 module BFSBackgroundTasks
-  include BudModule
-
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
     periodic :bg_timer, MASTER_DUTY_CYCLE
@@ -26,8 +20,7 @@ module BFSBackgroundTasks
     scratch :cc_demand, chunk_cache.schema
   end
 
-  declare
-  def replication
+  bloom :replication do
     cc_demand <= join([bg_timer, chunk_cache]).map {|t, c| c}
 
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))

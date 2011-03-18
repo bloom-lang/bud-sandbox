@@ -31,8 +31,7 @@ module ChunkedKVSFS
     scratch :lookup, [:reqid, :file]
   end
 
-  declare 
-  def lookups
+  bloom :lookups do
     lookup <= fschunklist
     lookup <= fsaddchunk
 
@@ -44,16 +43,14 @@ module ChunkedKVSFS
     end
   end
 
-  declare
-  def getchunks
+  bloom :getchunks do
     chunk_buffer <= join([fschunklist, kvget_response, chunk], [fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]).map{ |l, r, c| [l.reqid, c.chunkid] }
     chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
     fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
     # handle case of empty file / haven't heard about chunks yet
   end
 
-  declare 
-  def getnodes
+  bloom :getnodes do
     fsret <= fschunklocations.map do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
         [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache.length}"]
@@ -67,8 +64,7 @@ module ChunkedKVSFS
     fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
   end
 
-  declare
-  def addchunks
+  bloom :addchunks do
     #stdio <~ "Warning: no available datanodes" if available.empty?
     minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
