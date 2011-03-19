@@ -3,7 +3,6 @@ require 'bud'
 
 require 'kvs/kvs'
 require 'delivery/multicast'
-require 'time_hack/time_moves'
 
 # some combinations are simple:
 

@@ -3,7 +3,6 @@ require 'test/unit'
 require 'bud'
 require 'ordering/serializer'
 require 'ordering/nonce'
-require 'time_hack/time_moves'
 require 'ordering/assigner'
 
 class ST
