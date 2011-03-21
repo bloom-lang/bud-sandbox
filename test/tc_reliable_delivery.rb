@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'bud'
-require 'bud/rendezvous'
 require 'test/unit'
 require 'delivery/reliable_delivery'
 
@@ -9,11 +8,13 @@ class RED
   include ReliableDelivery
 
   state do
-    table :pipe_perm, [:dst, :src, :ident, :payload]
+    table :pipe_log, pipe_sent.schema
+    callback :msg_sent, pipe_sent.schema
   end
 
-  bloom :recall do
-    pipe_perm <= pipe_sent
+  bloom do
+    pipe_log <= pipe_sent
+    msg_sent <= pipe_sent
   end
 end
 
@@ -23,10 +24,10 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd.run_bg
 
     sendtup = ['localhost:12223', 'localhost:12222', 1, 'foobar']
-    rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
+    rd.sync_do { rd.pipe_in <+ [ sendtup ] }
 
     # transmission not 'complete'
-    rd.sync_do{ assert(rd.pipe_perm.empty?) }
+    rd.sync_do { assert(rd.pipe_log.empty?) }
     rd.stop_bg
   end
 
@@ -35,18 +36,19 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd2 = RED.new
     rd.run_bg
     rd2.run_bg
-    ren = Rendezvous.new(rd, rd.pipe_sent)
+
+    q = Queue.new
+    rd.register_callback(:msg_sent) do
+      q.push(true)
+    end
 
     sendtup = [rd2.ip_port, rd.ip_port, 1, 'foobar']
-    rd.sync_do{ rd.pipe_in <+ [sendtup] }
-    res = ren.block_on(5)
-    # transmission 'complete'
-    rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
+    rd.sync_do { rd.pipe_in <+ [sendtup] }
+    q.pop
+    rd.sync_do { assert_equal([sendtup], rd.pipe_log.to_a.sort) }
+    rd.sync_do { assert(rd.buf.empty?) }
 
-    # gc done
-    rd.sync_do{ assert(rd.buf.empty?) }
     rd.stop_bg
     rd2.stop_bg
-    ren.stop
   end
 end

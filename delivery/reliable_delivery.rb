@@ -6,7 +6,7 @@ module ReliableDelivery
   include BestEffortDelivery
 
   state do
-    table :buf, [:dst, :src, :ident] => [:payload]
+    table :buf, pipe_in.schema
     channel :ack, [:@src, :dst, :ident]
     periodic :clock, 2
   end
