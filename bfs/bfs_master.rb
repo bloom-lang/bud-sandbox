@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'bud'
+require 'bud/rendezvous'
 require 'bfs/bfs_client_proto'
 require 'bfs/background'
 require 'bfs/chunking'

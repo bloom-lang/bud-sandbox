@@ -7,7 +7,7 @@ require 'bfs/data_protocol'
 require 'bfs/bfs_config'
 require 'timeout'
 
-# The BFS client and shell stand between ruby and BUD.  BSFShell provides
+# The BFS client and shell stand between ruby and BUD.  BFSShell provides
 # dispatch_command() as a synchronous functional interface for FS operations
 module BFSClient
   include BFSClientProtocol
@@ -98,7 +98,7 @@ class BFSShell
   def synchronous_request(op, args)
     reqid = gen_id
     ren = Rendezvous.new(self, response)
-    async_do{ request <+ [[reqid, op, args]] }
+    async_do { request <+ [[reqid, op, args]] }
     begin
       res = ren.block_on(15)
     rescue
@@ -117,7 +117,7 @@ class BFSShell
   end
 
   def do_create(args, is_dir)
-    (file, path) = get_base_and_path(args[0])
+    file, path = get_base_and_path(args[0])
     if is_dir
       synchronous_request(:mkdir, [file, path])
     else 
