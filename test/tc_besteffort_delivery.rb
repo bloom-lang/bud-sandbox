@@ -21,6 +21,7 @@ class BED
 end
 
 class TestBEDelivery < Test::Unit::TestCase
+  # XXX: broken
   def test_besteffort_delivery
     rd = BED.new
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']
@@ -36,7 +37,7 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.stop_bg
   end
 
-  def test_delivery
+  def test_bed_delivery
     snd = BED.new
     rcv = BED.new
     snd.run_bg
@@ -47,14 +48,20 @@ class TestBEDelivery < Test::Unit::TestCase
       q.push(true)
     end
 
-    sendtup = [rcv.ip_port, snd.ip_port, 1, 'foobar']
-    snd.sync_do { snd.pipe_in <+ [sendtup] }
+    values = [[1, 'foo'], [2, 'bar']]
+    tuples = values.map {|v| [rcv.ip_port, snd.ip_port] + v}
 
-    # Wait for message to be delivered to rcv
-    q.pop
+    tuples.each do |t|
+      snd.sync_do {
+        snd.pipe_in <+ [t]
+      }
+    end
+
+    # Wait for messages to be delivered to rcv
+    tuples.length.times { q.pop }
 
     rcv.sync_do {
-      assert_equal([sendtup], rcv.pipe_chan_perm.to_a.sort)
+      assert_equal(tuples.sort, rcv.pipe_chan_perm.to_a.sort)
     }
     snd.stop_bg
     rcv.stop_bg
