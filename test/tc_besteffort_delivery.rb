@@ -36,7 +36,7 @@ class TestBEDelivery < Test::Unit::TestCase
 
   def test_delivery
     bd = BED.new
-    rcv = BED.new(:port => 12345)
+    rcv = BED.new
     bd.run_bg
     rcv.run_bg
 
