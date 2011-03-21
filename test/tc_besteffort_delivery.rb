@@ -5,18 +5,22 @@ require 'delivery/delivery'
 
 class BED
   include Bud
-  include BestEffortDelivery
+  import BestEffortDelivery => :bed
 
   state do
-    table :pipe_chan_perm, pipe_chan.schema
-    table :pipe_sent_perm, pipe_sent.schema
-    callback :got_pipe, pipe_chan.schema
+    table :pipe_chan_perm, bed.pipe_chan.schema
+    table :pipe_sent_perm, bed.pipe_sent.schema
+    callback :got_pipe, bed.pipe_chan.schema
+
+    # XXX: this is only necessary because we don't rewrite sync_do blocks
+    scratch :send_msg, bed.pipe_in.schema
   end
 
   bloom do
-    pipe_sent_perm <= pipe_sent
-    pipe_chan_perm <= pipe_chan
-    got_pipe <= pipe_chan
+    pipe_sent_perm <= bed.pipe_sent
+    pipe_chan_perm <= bed.pipe_chan
+    got_pipe <= bed.pipe_chan
+    bed.pipe_in <= send_msg
   end
 end
 
@@ -53,7 +57,7 @@ class TestBEDelivery < Test::Unit::TestCase
 
     tuples.each do |t|
       snd.sync_do {
-        snd.pipe_in <+ [t]
+        snd.send_msg <+ [t]
       }
     end
 
