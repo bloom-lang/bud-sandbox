@@ -6,7 +6,7 @@ require 'delivery/delivery'
 class BED
   include Bud
   include BestEffortDelivery
-  
+
   state do
     table :pipe_chan_perm, [:dst, :src, :ident, :payload]
     table :pipe_sent_perm, [:dst, :src, :ident, :payload]
@@ -33,15 +33,15 @@ class TestBEDelivery < Test::Unit::TestCase
     }
     rd.stop_bg
   end
-    
+
   def test_delivery
     bd = BED.new
     rcv = BED.new(:port => 12345)
     bd.run_bg
     rcv.run_bg
 
-    sendtup = ['localhost:12345', 'localhost:12346', 1, 'foobar']
-    bd.sync_do { bd.pipe_in <+  [sendtup] }
+    sendtup = [rcv.ip_port, bd.ip_port, 1, 'foobar']
+    bd.sync_do { bd.pipe_in <+ [sendtup] }
     sleep 2
 
     rcv.sync_do {

@@ -17,7 +17,7 @@ class RED
   end
 end
 
-class TestBEDelivery < Test::Unit::TestCase
+class TestReliableDelivery < Test::Unit::TestCase
   def ntest_delivery1
     rd = RED.new(:port => 12222, :dump => true)
     rd.run_bg
@@ -30,15 +30,15 @@ class TestBEDelivery < Test::Unit::TestCase
     rd.stop_bg
   end
 
-  def test_besteffort_delivery2
-    rd = RED.new(:port => 13333)
-    rd2 = RED.new(:port => 13334)
+  def test_rdelivery
+    rd = RED.new
+    rd2 = RED.new
     rd.run_bg
     rd2.run_bg
     ren = Rendezvous.new(rd, rd.pipe_sent)
 
-    sendtup = ['localhost:13334', 'localhost:13333', 1, 'foobar']
-    rd.sync_do{ rd.pipe_in <+ [ sendtup ] }
+    sendtup = [rd2.ip_port, rd.ip_port, 1, 'foobar']
+    rd.sync_do{ rd.pipe_in <+ [sendtup] }
     res = ren.block_on(5)
     # transmission 'complete'
     rd.sync_do{ assert_equal(1, rd.pipe_perm.length) }
