@@ -8,13 +8,15 @@ class BED
   include BestEffortDelivery
 
   state do
-    table :pipe_chan_perm, [:dst, :src, :ident, :payload]
-    table :pipe_sent_perm, [:dst, :src, :ident, :payload]
+    table :pipe_chan_perm, pipe_chan.schema
+    table :pipe_sent_perm, pipe_sent.schema
+    callback :got_pipe, pipe_chan.schema
   end
 
   bloom do
     pipe_sent_perm <= pipe_sent
     pipe_chan_perm <= pipe_chan
+    got_pipe <= pipe_chan
   end
 end
 
@@ -35,20 +37,26 @@ class TestBEDelivery < Test::Unit::TestCase
   end
 
   def test_delivery
-    bd = BED.new
+    snd = BED.new
     rcv = BED.new
-    bd.run_bg
+    snd.run_bg
     rcv.run_bg
 
-    sendtup = [rcv.ip_port, bd.ip_port, 1, 'foobar']
-    bd.sync_do { bd.pipe_in <+ [sendtup] }
-    sleep 2
+    q = Queue.new
+    rcv.register_callback(:got_pipe) do
+      q.push(true)
+    end
+
+    sendtup = [rcv.ip_port, snd.ip_port, 1, 'foobar']
+    snd.sync_do { snd.pipe_in <+ [sendtup] }
+
+    # Wait for message to be delivered to rcv
+    q.pop
 
     rcv.sync_do {
-      assert_equal(1, rcv.pipe_chan_perm.length)
-      assert_equal(sendtup, rcv.pipe_chan_perm.first)
+      assert_equal([sendtup], rcv.pipe_chan_perm.to_a.sort)
     }
-    bd.stop_bg
+    snd.stop_bg
     rcv.stop_bg
   end
 end
