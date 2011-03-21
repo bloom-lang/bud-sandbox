@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'bud'
-require 'bud/rendezvous'
 require 'backports'
 require 'timeout'
 require 'bfs/bfs_client_proto'
@@ -8,10 +7,8 @@ require 'bfs/data_protocol'
 require 'bfs/bfs_config'
 require 'timeout'
 
-# The BFS client and shell stand between ruby and BUD.  BSFShell provides dispatch_command() as a synchronous functional interface
-# for FS operations
-
-
+# The BFS client and shell stand between ruby and BUD.  BSFShell provides
+# dispatch_command() as a synchronous functional interface for FS operations
 module BFSClient
   include BFSClientProtocol
   include BFSClientMasterProtocol
@@ -43,7 +40,7 @@ class BFSShell
   include Bud
   include BFSClient
   
- def initialize(master, opts = {})
+ def initialize(master, opts={})
     @master = master
     super(opts)
   end
