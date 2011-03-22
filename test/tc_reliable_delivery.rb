@@ -5,16 +5,20 @@ require 'delivery/reliable_delivery'
 
 class RED
   include Bud
-  include ReliableDelivery
+  import ReliableDelivery => :rd
 
   state do
-    table :pipe_log, pipe_sent.schema
-    callback :msg_sent, pipe_sent.schema
+    table :pipe_log, rd.pipe_sent.schema
+    callback :msg_sent, rd.pipe_sent.schema
+
+    # XXX: only necessary because we don't rewrite sync_do blocks
+    scratch :send_msg, rd.pipe_in.schema
   end
 
   bloom do
-    pipe_log <= pipe_sent
-    msg_sent <= pipe_sent
+    pipe_log <= rd.pipe_sent
+    msg_sent <= rd.pipe_sent
+    rd.pipe_in <= send_msg
   end
 end
 
@@ -43,10 +47,10 @@ class TestReliableDelivery < Test::Unit::TestCase
     end
 
     sendtup = [rd2.ip_port, rd.ip_port, 1, 'foobar']
-    rd.sync_do { rd.pipe_in <+ [sendtup] }
+    rd.sync_do { rd.send_msg <+ [sendtup] }
     q.pop
     rd.sync_do { assert_equal([sendtup], rd.pipe_log.to_a.sort) }
-    rd.sync_do { assert(rd.buf.empty?) }
+#    assert(rd.buf_empty?)
 
     rd.stop_bg
     rd2.stop_bg
