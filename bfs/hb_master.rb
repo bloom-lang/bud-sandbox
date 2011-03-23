@@ -9,15 +9,15 @@ module HBMaster
   include BFSHBProtocol
 
   state do
+    interface output, :available, [] => [:pref_list]
     table :chunk_cache, [:node, :chunkid, :time]
     scratch :chunk_cache_nodes, [:node]
     # at any given time, :available will contain a list of datanodes in preference order.
     # for now, arbitrary
-    scratch :available, [] => [:pref_list]
     periodic :master_duty_cycle, MASTER_DUTY_CYCLE
   end
 
-  bloom :hblogic do
+  bloom :hbmasterlogic do
     #stdio <~ last_heartbeat.inspected
     chunk_cache <= join([master_duty_cycle, last_heartbeat]).flat_map do |d, l| 
       unless l.payload[1].nil?
