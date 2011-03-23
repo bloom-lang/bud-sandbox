@@ -34,7 +34,6 @@ module KVSFS
   include FSProtocol
   include BasicKVS
   include TimestepNonce
-  include AggAssign
 
   state do
     # in the KVS-backed implementation, we'll use the same routine for creating

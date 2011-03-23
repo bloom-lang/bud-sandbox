@@ -3,8 +3,10 @@ require 'bud'
 require 'backports'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
+require 'ordering/nonce'
 require 'bfs/data_protocol'
 require 'bfs/bfs_client_proto'
+
 
 module BFSDatanode
   include HeartbeatAgent

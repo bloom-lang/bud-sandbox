@@ -134,16 +134,32 @@ class BFSShell
     synchronous_request(:rm, [file, path]) 
   end
 
-  def do_read(args, fh)
-    begin 
-      res = synchronous_request(:getchunks, args[0])
-      res[2].sort{|a, b| a <=> b}.each do |chk|
-        res = synchronous_request(:getchunklocations, chk)
-        chunk = DataProtocolClient.read_chunk(chk, res[2])
-        fh.write chunk
+  def read_retry(chunk)
+    5.times do
+      begin
+        res = synchronous_request(:getchunklocations, chunk)
+        raise BFSClientError, "No copes of chunk #{chunk}" unless res[1]
+        chunk_data = DataProtocolClient.read_chunk(chunk, res[2])
+        return chunk_data
+      rescue
+        puts "ERROR IS #{$!}"
+        puts "retrying individual chunk read for #{chunk}"
+        sleep 1
       end
-    rescue
-      raise BFSClientError, $!
+    end
+    raise IOError, "Could not read chunk"
+  end
+
+  def do_read(args, fh)
+    res = synchronous_request(:getchunks, args[0])
+    res[2].sort{|a, b| a <=> b}.each do |chk|
+      puts "GET CHUNK LOC for #{chk}"
+      #res = synchronous_request(:getchunklocations, chk)
+      #raise BFSClientError, "No copes of chunk #{chk}" unless res[1]
+      puts "got it, do lookup: #{res.inspect}"
+      #chunk = read_retry(chk, res[2])
+      chunk = read_retry(chk)
+      fh.write chunk
     end
   end
 
