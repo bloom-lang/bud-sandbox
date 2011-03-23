@@ -9,7 +9,7 @@ class RED
 
   state do
     table :pipe_log, rd.pipe_sent.schema
-    callback :msg_sent, rd.pipe_sent.schema
+    scratch :msg_sent, rd.pipe_sent.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, rd.pipe_in.schema

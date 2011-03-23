@@ -10,7 +10,7 @@ class BED
   state do
     table :pipe_chan_perm, bed.pipe_chan.schema
     table :pipe_sent_perm, bed.pipe_sent.schema
-    callback :got_pipe, bed.pipe_chan.schema
+    scratch :got_pipe, bed.pipe_chan.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, bed.pipe_in.schema
