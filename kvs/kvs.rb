@@ -5,7 +5,6 @@ require 'delivery/multicast'
 
 module KVSProtocol
   state do
-    #interface input, :kvput, [:client, :key, :reqid] => [:value]
     interface input, :kvput, [:client, :key] => [:reqid, :value]
     interface input, :kvdel, [:key] => [:reqid]
     interface input, :kvget, [:reqid] => [:key]
