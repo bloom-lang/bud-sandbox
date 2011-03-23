@@ -7,7 +7,6 @@ require 'membership/membership'
 # to arbitrary streams will require installing serializers
 module NonceProto
   state do
-    interface input, :seed, []
     interface output, :nonce, [] => [:ident]
   end
 end
@@ -21,6 +20,7 @@ module GroupNonce
   # this host (among group members) and monotonically increasing
 
   state do
+    interface input, :seed, []
     table :permo, [] => [:ident]
     scratch :mcnt, [] => [:cnt]
   end
