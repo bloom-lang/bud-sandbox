@@ -3,7 +3,8 @@ require 'bud'
 require 'delivery/delivery'
 
 module ReliableDelivery
-  include BestEffortDelivery
+  include DeliveryProtocol
+  import BestEffortDelivery => :bed
 
   state do
     table :buf, pipe_in.schema
@@ -13,11 +14,12 @@ module ReliableDelivery
 
   bloom :remember do
     buf <= pipe_in
-    pipe_chan <~ join([buf, clock]).map {|b, c| b}
+    bed.pipe_in <= pipe_in
+    bed.pipe_in <= join([buf, clock]).map {|b, c| b}
   end
 
   bloom :rcv do
-    ack <~ pipe_chan.map {|p| [p.src, p.dst, p.ident]}
+    ack <~ bed.pipe_chan.map {|p| [p.src, p.dst, p.ident]}
   end
 
   bloom :done do

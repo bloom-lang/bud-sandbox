@@ -11,15 +11,17 @@ class RED
   state do
     table :pipe_log, rd.pipe_sent.schema
     scratch :msg_sent, rd.pipe_sent.schema
-
-    # XXX: only necessary because we don't rewrite sync_do blocks
-    scratch :send_msg, rd.pipe_in.schema
   end
 
   bloom do
     pipe_log <= rd.pipe_sent
     msg_sent <= rd.pipe_sent
-    rd.pipe_in <= send_msg
+  end
+
+  def send_msg(t)
+    sync_do {
+      rd.pipe_in <+ t
+    }
   end
 
   def check_buf_empty
@@ -58,7 +60,7 @@ class TestReliableDelivery < Test::Unit::TestCase
       [rd2.ip_port, rd.ip_port, i, v]
     end
 
-    rd.sync_do { rd.send_msg <+ tuples }
+    rd.send_msg(tuples)
     tuples.length.times { q.pop }
     rd.sync_do { assert_equal(tuples, rd.pipe_log.to_a.sort) }
     rd.check_buf_empty
