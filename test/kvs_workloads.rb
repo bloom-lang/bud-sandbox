@@ -10,7 +10,7 @@ module KVSWorkloads
   def add_members(b, *hosts)
     hosts.each do |h|
       #print "ADD MEMBER: #{h.inspect}\n"
-      assert_nothing_raised(RuntimeError) { b.add_member <+ [[h]] }
+      b.add_member <+ [[h]]
     end
   end
 
