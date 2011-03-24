@@ -144,9 +144,7 @@ class TestBFS < Test::Unit::TestCase
   def do_read(rt)
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
     fp = File.open(file, "w")
-    puts "\n\n\nSTART READ\n\n\n"
     rt.dispatch_command(["read", "/peter"], fp)
-    puts "\n\n\nEND READ\n\n\n"
     fp.close
     assert_equal(md5_of(TEST_FILE), md5_of(file)) 
   end
@@ -172,26 +170,12 @@ class TestBFS < Test::Unit::TestCase
     rd = File.open(TEST_FILE, "r")
     s.dispatch_command(["append", "/peter"], rd)
     rd.close  
-
     s.sync_do{}
-
-    #s.dispatch_command(["ls", "/"])
-    #file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
-    #fp = File.open(file, "w")
-    #puts "\n\n\nSTART READ\n\n\n"
-    #s.dispatch_command(["read", "/peter"], fp)
-    #fp.close
-    #assert_equal(md5_of(TEST_FILE), md5_of(file)) 
     do_read(s)
 
     dn.stop_datanode
 
     # failover
-    #file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
-    #fp = File.open(file, "w")
-    #s.dispatch_command(["read", "/peter"], fp)
-    #fp.close
-    #assert_equal(md5_of(TEST_FILE), md5_of(file)) 
     do_read(s)
 
     dn2.stop_datanode
@@ -203,30 +187,17 @@ class TestBFS < Test::Unit::TestCase
     # and an amnesiac
     dn4 = new_datanode(11119, 65433)
 
-    #file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
-    #fp = File.open(file, "w")
-    #s.dispatch_command(["read", "/peter"], fp)
-    #fp.close
-    #assert_equal(md5_of(TEST_FILE), md5_of(file)) 
     do_read(s)
 
     # kill the memory node
     dn3.stop_datanode
 
-
     # and run off the replica
-    
-    #file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
-    #fp = File.open(file, "w")
-    #s.dispatch_command(["read", "/peter"], fp)
-    #fp.close
-    #assert_equal(md5_of(TEST_FILE), md5_of(file)) 
     do_read(s)
 
     dn4.stop_datanode
     s.stop_bg
     b.stop_bg
-  
   end
   
   # not the dryest
