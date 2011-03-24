@@ -18,13 +18,13 @@ module ReliableDelivery
     bed.pipe_in <= (buf * clock).lefts
   end
 
-  bloom :rcv do
-    ack <~ bed.pipe_chan.map {|p| [p.src, p.dst, p.ident]}
+  bloom :send_ack do
+    ack <~ bed.pipe_chan {|p| [p.src, p.dst, p.ident]}
   end
 
   bloom :done do
-    msg_done = (ack * buf).rights(:ident => :ident)
-    pipe_sent <= msg_done
-    buf <- msg_done
+    msg_acked = (buf * ack).lefts(:ident => :ident)
+    pipe_sent <= msg_acked
+    buf <- msg_acked
   end
 end

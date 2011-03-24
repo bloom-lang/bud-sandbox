@@ -78,8 +78,8 @@ class TestFind < Test::Unit::TestCase
     #   puts "node #{@my_nodes[num].port} : #{@my_nodes[num].succ_cache.map.inspect}"
     # end
     assert_equal(3, @my_nodes[0].succ_cache.length)
-    assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
-    assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
+    assert_equal(@my_nodes[0].succ_cache.to_a.sort, @my_nodes[1].succ_cache.to_a.sort)
+    assert_equal(@my_nodes[1].succ_cache.to_a.sort, @my_nodes[2].succ_cache.to_a.sort)
   end
   # def test_join
   #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
@@ -98,7 +98,7 @@ class TestFind < Test::Unit::TestCase
   #   sleep 2
   #   assert_nothing_raised { @my_nodes.each{|n| n.stop_bg} }
   #   # assert_equal(4, @my_nodes[0].succ_cache.length)
-  #   assert_equal(@my_nodes[0].finger.map{|f| f}, nil)
+  #   assert_equal(@my_nodes[0].finger, nil)
   #   assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
   #   assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
   #   assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[3].succ_cache.map{|s| s})
