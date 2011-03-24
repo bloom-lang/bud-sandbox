@@ -12,8 +12,8 @@ module TestState
   end
 
   bloom :mem do
-    mcast_done_perm <= mcast_done.map{|d| d }
-    rcv_perm <= pipe_chan.map{|r| [r.ident, r.payload] }
+    mcast_done_perm <= mcast_done
+    rcv_perm <= pipe_chan {|r| [r.ident, r.payload]}
   end
 end
 
