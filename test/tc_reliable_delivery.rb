@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bud'
 require 'test/unit'
 require 'delivery/reliable_delivery'
+require 'enumerator'
 
 class RED
   include Bud
@@ -19,6 +20,12 @@ class RED
     pipe_log <= rd.pipe_sent
     msg_sent <= rd.pipe_sent
     rd.pipe_in <= send_msg
+  end
+
+  def check_buf_empty
+    sync_do {
+      raise unless rd.buf.empty?
+    }
   end
 end
 
@@ -46,11 +53,15 @@ class TestReliableDelivery < Test::Unit::TestCase
       q.push(true)
     end
 
-    sendtup = [rd2.ip_port, rd.ip_port, 1, 'foobar']
-    rd.sync_do { rd.send_msg <+ [sendtup] }
-    q.pop
-    rd.sync_do { assert_equal([sendtup], rd.pipe_log.to_a.sort) }
-#    assert(rd.buf_empty?)
+    vals = ("aa".."dd").to_a
+    tuples = vals.enum_with_index.map do |v, i|
+      [rd2.ip_port, rd.ip_port, i, v]
+    end
+
+    rd.sync_do { rd.send_msg <+ tuples }
+    tuples.length.times { q.pop }
+    rd.sync_do { assert_equal(tuples, rd.pipe_log.to_a.sort) }
+    rd.check_buf_empty
 
     rd.stop_bg
     rd2.stop_bg
