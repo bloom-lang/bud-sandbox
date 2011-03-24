@@ -97,19 +97,18 @@ class BFSShell
   
   def synchronous_request(op, args)
     reqid = gen_id
-    ren = Rendezvous.new(self, response)
-    async_do { request <+ [[reqid, op, args]] }
-    begin
-      res = ren.block_on(15)
-    rescue
-      raise BFSClientError, $!
+    q = Queue.new
+    self.register_callback(:response) do |c|
+      q.push c.first
     end
-    ren.stop
+    async_do { request <+ [[reqid, op, args]] }
+    res = q.pop
     if res[0] = reqid
       return res
     else 
       raise BFSClientError, "GOT (wrong) RES #{res}" 
     end
+    unregister_callback(:response)
   end
 
   def do_createfile(args)
@@ -135,7 +134,7 @@ class BFSShell
   end
 
   def read_retry(chunk)
-    5.times do
+    READ_RETRIES.times do
       begin
         res = synchronous_request(:getchunklocations, chunk)
         raise BFSClientError, "No copes of chunk #{chunk}" unless res[1]
@@ -153,11 +152,6 @@ class BFSShell
   def do_read(args, fh)
     res = synchronous_request(:getchunks, args[0])
     res[2].sort{|a, b| a <=> b}.each do |chk|
-      puts "GET CHUNK LOC for #{chk}"
-      #res = synchronous_request(:getchunklocations, chk)
-      #raise BFSClientError, "No copes of chunk #{chk}" unless res[1]
-      puts "got it, do lookup: #{res.inspect}"
-      #chunk = read_retry(chk, res[2])
       chunk = read_retry(chk)
       fh.write chunk
     end
