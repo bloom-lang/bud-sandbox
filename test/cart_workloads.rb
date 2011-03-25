@@ -17,8 +17,7 @@ module CartWorkloads
       program.client_action <+ [[addy, 1234, 130, 'beer', 'Del']]
     }
 
-    program.sync_do{ program.client_checkout <+ [[addy, 1234, 131]] }
-    #program.sync_do{ program.client_action <+ [[addy, 1234, 132, 'papers', 'Add']] }
+    program.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg) {}
   end
 
   def run_cart2(program)
