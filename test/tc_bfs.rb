@@ -221,31 +221,5 @@ class TestBFS < Test::Unit::TestCase
     b.sync_do{ b.fsls <+ [[126, '/sub1']] }
     assert_resp(b, 126, ["subsub1"])
   end
-
-  def ntest_datanode
-    dn = new_datanode(11116, 45637)
-    dn.run_bg
-    hbc = HBA.new(@opts.merge(:port => 45637))
-    hbc.run_bg
-    hbc.sync_do {} 
-
-
-    sleep 6
-  
-    #dn.sync_do  {
-    #  dn.payload.each{|p| puts "PL: #{p.inspect}" }
-    #  dn.member.each{|m| puts "DNM: #{m.inspect}" } 
-    #}
-
-    hbc.sync_do {
-      hbc.chunk_cache.each{|c| puts "CC: #{c.inspect}" } 
-      assert_equal(1, hbc.chunk_cache.length)
-      #hbc.last_heartbeat.each{|l| puts "LHB: #{l.inspect}" }
-      #hbc.chunk_cache.each{|l| puts "CH: #{l.inspect}" }
-    }
-
-    hbc.stop_bg
-    dn.stop_datanode
-  end
 end
 
