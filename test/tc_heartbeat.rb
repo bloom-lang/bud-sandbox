@@ -22,7 +22,7 @@ end
 class TestHB < Test::Unit::TestCase
 
   def test_heartbeat_group
-    hb = HB.new(:port => 46362, :dump => true, :trace => true)
+    hb = HB.new(:port => 46362)
     hb2 = HB.new(:port => 46363)
     hb3 = HB.new(:port => 46364)
     hb.payload << ['foo']
@@ -33,7 +33,11 @@ class TestHB < Test::Unit::TestCase
     hb3.run_bg
 
 
-    sleep 16
+    # wait for the heartbeats to start appearing
+    q = Queue.new
+    ref = hb.register_callback(:last_heartbeat) {|c| q.push true}
+    q.pop
+    hb.unregister_callback(ref)
 
     [hb, hb2, hb3].each do |h|
       h.sync_do { 
