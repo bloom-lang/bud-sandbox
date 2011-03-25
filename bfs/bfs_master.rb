@@ -52,13 +52,16 @@ class BFSMasterServer
   end
 
   def start_background_task_thread
-    meeting = Rendezvous.new(self, self.copy_chunk)
-    Thread.new do 
-      loop do
-        task = meeting.block_on(1000)
-        bg_besteffort_request(task[0], task[1], task[2])
+    @task = register_callback(:copy_chunk) do |cb|
+      cb.each do |t|
+        bg_besteffort_request(t[0], t[1], t[2])
       end
     end
+  end
+
+  def stop_bg
+    unregister_callback(@task)
+    super
   end
 
   def bg_besteffort_request(c, o, r)
