@@ -22,9 +22,9 @@ module BasicKVS
   end
 
   bloom :mutate do
-    kvstate <+ kvput_internal.map{ |s|  [s.key, s.value] } 
+    kvstate <+ kvput_internal.map {|s|  [s.key, s.value]}
     prev = join [kvstate, kvput_internal], [kvstate.key, kvput_internal.key]
-    kvstate <- prev.map { |b, s| b }
+    kvstate <- prev.map {|b, s| b }
   end
 
   bloom :get do
@@ -35,7 +35,7 @@ module BasicKVS
   end
 
   bloom :delete do
-    kvstate <- join([kvstate, kvdel], [kvstate.key, kvdel.key]).map {|s, d| s}
+    kvstate <- (kvstate * kvdel).lefts(:key => :key)
   end
 
   # place holder until scoping is fully implemented
@@ -56,18 +56,18 @@ module ReplicatedKVS
 
   bloom :local_indir do
     # if I am the master, multicast store requests
-    send_mcast <= kvput.map do |k| 
+    send_mcast <= kvput.map do |k|
       unless member.include? [k.client]
-        [k.reqid, [@addy, k.key, k.reqid, k.value]] 
+        [k.reqid, [@addy, k.key, k.reqid, k.value]]
       end
     end
 
-    kvput_internal <= mcast_done.map {|m| m.payload } 
+    kvput_internal <= mcast_done.map {|m| m.payload }
 
     # if I am a replica, store the payload of the multicast
     kvput_internal <= pipe_chan.map do |d|
       if d.payload.fetch(1) != @addy
-        d.payload 
+        d.payload
       end
     end
   end

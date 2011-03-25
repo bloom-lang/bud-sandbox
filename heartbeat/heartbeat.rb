@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'bud'
 require 'time'
-#require 'lib/bfs_client'
 require 'membership/membership'
 
 HB_EXPIRE = 6.0
@@ -54,7 +53,7 @@ module HeartbeatAgent
 
   bloom :buffer do
     payload_buffer <+ payload
-    payload_buffer <- join([payload_buffer, payload]).map{|b, p| b }
+    payload_buffer <- (payload_buffer * payload).lefts
   end
 
   bloom :reckon do
