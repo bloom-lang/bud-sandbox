@@ -13,7 +13,7 @@ end
 
 module GroupNonce
   include NonceProto
-  include MembershipProto
+  include MembershipProtocol
 
   # a nonce generator built on top of a membership group.
   # at each timestep, return a number that is unique to
@@ -31,8 +31,8 @@ module GroupNonce
 
   bloom do
     mcnt <= member.group(nil, count)
-    nonce <= join([permo,  mcnt]).map{ |p, m| [p.ident + (@budtime * m.cnt)] }
-    permo <= join([seed, local_id]).map {|s, l| l if @budtime == 0 }
+    nonce <= join([permo, mcnt]).map {|p, m| [p.ident + (@budtime * m.cnt)]}
+    permo <= join([seed, local_id]).map {|s, l| l if @budtime == 0}
   end
 end
 

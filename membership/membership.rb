@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 
-module MembershipProto
+module MembershipProtocol
   state do
     interface input, :add_member, [:host] => [:ident]
     interface input, :my_id, [] => [:ident]
@@ -10,17 +10,19 @@ module MembershipProto
   end
 end
 
+# This is a simple membership protocol that only allows members to be added to
+# the group before the first Bud timestep.
 module StaticMembership
-  include MembershipProto
+  include MembershipProtocol
 
   bloom :member_logic do
-    member <= add_member.map do |m|
+    member <= add_member do |m|
       if @budtime == 0
         m
       else
         puts "REJECT #{m.inspect} @ #{@budtime}"
       end
     end
-    local_id <= my_id.map{ |m| m if @budtime == 0 }
+    local_id <= my_id {|m| m if @budtime == 0}
   end
 end

@@ -72,11 +72,11 @@ module VotingMaster
         [v.ident, s.content, v.response]
       end
     end
-    vote_status <+ victor.map{|v| v }
+    vote_status <+ victor
     vote_status <- victor.map do |v|
       [v.ident, v.content, 'in flight']
     end
-    #localtick <~ victor.map{|v| v}
+    #localtick <~ victor
   end
 end
 
@@ -115,8 +115,8 @@ module MajorityVotingMaster
         [v.ident, s.content, v.response]
       end
     end
-    vote_status <+ victor.map{|v| v }
+    vote_status <+ victor
     vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
-    #localtick <~ victor.map{|v| v}
+    #localtick <~ victor
   end
 end

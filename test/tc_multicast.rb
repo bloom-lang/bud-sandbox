@@ -12,8 +12,8 @@ module TestState
   end
 
   bloom :mem do
-    mcast_done_perm <= mcast_done.map{|d| d }
-    rcv_perm <= pipe_chan.map{|r| [r.ident, r.payload] }
+    mcast_done_perm <= mcast_done
+    rcv_perm <= pipe_chan {|r| [r.ident, r.payload]}
   end
 end
 
@@ -32,14 +32,13 @@ end
 
 class TestMC < Test::Unit::TestCase
   def test_be
-    mc = MC.new(:port => 34256)
-    mc2 = MC.new(:port =>  34257)
-    mc3 = MC.new(:port =>  34258)
+    mc = MC.new
+    mc2 = MC.new
+    mc3 = MC.new
 
-    mc.add_member <+ [["localhost: 34257" ]]
-    mc.add_member <+ [["localhost: 34258" ]]
-
-    assert_nothing_raised(RuntimeError) { mc.run_bg; mc2.run_bg; mc3.run_bg }
+    mc2.run_bg; mc3.run_bg
+    mc.add_member <+ [[mc2.ip_port], [mc3.ip_port]]
+    mc.run_bg
 
     mc.sync_do{ mc.send_mcast <+ [[1, 'foobar']] }
 

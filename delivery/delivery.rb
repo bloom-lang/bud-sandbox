@@ -20,7 +20,8 @@ module BestEffortDelivery
   end
 
   bloom :done do
-    # vacuous ackuous.  override me!
+    # Report success immediately -- this implementation of "best effort" is more
+    # like "an effort".
     pipe_sent <= pipe_in
   end
 end

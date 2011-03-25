@@ -27,7 +27,7 @@ class TestVoting < Test::Unit::TestCase
 
   def start_kind(kind, port)
     t = nil
-    assert_nothing_raised(RuntimeError) { eval "t = #{kind}.new(@opts.merge(:port => #{port}, :tag => #{port}))" }
+    eval "t = #{kind}.new(@opts.merge(:port => #{port}, :tag => #{port}))"
     return t
   end
 

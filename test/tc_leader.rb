@@ -22,7 +22,7 @@ class TestLE < Test::Unit::TestCase
     v.init_le <+ [[nil]]
     v.current_state << ['election', "127.0.0.1:10001", 0, Time.new.to_f, 0.5] 
   
-    assert_nothing_raised(RuntimeError) {v.run_bg}
+    v.run_bg
     sleep 3
 
     v.vote_status.each {|s| puts "VOTe StATUS: #{s.inspect}" } 

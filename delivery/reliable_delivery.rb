@@ -15,18 +15,16 @@ module ReliableDelivery
   bloom :remember do
     buf <= pipe_in
     bed.pipe_in <= pipe_in
-    bed.pipe_in <= join([buf, clock]).map {|b, c| b}
+    bed.pipe_in <= (buf * clock).lefts
   end
 
-  bloom :rcv do
-    ack <~ bed.pipe_chan.map {|p| [p.src, p.dst, p.ident]}
+  bloom :send_ack do
+    ack <~ bed.pipe_chan {|p| [p.src, p.dst, p.ident]}
   end
 
   bloom :done do
-    got_ack = join [ack, buf], [ack.ident, buf.ident]
-    msg_done = got_ack.map {|a, b| b}
-
-    pipe_sent <= msg_done
-    buf <- msg_done
+    msg_acked = (buf * ack).lefts(:ident => :ident)
+    pipe_sent <= msg_acked
+    buf <- msg_acked
   end
 end

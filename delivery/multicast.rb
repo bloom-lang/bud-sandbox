@@ -6,7 +6,7 @@ require 'voting/voting'
 require 'membership/membership.rb'
 
 module MulticastProtocol
-  include MembershipProto
+  include MembershipProtocol
 
   state do
     interface input, :send_mcast, [:ident] => [:payload]
@@ -42,11 +42,11 @@ module ReliableMulticast
   include Multicast
 
   bloom :start_mcast do
-    begin_vote <= send_mcast.map{|s| [s.ident, s] }
+    begin_vote <= send_mcast {|s| [s.ident, s] }
   end
 
   bloom :agency do
-    cast_vote <= join([pipe_sent, waiting_ballots], [pipe_sent.ident, waiting_ballots.ident]).map{|p, b| [b.ident, b.content]}
+    cast_vote <= (pipe_sent * waiting_ballots).pairs(:ident => :ident) {|p, b| [b.ident, b.content]}
   end
 
   bloom :done_mcast do
