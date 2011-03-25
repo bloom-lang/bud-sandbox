@@ -6,7 +6,7 @@ require 'voting/voting'
 require 'membership/membership.rb'
 
 module MulticastProtocol
-  include MembershipProto
+  include MembershipProtocol
 
   state do
     interface input, :send_mcast, [:ident] => [:payload]

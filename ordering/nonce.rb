@@ -13,7 +13,7 @@ end
 
 module GroupNonce
   include NonceProto
-  include MembershipProto
+  include MembershipProtocol
 
   # a nonce generator built on top of a membership group.
   # at each timestep, return a number that is unique to

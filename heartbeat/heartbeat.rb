@@ -7,7 +7,7 @@ require 'membership/membership'
 HB_EXPIRE = 6.0
 
 module HeartbeatProtocol
-  include MembershipProto
+  include MembershipProtocol
 
   state do
     interface input, :payload, [] => [:payload]
