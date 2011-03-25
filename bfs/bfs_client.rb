@@ -94,23 +94,20 @@ class BFSShell
     items = path.split("/")
     return [items.pop, items.length == 1 ? "/" : items.join("/")]
   end 
-  
+
   def synchronous_request(op, args)
     reqid = gen_id
-    q = Queue.new
-    self.register_callback(:response) do |c|
-      q.push c.first
+    tupset = [[reqid, op, args]]
+    sync_callback(:request, tupset, :response) do |cb|
+      tup = cb.first
+      if tup[0] == reqid
+        return tup
+      else
+        raise BFSClientError, "Got (wrong) RES #{res} expecting #{reqid}.  Unexpected concurrency?" 
+      end
     end
-    async_do { request <+ [[reqid, op, args]] }
-    res = q.pop
-    if res[0] = reqid
-      return res
-    else 
-      raise BFSClientError, "GOT (wrong) RES #{res}" 
-    end
-    unregister_callback(:response)
   end
-
+  
   def do_createfile(args)
     do_create(args, false)
   end
@@ -137,7 +134,7 @@ class BFSShell
     READ_RETRIES.times do
       begin
         res = synchronous_request(:getchunklocations, chunk)
-        raise BFSClientError, "No copes of chunk #{chunk}" unless res[1]
+        raise BFSClientError, "Read Failure: No copies of chunk #{chunk}" unless res[1]
         chunk_data = DataProtocolClient.read_chunk(chunk, res[2])
         return chunk_data
       rescue
