@@ -68,11 +68,11 @@ class TestFind < Test::Unit::TestCase
     @my_nodes = @addrs.values.map do |a|
       LilChord.new(:port => a) #, :trace => true)
     end
-    assert_nothing_raised { @my_nodes.each{|n| n.run_bg} }
-    assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.load_data}}}
-    assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.do_lookups}}}
+    @my_nodes.each{|n| n.run_bg}
+    @my_nodes.each{|n| n.sync_do {n.load_data}}
+    @my_nodes.each{|n| n.sync_do {n.do_lookups}}
     sleep 2
-    assert_nothing_raised { @my_nodes.each{|n| n.stop_bg} }
+    @my_nodes.each{|n| n.stop_bg}
     
     # [0,1,2].each do |num|
     #   puts "node #{@my_nodes[num].port} : #{@my_nodes[num].succ_cache.map.inspect}"
@@ -86,17 +86,17 @@ class TestFind < Test::Unit::TestCase
   #   @my_nodes = @addrs.values.map do |a|
   #     LilChord.new(:port => a, :trace => true)
   #   end
-  #   assert_nothing_raised { @my_nodes.each{|n| n.run_bg} }
-  #   assert_nothing_raised { @my_nodes.each{|n| n.async_do {n.load_data}}}
+  #   @my_nodes.each{|n| n.run_bg}
+  #   @my_nodes.each{|n| n.async_do {n.load_data}}
   #   @addrs[6] = 12346
   #   newnode = LilChord.new(:port => 12346, :trace => true)
   #   @my_nodes << newnode
-  #   assert_nothing_raised { newnode.run_bg}
-  #   assert_nothing_raised { newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}}
+  #   newnode.run_bg
+  #   newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}
   #   sleep 2
-  #   assert_nothing_raised { @my_nodes.each{|n| n.sync_do {n.do_lookups}}}
+  #   @my_nodes.each{|n| n.sync_do {n.do_lookups}}
   #   sleep 2
-  #   assert_nothing_raised { @my_nodes.each{|n| n.stop_bg} }
+  #   @my_nodes.each{|n| n.stop_bg}
   #   # assert_equal(4, @my_nodes[0].succ_cache.length)
   #   assert_equal(@my_nodes[0].finger, nil)
   #   assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})

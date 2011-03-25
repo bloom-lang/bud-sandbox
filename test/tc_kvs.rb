@@ -9,7 +9,6 @@ class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)
-    #@opts = {:dump => true, :trace => true, :scoping => false}
     @opts = {}
     super
   end
@@ -17,7 +16,7 @@ class TestKVS < Test::Unit::TestCase
   def test_wl2
     # reliable delivery fails if the recipient is down
     v = SingleSiteKVS.new
-    assert_nothing_raised(RuntimeError) {v.run_bg}
+    v.run_bg
     if v.is_a?  ReliableDelivery
       workload1(v)
       assert_equal(0, v.kvstate.length)
@@ -29,7 +28,7 @@ class TestKVS < Test::Unit::TestCase
     # the unmetered kvs should fail on a ``disorderly'' workload
     # however, async_do forces a FIFO, coincidence-free delivery order
     v = SingleSiteKVS.new(@opts.merge(:port => 12352))
-    assert_nothing_raised(RuntimeError) {v.run_bg}
+    v.run_bg
     #add_members(v, "localhost:12352")
     assert_raise(Bud::KeyConstraintError)  { workload2(v) }
     v.stop_bg
@@ -42,8 +41,8 @@ class TestKVS < Test::Unit::TestCase
     add_members(v, "localhost:12345", "localhost:12346")
     add_members(v2, "localhost:12345", "localhost:12346")
 
-    assert_nothing_raised(RuntimeError) {v.run_bg}
-    assert_nothing_raised(RuntimeError) {v2.run_bg}
+    v.run_bg
+    v2.run_bg
     workload1(v)
     v.sync_do{ assert_equal(1, v.kvstate.length) }
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) } 
@@ -55,7 +54,7 @@ class TestKVS < Test::Unit::TestCase
 
   def test_simple
     v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')
-    assert_nothing_raised(RuntimeError) {v.run_bg}
+    v.run_bg
     workload1(v)
     v.sync_do{ assert_equal(1, v.kvstate.length) }
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
@@ -71,7 +70,7 @@ class TestKVS < Test::Unit::TestCase
 
   def test_del
     v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')
-    assert_nothing_raised(RuntimeError) {v.run_bg}
+    v.run_bg
     workload1(v)
     v.sync_do{ assert_equal(1, v.kvstate.length) }
     v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }

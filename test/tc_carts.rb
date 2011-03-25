@@ -99,7 +99,7 @@ class TestCart < Test::Unit::TestCase
 
   def add_members(b, *hosts)
     hosts.each do |h|
-      assert_nothing_raised(RuntimeError) { b.add_member <+ [[h]] }
+      b.add_member <+ [[h]]
     end
   end
 end
