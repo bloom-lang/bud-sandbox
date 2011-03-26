@@ -32,7 +32,7 @@ module LeaderElection
   end
 
   bloom :decide do
-    proofj = join([proof, current_state])
+    temp :proofj <= join([proof, current_state])
     current_state <+ proofj.map do |p, s|
       if p.view > s.view 
         ['follower', p.src, p.view, s.timeout]
@@ -53,7 +53,7 @@ module LeaderElection
     #packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or (b.content.unshift(b.ident)) } 
     packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or [b.ident, b.content.fetch(0), b.content.fetch(1), b.content.fetch(2)] } 
     #stdio <~ packet.map{|p| ["packet: " + p.inspect] } 
-    pacstate = join([packet, current_state])
+    temp :pacstate <= join([packet, current_state])
     start_le <= pacstate.map do |p, c|
       if p.view > c.view
         puts ip_port + " JUMP views to " + p.inspect + " from " + c.inspect or [p.host, p.view, c.timeout]
@@ -78,7 +78,7 @@ module LeaderElection
     set_alarm <= start_le.map{ |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeout * 2] }
 
 
-    csj = join [current_state, start_le]
+    temp :csj <= join [current_state, start_le]
     current_state <- csj.map{|c, s| c } 
     current_state <+ csj.map{|c, s| ['election', s.host, s.view, s.timeout * 2] } 
 

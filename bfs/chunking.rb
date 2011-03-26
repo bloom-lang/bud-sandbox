@@ -58,7 +58,7 @@ module ChunkedKVSFS
     end
 
     # chunkjoin will have rows if the block above doesn't.
-    chunkjoin = join [fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid]
+    temp :chunkjoin <= join([fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid])
     host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
     host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
     fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
@@ -66,7 +66,7 @@ module ChunkedKVSFS
 
   bloom :addchunks do
     #stdio <~ "Warning: no available datanodes" if available.empty?
-    minted_chunk = join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
+    temp :minted_chunk <= join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
     chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
     fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]] }
     fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|

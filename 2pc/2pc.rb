@@ -54,7 +54,7 @@ module TwoPCMaster
   end
 
   bloom :panic_or_rejoice do
-    decide = join([xact, vote_status], [xact.xid, vote_status.ident])
+    temp :decide <= (xact * vote_status).pairs(:xid => :ident)
     xact <+ decide.map do |x, s|
       [x.xid, x.data, "abort"] if s.response == "N"
     end

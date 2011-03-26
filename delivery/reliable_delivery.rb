@@ -23,7 +23,7 @@ module ReliableDelivery
   end
 
   bloom :done do
-    msg_acked = (buf * ack).lefts(:ident => :ident)
+    temp :msg_acked <= (buf * ack).lefts(:ident => :ident)
     pipe_sent <= msg_acked
     buf <- msg_acked
   end

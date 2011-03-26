@@ -94,7 +94,7 @@ module PaxosPrepareAgent
   end
 
   bloom :decide do
-    dj = join([datalist, datalist_length])
+    temp :dj <= join([datalist, datalist_length])
     #cast_vote <+ dj.map do |d, l|
     #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
     #end

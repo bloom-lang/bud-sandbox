@@ -26,7 +26,7 @@ module BFSBackgroundTasks
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))
     chunk_cnts_host <= cc_demand.group([cc_demand.node], count(cc_demand.chunkid))
 
-    danger = join [bg_timer, chunk_cnts_chunk, cc_demand, chunk_cnts_host], [cc_demand.node, chunk_cnts_host.host]
+    temp :danger <= join([bg_timer, chunk_cnts_chunk, cc_demand, chunk_cnts_host], [cc_demand.node, chunk_cnts_host.host])
     candidate_nodes <= danger.map do |t, ccc, cc, cch|
       if ccc.replicas < REP_FACTOR
         unless cc_demand.map{|c| c.node if c.chunkid == ccc.chunkid}.include?  cc.node

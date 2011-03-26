@@ -40,7 +40,7 @@ module BFSDatanode
     # remember the stuff we cast
     last_dir_contents <+ to_payload
     # if we get an ack, permanently remember
-    acked_contents = join([hb_ack, last_dir_contents], [hb_ack.val, last_dir_contents.nonce])
+    temp :acked_contents <= (hb_ack * last_dir_contents).pairs(:val => :nonce)
     server_knows <= acked_contents.map {|a, c| [c.file]}
     # and clean up the cache
     last_dir_contents <- acked_contents.map{|a, c| c}

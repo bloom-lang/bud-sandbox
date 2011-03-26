@@ -28,6 +28,6 @@ module CartClient
   bloom :client do
     action_msg <~ client_action.map{|a| [a.server, @addy, a.session, a.reqid, a.item, a.action]}
     checkout_msg <~ client_checkout.map{|a| [a.server, @addy, a.session, a.reqid]}
-    client_response <= response_msg.map {|r| r }
+    client_response <= response_msg
   end
 end

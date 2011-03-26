@@ -58,7 +58,7 @@ module HeartbeatAgent
 
   bloom :reckon do
     heartbeat_buffer <= heartbeat.map{|h| [h.src, h.sender, h.payload] }
-    duty_cycle = join [hb_timer, heartbeat_buffer]
+    temp :duty_cycle <= join([hb_timer, heartbeat_buffer])
     heartbeat_log <= duty_cycle.map{|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- duty_cycle.map{|t, h| h }
   end

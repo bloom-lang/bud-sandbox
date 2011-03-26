@@ -33,7 +33,7 @@ module DisorderlyCart
       end
     end
 
-    out = status.reduce({}) do |memo, i|
+    temp :out <= status.reduce({}) do |memo, i|
       memo[[i[0],i[1],i[2]]] ||= []
       i[4].times do
         memo[[i[0],i[1],i[2]]] << i[3]

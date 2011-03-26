@@ -17,7 +17,7 @@ module DestructiveCart
       end
     end
 
-    old_state = join [kvget_response, action_msg], [kvget_response.key, action_msg.session]
+    temp :old_state <= (kvget_response * action_msg).pairs(:key => :session)
     kvput <= old_state.map do |b, a| 
       if a.action == "Add"
         [a.client, a.session, a.reqid, (b.value.clone.push(a.item))]
@@ -29,7 +29,7 @@ module DestructiveCart
 
   bloom :finish do
     kvget <= checkout_msg.map{|c| [c.reqid, c.session] }
-    lookup = join([kvget_response, checkout_msg], [kvget_response.key, checkout_msg.session])
+    temp :lookup <= (kvget_response * checkout_msg).pairs(:key => :session)
     response_msg <~ lookup.map do |r, c|
       puts "RESP" or [r.client, r.server, r.key, r.value, nil]
     end

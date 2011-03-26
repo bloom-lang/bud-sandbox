@@ -40,7 +40,7 @@ module VotingMaster
   bloom :initiation do
     # when stimulated by begin_vote, send ballots
     # to members, set status to 'in flight'
-    j = join([begin_vote, member])
+    temp :j <= join([begin_vote, member])
     ballot <~ j.map do |b,m|
       [m.host, ip_port, b.ident, b.content]
     end
@@ -65,8 +65,8 @@ module VotingMaster
     # complete and unanimous vote.
     # a subclass will likely override this
     # paa -- fix potentially global scope of join aliases somehow...
-    sj = join([vote_status, member_cnt, vote_cnt],
-             [vote_status.ident, vote_cnt.ident])
+    temp :sj <= join([vote_status, member_cnt, vote_cnt],
+                     [vote_status.ident, vote_cnt.ident])
     victor <= sj.map do |s,m,v|
       if s.response == 'in flight' and m.cnt == v.cnt
         [v.ident, s.content, v.response]

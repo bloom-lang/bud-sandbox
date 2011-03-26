@@ -78,7 +78,7 @@ module ChordJoin
     # update finger entries upon a finger_upd if the new one works: insert new, delete old
     # XXX would be nice to have an update pattern in Bloom for this
     stdio <~ finger_upd.inspected
-    k = join([finger_upd, finger], [finger_upd.referrer_index, finger.index])
+    temp :k <= join([finger_upd, finger], [finger_upd.referrer_index, finger.index])
     stdio <~ k.map {|u,f| ["[#{u.inspect}], [#{f.inspect}]"]}
     finger <+ k.map do |u, f|
       [f.index, f.start, f.hi, u.my_start, u.from] if in_range(u.my_start, f.start, f.hi)

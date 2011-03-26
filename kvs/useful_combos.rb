@@ -50,7 +50,7 @@ module ReplicatedMeteredGlue
   bloom :rmg_indir do
     cs_rep <= rep_can_store.map {|c| c }
     cs_meter <= meter_can_store.map {|c| c }
-    csj = join([cs_rep, cs_meter], [cs_rep.ident, cs_meter.ident])
+    temp :csj <= join([cs_rep, cs_meter], [cs_rep.ident, cs_meter.ident])
     rmg_can_store <+ csj.map { |r, m| r } 
     cs_rep <- csj.map {|r, m| r }
     cs_meter <- csj.map {|r, m| m }

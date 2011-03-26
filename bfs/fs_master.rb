@@ -70,7 +70,7 @@ module KVSFS
     end
 
     # if the block above had no rows, dir_exists will have rows.
-    dir_exists = join [check_parent_exists, kvget_response, nonce], [check_parent_exists.reqid, kvget_response.reqid]
+    temp :dir_exists <= join([check_parent_exists, kvget_response, nonce], [check_parent_exists.reqid, kvget_response.reqid])
 
     check_is_empty <= join([fsrm, nonce]).map{|m, n| [n.ident, m.reqid, terminate_with_slash(m.path) + m.name] }
     kvget <= check_is_empty.map{|c| [c.reqid, c.name] }

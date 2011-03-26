@@ -32,7 +32,7 @@ module Serializer
   #end
 
   bloom :actions do
-    deq = join [storage_tab, top, dequeue], [storage_tab.ident, top.ident]
+    temp :deq <= join([storage_tab, top, dequeue], [storage_tab.ident, top.ident])
     dequeue_resp <+ deq.map do |s, t, d|
       [d.reqid, s.ident, s.payload]
     end

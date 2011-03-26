@@ -23,12 +23,11 @@ module BasicKVS
 
   bloom :mutate do
     kvstate <+ kvput_internal.map {|s|  [s.key, s.value]}
-    prev = join [kvstate, kvput_internal], [kvstate.key, kvput_internal.key]
-    kvstate <- prev.map {|b, s| b }
+    kvstate <- (kvstate * kvput_internal).lefts(:key => :key)
   end
 
   bloom :get do
-    getj = join([kvget, kvstate], [kvget.key, kvstate.key])
+    temp :getj <= join([kvget, kvstate], [kvget.key, kvstate.key])
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
     end
