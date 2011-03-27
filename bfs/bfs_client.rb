@@ -98,13 +98,12 @@ class BFSShell
   def synchronous_request(op, args)
     reqid = gen_id
     tupset = [[reqid, op, args]]
-    sync_callback(:request, tupset, :response) do |cb|
-      tup = cb.first
-      if tup[0] == reqid
-        return tup
-      else
-        raise BFSClientError, "Got (wrong) RES #{res} expecting #{reqid}.  Unexpected concurrency?" 
-      end
+    tbl = sync_callback(:request, tupset, :response) 
+    tup = tbl.first
+    if tup[0] == reqid
+      return tup
+    else
+      raise BFSClientError, "Got (wrong) RES #{res} expecting #{reqid}.  Unexpected concurrency?" 
     end
   end
   

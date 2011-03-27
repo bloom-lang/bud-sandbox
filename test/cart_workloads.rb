@@ -16,8 +16,8 @@ module CartWorkloads
       program.client_action <+ [[addy, 1234, 129, 'beer', 'Add']]
       program.client_action <+ [[addy, 1234, 130, 'beer', 'Del']]
     }
-
-    program.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg) {}
+    # block until we see the checkout message come in
+    program.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg)
   end
 
   def run_cart2(program)
