@@ -17,8 +17,8 @@ class TestBEDelivery < Test::Unit::TestCase
   def test_besteffort_delivery
     tt = TT.new
     tt.run_bg
-    tt.set_alarm <+ [['foo', 3]]
-    sleep 5
+    tt.set_alarm <+ [['foo', 1]]
+    sleep 2
     tt.stop_bg
   end
 end
