@@ -7,18 +7,18 @@ class TT
   include Bud
   include ProgressTimer
 
-  bloom do
-    stdio <~ alarm.map {|a| [ "ALRM: " + a.inspect ]}
-  end
 end
 
-class TestBEDelivery < Test::Unit::TestCase
+class TestTimers < Test::Unit::TestCase
 
   def test_besteffort_delivery
-    tt = TT.new
+    tt = TT.new(:dump_rewrite => true)
     tt.run_bg
     tt.set_alarm <+ [['foo', 1]]
-    sleep 2
+    tt.sync_do{}
+    #sleep 2
+    tt.delta(:alarm)
+    puts "out"
     tt.stop_bg
   end
 end

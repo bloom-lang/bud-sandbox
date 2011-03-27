@@ -17,13 +17,17 @@ module ProgressTimer
 
   state do
     table :timer_state, [:name] => [:start_tm, :time_out]
+    table :alrm_buf, set_alarm.schema
     periodic :timer, 0.2
   end
 
   bloom :timer_logic do
-    timer_state <= join([set_alarm, timer]).map {|s, t| [s.name, Time.parse(t.val).to_f, s.time_out]}
+    alrm_buf <= set_alarm
+    temp :cyc <= (alrm_buf * timer)
+    timer_state <= cyc.map {|s, t| [s.name, Time.parse(t.val).to_f, s.time_out]}
+    alrm_buf <- cyc.map{|s, t| s}
 
-    alarm <= join([timer_state, timer]).map do |s, t|
+    alarm <= (timer_state * timer).map do |s, t|
       if Time.parse(t.val).to_f - s.start_tm > s.time_out
         [s.name, s.time_out]
       end
