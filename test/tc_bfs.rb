@@ -154,13 +154,9 @@ class TestBFS < Test::Unit::TestCase
 
     b = BFSMasterServer.new(@opts.merge(:port => "65432"))
     b.run_bg
-    #sleep 5
     do_basic_fs_tests(b)
     do_addchunks(b)
 
-    #b.chunk.each do |a|
-    #  puts "CC: #{a.inspect}"
-    #end 
     dn.stop_datanode
     #dn2.stop_bg
     b.stop_bg

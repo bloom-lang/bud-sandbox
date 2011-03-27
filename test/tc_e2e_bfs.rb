@@ -45,7 +45,6 @@ class TestBFS < Test::Unit::TestCase
 
     b.run_bg; s1.run_bg; s2.run_bg
 
-    #sleep 6
 
     s1.dispatch_command(["create", "/test1"])
     #res = s2.dispatch_command(["ls", "/"])
