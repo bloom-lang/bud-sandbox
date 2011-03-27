@@ -25,7 +25,7 @@ module BasicKVS
   end
 
   bloom :get do
-    temp :getj <= join([kvget, kvstate], [kvget.key, kvstate.key])
+    temp :getj <= (kvget * kvstate).pairs(:key => :key)
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
     end
@@ -41,6 +41,14 @@ module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
   import BasicKVS => :kvs
+
+  bloom :super_stuff do
+    # it would be nice if this sort of thing were automatic
+    # the visualization made it easy to spot this issue
+    kvs.kvget <= kvget
+    kvs.kvdel <= kvdel
+    kvget_response <= kvs.kvget_response
+  end
 
   bloom :local_indir do
     # if I am the master, multicast store requests
