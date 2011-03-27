@@ -36,18 +36,20 @@ class TestKVS < Test::Unit::TestCase
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345))
-    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :dump_rewrite => true))
     add_members(v, "localhost:12345", "localhost:12346")
     add_members(v2, "localhost:12345", "localhost:12346")
 
     v.run_bg
     v2.run_bg
+
     workload1(v)
-    v.sync_do{ assert_equal(1, v.kvstate.length) }
-    v.sync_do{ assert_equal("bak", v.kvstate.first[1]) } 
-    v2.sync_do{ assert_equal(1, v2.kvstate.length) }
-    v2.sync_do{ assert_equal("bak", v2.kvstate.first[1]) }
+    # what are we going to do about name-mangling in the module system?
+    v.sync_do{ assert_equal(1, v.kvs__kvstate.length) }
+    v.sync_do{ assert_equal("bak", v.kvs__kvstate.first[1]) } 
+    v2.sync_do{ assert_equal(1, v2.kvs__kvstate.length) }
+    v2.sync_do{ assert_equal("bak", v2.kvs__kvstate.first[1]) }
     v.stop_bg
     v2.stop_bg
   end
@@ -67,6 +69,8 @@ class TestKVS < Test::Unit::TestCase
 
     v.stop_bg
   end
+
+  
 
   def test_del
     v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')

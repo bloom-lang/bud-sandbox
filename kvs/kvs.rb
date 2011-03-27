@@ -17,13 +17,11 @@ module BasicKVS
 
   state do
     table :kvstate, [:key] => [:value]
-    #interface input, :kvput_internal, [:client, :key] => [:reqid, :value]
-    scratch :kvput_internal, [:client, :key] => [:reqid, :value]
   end
 
   bloom :mutate do
-    kvstate <+ kvput_internal.map {|s|  [s.key, s.value]}
-    kvstate <- (kvstate * kvput_internal).lefts(:key => :key)
+    kvstate <+ kvput.map {|s|  [s.key, s.value]}
+    kvstate <- (kvstate * kvput).lefts(:key => :key)
   end
 
   bloom :get do
@@ -36,22 +34,13 @@ module BasicKVS
   bloom :delete do
     kvstate <- (kvstate * kvdel).lefts(:key => :key)
   end
-
-  # place holder until scoping is fully implemented
-  bloom :local_indir do
-    kvput_internal <= kvput
-  end
 end
 
 
 module ReplicatedKVS
-  include BasicKVS
+  include KVSProtocol
   include MulticastProtocol
-
-  #state do
-  #  # override kvput
-  #  interface input, :kvput_in, [:client, :key] => [:reqid, :value]
-  #end
+  import BasicKVS => :kvs
 
   bloom :local_indir do
     # if I am the master, multicast store requests
@@ -61,10 +50,10 @@ module ReplicatedKVS
       end
     end
 
-    kvput_internal <= mcast_done.map {|m| m.payload }
+    kvs.kvput <= mcast_done.map {|m| m.payload }
 
     # if I am a replica, store the payload of the multicast
-    kvput_internal <= pipe_chan.map do |d|
+    kvs.kvput <= pipe_chan.map do |d|
       if d.payload.fetch(1) != @addy
         d.payload
       end
