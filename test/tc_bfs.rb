@@ -46,13 +46,13 @@ end
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
     @opts = {}
-    `rm -r #{DATADIR}`
+    `rm -rf #{DATADIR}`
     super
   end
   def test_directorystuff1
-    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts)
     b.run_bg
-    s = BFSShell.new("localhost:65432")
+    s = BFSShell.new(b.ip_port)
     s.run_bg
 
     s.dispatch_command(["mkdir", "/foo"])
@@ -99,9 +99,9 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_rms
-    m = BFSMasterServer.new(@opts.merge(:port => 46363))
+    m = BFSMasterServer.new(@opts)
     m.run_bg
-    b = BFSShell.new("localhost:46363")
+    b = BFSShell.new(m.ip_port)
     b.run_bg
     
     b.dispatch_command(['mkdir', '/a'])
