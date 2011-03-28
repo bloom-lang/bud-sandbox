@@ -40,8 +40,8 @@ module VotingMaster
   bloom :initiation do
     # when stimulated by begin_vote, send ballots
     # to members, set status to 'in flight'
-    temp :j <= join([begin_vote, member])
-    ballot <~ j.map do |b,m|
+    temp :j <= (begin_vote * member)
+    ballot <~ j.pairs do |b,m|
       [m.host, ip_port, b.ident, b.content]
     end
     vote_status <+ begin_vote.map do |b|
@@ -65,9 +65,8 @@ module VotingMaster
     # complete and unanimous vote.
     # a subclass will likely override this
     # paa -- fix potentially global scope of join aliases somehow...
-    temp :sj <= join([vote_status, member_cnt, vote_cnt],
-                     [vote_status.ident, vote_cnt.ident])
-    victor <= sj.map do |s,m,v|
+    temp :sj <= (vote_status * member_cnt * vote_cnt).combos(vote_status.ident => vote_cnt.ident)
+    victor <= sj do |s,m,v|
       if s.response == 'in flight' and m.cnt == v.cnt
         [v.ident, s.content, v.response]
       end
@@ -99,7 +98,7 @@ module VotingAgent
     waiting_ballots <= ballot.map{|b| [b.ident, b.content, b.master] }
     #stdio <~ ballot.map{|b| [ip_port + " PUT ballot " + b.inspect] }
     # whenever we cast a vote on a waiting ballot, send the vote
-    vote <~ join([cast_vote, waiting_ballots], [cast_vote.ident, waiting_ballots.ident]).map do |v, c|
+    vote <~ (cast_vote * waiting_ballots).pairs(:ident => :ident) do |v, c|
       [c.master, ip_port, v.ident, v.response]
     end
   end
@@ -110,7 +109,7 @@ module MajorityVotingMaster
   include VotingMaster
 
   bloom :summary do
-    victor <= join([vote_status, member_cnt, vote_cnt], [vote_status.ident, vote_cnt.ident]).map do |s, m, v|
+    victor <= (vote_status * member_cnt * vote_cnt).combos(vote_status.ident => vote_cnt.ident) do |s, m, v|
       if s.response == "in flight" and v.cnt > m.cnt / 2
         [v.ident, s.content, v.response]
       end

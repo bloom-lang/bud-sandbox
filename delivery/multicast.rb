@@ -19,14 +19,14 @@ module Multicast
   include DeliveryProtocol
 
   bloom :snd_mcast do
-    pipe_in <= join([send_mcast, member]).map do |s, m|
+    pipe_in <= (send_mcast * member).pairs do |s, m|
       [m.host, @ip_port, s.ident, s.payload]
     end
   end
 
   bloom :done_mcast do
     # override me
-    mcast_done <= pipe_sent.map{|p| [p.ident, p.payload] }
+    mcast_done <= pipe_sent {|p| [p.ident, p.payload] }
   end
 end
 
@@ -50,7 +50,7 @@ module ReliableMulticast
   end
 
   bloom :done_mcast do
-    mcast_done <= vote_status.map do |v|
+    mcast_done <= vote_status do |v|
       "VEE: " + v.inspect
     end
   end

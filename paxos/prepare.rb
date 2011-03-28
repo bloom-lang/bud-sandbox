@@ -23,7 +23,7 @@ module PaxosPrepare
     #local_aru << [@myloc, 0] if global_history.empty?
     #last_installed << [0] if global_history.empty?
 
-    prepare <= join([leader_change, local_aru]).map do |c, a|
+    prepare <= (leader_change * local_aru).pairs do |c, a|
       if c.leader == c.host
         print "prepare!\n" or [c.view, a.aru]
       end
@@ -63,7 +63,7 @@ module PaxosPrepareAgent
 
   bloom :build_reply do
     stdio <~ ballot.map{|b| ["got ballot: #{b.inspect}"] }
-    datalist <= join([ballot, last_installed]).map do |d, l|
+    datalist <= (ballot * last_installed).pairs do |d, l|
       if d.ident > l.view
         print "AROO\n" or [d.ident, d.content, -1, "none", "bottom"]
       else 
@@ -71,7 +71,7 @@ module PaxosPrepareAgent
       end
     end
 
-    datalist <= join([datalist, global_history]).map do |d, g|
+    datalist <= (datalist * global_history).pairs do |d, g|
       if g.seqno > d.aru_requested and d.dltype == "bottom"
         print "oh yeah\n" or [d.view, d.aru_requested, g.seqno, g.update, "ordered"]
       else
@@ -79,7 +79,7 @@ module PaxosPrepareAgent
       end 
     end
 
-    datalist <= join([datalist, accept]).map do |d, a|
+    datalist <= (datalist * accept).pairs do |d, a|
       if a.seq >= d.aru_requested and d.dltype == "bottom"
         [d.view, d.aru_requested, a.seq, a.update, "proposed"]
       else
@@ -94,7 +94,7 @@ module PaxosPrepareAgent
   end
 
   bloom :decide do
-    temp :dj <= join([datalist, datalist_length])
+    temp :dj <= (datalist * datalist_length)
     #cast_vote <+ dj.map do |d, l|
     #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
     #end

@@ -10,7 +10,7 @@ module TwoPCAgent
   end
 
   bloom :decide do
-    cast_vote <= join([waiting_ballots, can_commit], [waiting_ballots.ident, can_commit.xact]).map{|w, c| puts @ip_port + " agent cast vote " + c.inspect or [w.ident, c.decision] }
+    cast_vote <= (waiting_ballots * can_commit).pairs(:ident => :xact) {|w, c| puts @ip_port + " agent cast vote " + c.inspect or [w.ident, c.decision] }
   end
 end
 
@@ -20,7 +20,7 @@ module TwoPCVotingMaster
   # override the default summary s.t. a single N vote
   # makes the vote_status = ABORT
   bloom :summary do
-    victor <= join([vote_status, member_cnt, vote_cnt], [vote_status.ident, vote_cnt.ident]).map do |s, m, v|
+    victor <= (vote_status * member_cnt * vote_cnt).combos(vote_status.ident => vote_cnt.ident) do |s, m, v|
       if v.response == "N"
         [v.ident, s.content, "N"]
       # huh??
@@ -95,7 +95,7 @@ module Monotonic2PCMaster
   end
 
   bloom :panic_or_rejoice do
-    decide = join([xact_accum, vote_status], [xact_accum.xid, vote_status.ident])
+    decide = (xact_accum*vote_status).pairs(:xid => :ident)
     xact_accum <= decide.map do |x, s|
       [x.xid, x.data, "abort"] if s.response == "N"
     end
@@ -106,11 +106,11 @@ module Monotonic2PCMaster
   end
 
   bloom :twopc_status do
-    sj <= join([xact_accum, xact_order], [xact_accum.status, xact_order.status]).map do |x,o|
+    sj <= (xact_accum*xact_order).pairs(:status => :status).map do |x,o|
       [x.xid, x.data, x.status, o.ordinal]
     end
     xact_final <= sj.group([sj.xid], max(sj.ordinal))
-    xact <= join( [sj, xact_final], [sj.ordinal, xact_final.ordinal]).map do |s, x|
+    xact <= (sj*xact_final).pairs(:ordinal => :ordinal).map do |s, x|
       [s.xid, s.data, s.status]
     end
   end

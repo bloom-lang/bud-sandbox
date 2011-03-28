@@ -32,7 +32,7 @@ module LeaderElection
   end
 
   bloom :decide do
-    temp :proofj <= join([proof, current_state])
+    temp :proofj <= (proof * current_state)
     current_state <+ proofj.map do |p, s|
       if p.view > s.view 
         ['follower', p.src, p.view, s.timeout]
@@ -44,7 +44,7 @@ module LeaderElection
     # use multicast lib?
     
 
-    start_le <= join([alarm, nonce]).map do |a, n|
+    start_le <= (alarm * nonce).pairs do |a, n|
       if a.name == "Progress"
         puts "TIMER KICK" or [@ip_port, n.ident, a.timeout]
       end
@@ -53,7 +53,7 @@ module LeaderElection
     #packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or (b.content.unshift(b.ident)) } 
     packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or [b.ident, b.content.fetch(0), b.content.fetch(1), b.content.fetch(2)] } 
     #stdio <~ packet.map{|p| ["packet: " + p.inspect] } 
-    temp :pacstate <= join([packet, current_state])
+    temp :pacstate <= (packet * current_state)
     start_le <= pacstate.map do |p, c|
       if p.view > c.view
         puts ip_port + " JUMP views to " + p.inspect + " from " + c.inspect or [p.host, p.view, c.timeout]
@@ -63,13 +63,13 @@ module LeaderElection
     cast_vote <= pacstate.map do |p, c| 
       puts ip_port + " cast vote " + p.inspect or [p.nonce, "yes"] if p.view >= c.view
     end
-    #cast_vote <= join([packet, start_le]).map {|p, s| puts ip_port +  " cast vote for "+ s.inspect or [s, "yes"] }
+    #cast_vote <= (packet * start_le).pairs {|p, s| puts ip_port +  " cast vote for "+ s.inspect or [s, "yes"] }
 
-    start_le <= join([init_le, nonce]).map do |i, n|
+    start_le <= (init_le * nonce).pairs do |i, n|
       puts ip_port + " INIT" +i.inspect + " " + n.inspect or [ip_port, n.ident, 0.5]
     end
 
-    begin_vote <= join([start_le, nonce]).map do |s, n|
+    begin_vote <= (start_le * nonce).pairs do |s, n|
       puts ip_port + "@" + @budtime.to_s +  " BEGIN VOT FOR " + s.inspect + " with nonce " + n.inspect or [n.ident, s]
     end
 
@@ -78,9 +78,9 @@ module LeaderElection
     set_alarm <= start_le.map{ |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeout * 2] }
 
 
-    temp :csj <= join [current_state, start_le]
-    current_state <- csj.map{|c, s| c } 
-    current_state <+ csj.map{|c, s| ['election', s.host, s.view, s.timeout * 2] } 
+    temp :csj <=  (current_state* start_le)
+    current_state <- csj {|c, s| c } 
+    current_state <+ csj {|c, s| ['election', s.host, s.view, s.timeout * 2] } 
 
     packet_in <= victor.map{ |v| puts ip_port + "@" + @budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
     current_state <+ packet_in.map do |p|
@@ -91,7 +91,7 @@ module LeaderElection
       end
     end
   
-    current_state <- join([current_state, packet_in]).map{ |c, p| c }
+    current_state <- (current_state * packet_in).pairs{ |c, p| c }
 
     localtick <~ victor.map {|v| [ip_port]}
   end

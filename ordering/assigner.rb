@@ -16,13 +16,13 @@ module Assigner
   include SerializerProto
 
   bloom :logos do
-    enqueue <= dump.map do |d|
+    enqueue <= dump do |d|
       [d.join(","), d]
     end
 
     dequeue <= localtick
 
-    pickup <= dequeue_resp.map{|r| [r.ident, r.payload] }
+    pickup <= dequeue_resp {|r| [r.ident, r.payload] }
   end
 end
 
@@ -37,7 +37,7 @@ module AggAssign
 
   bloom :grouping do
     holder <= dump.group(nil, accum(dump.payload))
-    #stdio <~ holder.map{|h| ["HOLD: #{h.inspect}"] }
+    #stdio <~ holder {|h| ["HOLD: #{h.inspect}"] }
     pickup <= holder.flat_map do |h|
       h.array.each_with_index.map{|a, i| [i, a] }
     end

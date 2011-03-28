@@ -42,14 +42,6 @@ module ReplicatedKVS
   include MulticastProtocol
   import BasicKVS => :kvs
 
-  bloom :super_stuff do
-    # it would be nice if this sort of thing were automatic
-    # the visualization made it easy to spot this issue
-    kvs.kvget <= kvget
-    kvs.kvdel <= kvdel
-    kvget_response <= kvs.kvget_response
-  end
-
   bloom :local_indir do
     # if I am the master, multicast store requests
     send_mcast <= kvput.map do |k|

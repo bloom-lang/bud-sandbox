@@ -26,8 +26,8 @@ module CartClient
   include CartClientProtocol
 
   bloom :client do
-    action_msg <~ client_action.map{|a| [a.server, @addy, a.session, a.reqid, a.item, a.action]}
-    checkout_msg <~ client_checkout.map{|a| [a.server, @addy, a.session, a.reqid]}
+    action_msg <~ client_action {|a| [a.server, @addy, a.session, a.reqid, a.item, a.action]}
+    checkout_msg <~ client_checkout {|a| [a.server, @addy, a.session, a.reqid]}
     client_response <= response_msg
   end
 end

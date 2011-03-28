@@ -17,9 +17,9 @@ module Serializer
     scratch :top, [:ident]
   end
 
-  bootstrap do
-    #localtick <~ [[@budtime]]
-  end
+  # bootstrap do
+  #   localtick <~ [[@budtime]]
+  # end
 
   bloom :logic do
     storage_tab <= enqueue
@@ -32,11 +32,11 @@ module Serializer
   #end
 
   bloom :actions do
-    temp :deq <= join([storage_tab, top, dequeue], [storage_tab.ident, top.ident])
-    dequeue_resp <+ deq.map do |s, t, d|
+    temp :deq <= (storage_tab * top * dequeue).combos(storage_tab.ident => top.ident)
+    dequeue_resp <+ deq do |s, t, d|
       [d.reqid, s.ident, s.payload]
     end
-    storage_tab <- deq.map {|s, t, d| s }
-    #localtick <= deq.map{|s, t, d| d }
+    storage_tab <- deq {|s, t, d| s }
+    #localtick <= deq {|s, t, d| d }
   end
 end
