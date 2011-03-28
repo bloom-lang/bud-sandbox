@@ -21,13 +21,13 @@ module BFSBackgroundTasks
   end
 
   bloom :replication do
-    cc_demand <= join([bg_timer, chunk_cache]).map {|t, c| c}
+    cc_demand <= (bg_timer * chunk_cache).pairs {|t, c| c}
 
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))
     chunk_cnts_host <= cc_demand.group([cc_demand.node], count(cc_demand.chunkid))
 
-    temp :danger <= join([bg_timer, chunk_cnts_chunk, cc_demand, chunk_cnts_host], [cc_demand.node, chunk_cnts_host.host])
-    candidate_nodes <= danger.map do |t, ccc, cc, cch|
+    temp :danger <= (bg_timer * chunk_cnts_chunk * cc_demand * chunk_cnts_host).combos(cc_demand.node => chunk_cnts_host.host)
+    candidate_nodes <= danger do |t, ccc, cc, cch|
       if ccc.replicas < REP_FACTOR
         unless cc_demand.map{|c| c.node if c.chunkid == ccc.chunkid}.include?  cc.node
           [ccc.chunkid, cc.node, cch.chunks]
@@ -37,9 +37,9 @@ module BFSBackgroundTasks
 
     best_dest <= candidate_nodes.argagg(:min, [candidate_nodes.chunkid], candidate_nodes.chunks)
     chosen_dest <= best_dest.group([best_dest.chunkid], choose(best_dest.host))
-    sources <= join([cc_demand, candidate_nodes], [cc_demand.chunkid, candidate_nodes.chunkid]).map{|c, cn| [c.chunkid, c.node]}
+    sources <= (cc_demand * candidate_nodes).pairs(:chunkid => :chunkid) {|c, cn| [c.chunkid, c.node]}
     best_src <= sources.group([sources.chunkid], choose(sources.host))
-    copy_chunk <= join([chosen_dest, best_src], [chosen_dest.chunkid, best_src.chunkid]).map do |d, s|
+    copy_chunk <= (chosen_dest * best_src).pairs(:chunkid => :chunkid) do |d, s|
       [d.chunkid, s.host, d.host]
     end
   end

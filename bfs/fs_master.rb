@@ -49,7 +49,7 @@ module KVSFS
 
   bloom :elles do
     kvget <= fsls.map{ |l| [l.reqid, l.path] }
-    fsret <= join([kvget_response, fsls], [kvget_response.reqid, fsls.reqid]).map{ |r, i| [r.reqid, true, r.value] }
+    fsret <= (kvget_response * fsls).pairs(:reqid => :reqid) { |r, i| [r.reqid, true, r.value] }
     fsret <= fsls.map do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
         [l.reqid, false, nil]
@@ -70,15 +70,14 @@ module KVSFS
     end
 
     # if the block above had no rows, dir_exists will have rows.
-    temp :dir_exists <= join([check_parent_exists, kvget_response, nonce], [check_parent_exists.reqid, kvget_response.reqid])
-
-    check_is_empty <= join([fsrm, nonce]).map{|m, n| [n.ident, m.reqid, terminate_with_slash(m.path) + m.name] }
+    temp :dir_exists <= (check_parent_exists * kvget_response * nonce).combos([check_parent_exists.reqid, kvget_response.reqid])
+    check_is_empty <= (fsrm * nonce).pairs {|m, n| [n.ident, m.reqid, terminate_with_slash(m.path) + m.name] }
     kvget <= check_is_empty.map{|c| [c.reqid, c.name] }
-    can_remove <= join([kvget_response, check_is_empty], [kvget_response.reqid, check_is_empty.reqid]).map do |r, c|
+    can_remove <= (kvget_response * check_is_empty).pairs([kvget_response.reqid, check_is_empty.reqid]) do |r, c|
       [c.reqid, c.orig_reqid, c.name] if r.value.length == 0
     end
 
-    fsret <= dir_exists.map do |c, r, n|
+    fsret <= dir_exists do |c, r, n|
       if c.mtype == :rm
         unless can_remove.map{|can| can.orig_reqid}.include? c.reqid
           [c.reqid, false, "directory #{} not empty"]
@@ -89,7 +88,7 @@ module KVSFS
     # update dir entry
     # note that it is unnecessary to ensure that a file is created before its corresponding
     # directory entry, as both inserts into :kvput below will co-occur in the same timestep.
-    kvput <= dir_exists.map do |c, r, n|
+    kvput <= dir_exists do |c, r, n|
       if c.mtype == :rm
         if can_remove.map{|can| can.orig_reqid}.include? c.reqid
           [ip_port, c.path, n.ident, r.value.clone.reject{|item| item == c.name}]
@@ -99,7 +98,7 @@ module KVSFS
       end
     end
 
-    kvput <= dir_exists.map do |c, r, n|
+    kvput <= dir_exists do |c, r, n|
       case c.mtype
         when :mkdir
           [ip_port, terminate_with_slash(c.path) + c.name, c.reqid, []]
@@ -109,7 +108,7 @@ module KVSFS
     end
 
     # delete entry -- if an 'rm' request,
-    kvdel <= dir_exists.map do |c, r, n|
+    kvdel <= dir_exists do |c, r, n|
       if can_remove.map{|can| can.orig_reqid}.include? c.reqid
         [terminate_with_slash(c.path) + c.name, c.reqid]
       end
@@ -117,7 +116,7 @@ module KVSFS
 
     # report success if the parent directory exists (and there are no errors)
     # were there errors, we'd never reach fixpoint.
-    fsret <= dir_exists.map do |c, r|
+    fsret <= dir_exists do |c, r, n|
       unless c.mtype == :rm and ! can_remove.map{|can| can.orig_reqid}.include? c.reqid
         [c.reqid, true, nil]
       end

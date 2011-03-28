@@ -16,17 +16,17 @@ module BFSMasterGlue
 
   bloom :mglue do
     rendez <= request_msg
-    fscreate <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "create" }
-    fsmkdir <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "mkdir" }
-    fsls <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "ls" } 
-    fsaddchunk <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "append" } 
-    fschunklist <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunks" }       
-    fschunklocations <= request_msg.map{ |r| [r.reqid, r.args] if r.rtype == "getchunklocations" }       
-    fsrm <= request_msg.map{ |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "rm" }
+    fscreate <= request_msg { |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "create" }
+    fsmkdir <= request_msg { |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "mkdir" }
+    fsls <= request_msg { |r| [r.reqid, r.args] if r.rtype == "ls" } 
+    fsaddchunk <= request_msg { |r| [r.reqid, r.args] if r.rtype == "append" } 
+    fschunklist <= request_msg { |r| [r.reqid, r.args] if r.rtype == "getchunks" }       
+    fschunklocations <= request_msg { |r| [r.reqid, r.args] if r.rtype == "getchunklocations" }       
+    fsrm <= request_msg { |r| [r.reqid, r.args[0], r.args[1]] if r.rtype == "rm" }
   end
 
   bloom :response_glue do
-    response_msg <~ join([fsret, rendez], [fsret.reqid, rendez.reqid]).map do |f, r|
+    response_msg <~ (fsret * rendez).pairs(:reqid => :reqid) do |f, r|
       [r.source, r.master, f.reqid, f.status, f.data]
     end
   end 

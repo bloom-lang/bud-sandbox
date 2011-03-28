@@ -30,7 +30,7 @@ module BFSDatanode
       files.map {|f| [f, Time.parse(t.val).to_f]}
     end
 
-    to_payload <= join([dir_contents, nonce]).map do |c, n|
+    to_payload <= (dir_contents * nonce).pairs do |c, n|
       unless server_knows.map{|s| s.file}.include? c.file
         [n.ident, c.file, c.time]
       end
