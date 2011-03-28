@@ -17,7 +17,7 @@ class TestKVS < Test::Unit::TestCase
     # reliable delivery fails if the recipient is down
     v = SingleSiteKVS.new
     v.run_bg
-    if v.is_a?  ReliableDelivery
+    if v.is_a? ReliableDelivery
       workload1(v)
       assert_equal(0, v.kvstate.length)
     end
@@ -36,10 +36,10 @@ class TestKVS < Test::Unit::TestCase
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true))
-    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :dump_rewrite => true))
-    add_members(v, "localhost:12345", "localhost:12346")
-    add_members(v2, "localhost:12345", "localhost:12346")
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346))
+    add_members(v, v.ip_port, v2.ip_port)
+    add_members(v2, v.ip_port, v2.ip_port)
 
     v.run_bg
     v2.run_bg
@@ -83,4 +83,3 @@ class TestKVS < Test::Unit::TestCase
     v.stop_bg
   end
 end
-

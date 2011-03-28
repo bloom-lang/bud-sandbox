@@ -1,9 +1,5 @@
 require 'rubygems'
 require 'bud'
-require 'test/unit'
-
-require 'kvs/kvs'
-
 
 module KVSWorkloads
 
@@ -28,7 +24,7 @@ module KVSWorkloads
     v.async_do{ v.kvput <+ [["localhost:54321", "foo", 2, "baz"]] }
     v.async_do{ v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] } 
     v.async_do{ v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
-    v.sync_do{ }
+    v.sync_do
   end
 end
 
