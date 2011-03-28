@@ -8,9 +8,9 @@ class ZkTableTest < Bud
   end
 
   bloom do
-    stdio <~ foo.map{|f| ["ZK: k = #{f.key}"]}
-    stdio <~ foo.map{|f| ["ZK: k = " + f.key]}
-    #foo <~ tik.map{|t| ["tik_" + t.val, "time = " + t.val]}
+    stdio <~ foo {|f| ["ZK: k = #{f.key}"]}
+    stdio <~ foo {|f| ["ZK: k = " + f.key]}
+    #foo <~ tik {|t| ["tik_" + t.val, "time = " + t.val]}
   end
 end
 

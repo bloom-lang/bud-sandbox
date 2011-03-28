@@ -57,7 +57,7 @@ module HeartbeatAgent
   end
 
   bloom :reckon do
-    heartbeat_buffer <= heartbeat.map{|h| [h.src, h.sender, h.payload] }
+    heartbeat_buffer <= heartbeat {|h| [h.src, h.sender, h.payload] }
     heartbeat_log <= (hb_timer * heartbeat_buffer).pairs {|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- (hb_timer * heartbeat_buffer).pairs {|t, h| h }
   end

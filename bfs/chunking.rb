@@ -35,8 +35,8 @@ module ChunkedKVSFS
     lookup <= fschunklist
     lookup <= fsaddchunk
 
-    kvget <= lookup.map{ |a| [a.reqid, a.file] } 
-    fsret <= lookup.map do |a|
+    kvget <= lookup { |a| [a.reqid, a.file] } 
+    fsret <= lookup do |a|
       unless kvget_response.map{ |r| r.reqid}.include? a.reqid
         [a.reqid, false, "File not found: #{a.file}"]
       end
@@ -46,12 +46,12 @@ module ChunkedKVSFS
   bloom :getchunks do
     chunk_buffer <= (fschunklist * kvget_response * chunk).combos([fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]) { |l, r, c| [l.reqid, c.chunkid] }
     chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
-    fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
+    fsret <= chunk_buffer2 { |c| [c.reqid, true, c.chunklist] }
     # handle case of empty file / haven't heard about chunks yet
   end
 
   bloom :getnodes do
-    fsret <= fschunklocations.map do |l|
+    fsret <= fschunklocations do |l|
       unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
         [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache.length}"]
       end
@@ -59,9 +59,9 @@ module ChunkedKVSFS
 
     # chunkjoin will have rows if the block above doesn't.
     temp :chunkjoin <= (fschunklocations * chunk_cache).pairs(:chunkid => :chunkid)
-    host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
+    host_buffer <= chunkjoin {|l, c| [l.reqid, c.node] }
     host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
-    fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
+    fsret <= host_buffer2 {|c| [c.reqid, true, c.hostlist] }
   end
 
   bloom :addchunks do

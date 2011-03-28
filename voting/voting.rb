@@ -44,7 +44,7 @@ module VotingMaster
     ballot <~ j.pairs do |b,m|
       [m.host, ip_port, b.ident, b.content]
     end
-    vote_status <+ begin_vote.map do |b|
+    vote_status <+ begin_vote do |b|
       [b.ident, b.content, 'in flight']
     end
     member_cnt <= member.group(nil, count)
@@ -53,8 +53,8 @@ module VotingMaster
   bloom :counting do
     # accumulate votes into votes_rcvd table,
     # calculate current counts
-    #stdio <~ vote.map { |v| ["GOT VOTE: " + v.inspect] }
-    votes_rcvd <= vote.map { |v| [v.ident, v.response, v.peer] }
+    #stdio <~ vote { |v| ["GOT VOTE: " + v.inspect] }
+    votes_rcvd <= vote { |v| [v.ident, v.response, v.peer] }
     vote_cnt <= votes_rcvd.group(
       [votes_rcvd.ident, votes_rcvd.response],
       count(votes_rcvd.peer))
@@ -72,7 +72,7 @@ module VotingMaster
       end
     end
     vote_status <+ victor
-    vote_status <- victor.map do |v|
+    vote_status <- victor do |v|
       [v.ident, v.content, 'in flight']
     end
     #localtick <~ victor
@@ -90,13 +90,13 @@ module VotingAgent
 
   # default for decide: always cast vote 'yes'.  expect subclasses to override
   bloom :decide do
-    cast_vote <= ballot.map{ |b| [b.ident, 'yes'] }
+    cast_vote <= ballot { |b| [b.ident, 'yes'] }
   end
 
   bloom :casting do
     # cache incoming ballots for subsequent decisions (may be delayed)
-    waiting_ballots <= ballot.map{|b| [b.ident, b.content, b.master] }
-    #stdio <~ ballot.map{|b| [ip_port + " PUT ballot " + b.inspect] }
+    waiting_ballots <= ballot {|b| [b.ident, b.content, b.master] }
+    #stdio <~ ballot {|b| [ip_port + " PUT ballot " + b.inspect] }
     # whenever we cast a vote on a waiting ballot, send the vote
     vote <~ (cast_vote * waiting_ballots).pairs(:ident => :ident) do |v, c|
       [c.master, ip_port, v.ident, v.response]
@@ -115,7 +115,7 @@ module MajorityVotingMaster
       end
     end
     vote_status <+ victor
-    vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
+    vote_status <- victor {|v| [v.ident, v.content, 'in flight'] }
     #localtick <~ victor
   end
 end

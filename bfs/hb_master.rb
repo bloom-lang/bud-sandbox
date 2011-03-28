@@ -27,15 +27,15 @@ module HBMaster
       end
     end
 
-    hb_ack <~ last_heartbeat.map do |l|
+    hb_ack <~ last_heartbeat do |l|
       [l.sender, l.payload[0]] unless l.payload[1] == [nil]
     end
 
-    chunk_cache <- (master_duty_cycle * chunk_cache).map do |t, c|
+    chunk_cache <- (master_duty_cycle * chunk_cache).pairs do |t, c|
       c unless last_heartbeat.map{|h| h.peer}.include? c.node
     end
 
-    chunk_cache_nodes <= chunk_cache.map{ |cc| [cc.node] }
+    chunk_cache_nodes <= chunk_cache { |cc| [cc.node] }
     available <= chunk_cache_nodes.group(nil, accum(chunk_cache_nodes.node))
   end
 end

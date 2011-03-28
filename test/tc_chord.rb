@@ -58,7 +58,7 @@ class LilChord
 
   bloom :persist_resps do
     succ_cache <= succ_resp
-    # stdio <~ succ_resp.map{|s| [s.inspect]}
+    # stdio <~ succ_resp {|s| [s.inspect]}
   end
 end
 

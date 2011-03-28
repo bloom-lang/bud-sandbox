@@ -48,9 +48,9 @@ module KVSFS
   end
 
   bloom :elles do
-    kvget <= fsls.map{ |l| [l.reqid, l.path] }
+    kvget <= fsls { |l| [l.reqid, l.path] }
     fsret <= (kvget_response * fsls).pairs(:reqid => :reqid) { |r, i| [r.reqid, true, r.value] }
-    fsret <= fsls.map do |l|
+    fsret <= fsls  do |l|
       unless kvget_response.map{ |r| r.reqid}.include? l.reqid
         [l.reqid, false, nil]
       end
@@ -58,12 +58,12 @@ module KVSFS
   end
 
   bloom :create do
-    check_parent_exists <= fscreate.map{ |c| [c.reqid, c.name, c.path, :create, c.data] }
-    check_parent_exists <= fsmkdir.map{ |m| [m.reqid, m.name, m.path, :mkdir, nil] }
-    check_parent_exists <= fsrm.map{ |m| [m.reqid, m.name, m.path, :rm, nil] }
+    check_parent_exists <= fscreate { |c| [c.reqid, c.name, c.path, :create, c.data] }
+    check_parent_exists <= fsmkdir { |m| [m.reqid, m.name, m.path, :mkdir, nil] }
+    check_parent_exists <= fsrm { |m| [m.reqid, m.name, m.path, :rm, nil] }
 
-    kvget <= check_parent_exists.map{ |c| [c.reqid, c.path] }
-    fsret <= check_parent_exists.map do |c|
+    kvget <= check_parent_exists { |c| [c.reqid, c.path] }
+    fsret <= check_parent_exists  do |c|
       unless kvget_response.map{ |r| r.reqid}.include? c.reqid
         puts "not found #{c.path}" or [c.reqid, false, "parent path #{c.path} for #{c.name} does not exist"]
       end
@@ -72,7 +72,7 @@ module KVSFS
     # if the block above had no rows, dir_exists will have rows.
     temp :dir_exists <= (check_parent_exists * kvget_response * nonce).combos([check_parent_exists.reqid, kvget_response.reqid])
     check_is_empty <= (fsrm * nonce).pairs {|m, n| [n.ident, m.reqid, terminate_with_slash(m.path) + m.name] }
-    kvget <= check_is_empty.map{|c| [c.reqid, c.name] }
+    kvget <= check_is_empty {|c| [c.reqid, c.name] }
     can_remove <= (kvget_response * check_is_empty).pairs([kvget_response.reqid, check_is_empty.reqid]) do |r, c|
       [c.reqid, c.orig_reqid, c.name] if r.value.length == 0
     end

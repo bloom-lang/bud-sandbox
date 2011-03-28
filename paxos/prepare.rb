@@ -29,18 +29,18 @@ module PaxosPrepare
       end
     end
 
-    begin_vote <+ prepare.map{|p| print "put in ballot : " + p.inspect + "\n" or [p.view, p.aru]}
+    begin_vote <+ prepare {|p| print "put in ballot : " + p.inspect + "\n" or [p.view, p.aru]}
   end
 
   bloom :establish_quorum do
-    quorum <= vote_status.map do |v|
+    quorum <= vote_status do |v|
       puts "VOTE_STATUS: #{v.inspect}"
       if v.response.class == Array 
         [ v.response.fetch(0), v.response.fetch(1) ] if v.response.fetch(4) == 'bottom'
       end
     end
 
-    stdio <~ quorum.map{|q| ["QUORUM: #{q.inspect}"] }
+    stdio <~ quorum {|q| ["QUORUM: #{q.inspect}"] }
   end
   
 end
@@ -62,7 +62,7 @@ module PaxosPrepareAgent
   end
 
   bloom :build_reply do
-    stdio <~ ballot.map{|b| ["got ballot: #{b.inspect}"] }
+    stdio <~ ballot {|b| ["got ballot: #{b.inspect}"] }
     datalist <= (ballot * last_installed).pairs do |d, l|
       if d.ident > l.view
         print "AROO\n" or [d.ident, d.content, -1, "none", "bottom"]
@@ -90,17 +90,17 @@ module PaxosPrepareAgent
     datalist_agg <= datalist.group([datalist.view], accum([datalist.aru_requested, datalist.seq, datalist.update, datalist.dltype]))
     #datalist_length <= datalist.group([datalist.aru_requested], count())
 
-    stdio <~ datalist_agg.map{|d| ["DLA: #{d.inspect}"] } 
+    stdio <~ datalist_agg {|d| ["DLA: #{d.inspect}"] } 
   end
 
   bloom :decide do
     temp :dj <= (datalist * datalist_length)
-    #cast_vote <+ dj.map do |d, l|
+    #cast_vote <+ dj do |d, l|
     #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
     #end
-    cast_vote <= datalist_agg.map{|d| [d.view, d.contents] } 
+    cast_vote <= datalist_agg {|d| [d.view, d.contents] } 
   
-    #datalist <- dj.map{|d, l| d}
+    #datalist <- dj {|d, l| d}
   end 
 end
 

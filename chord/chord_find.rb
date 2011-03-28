@@ -21,7 +21,7 @@ module ChordFind
     # convert local successor requests into local find_events
     find_event <= succ_req {|s| [s.key, ip_port]}
     
-#    stdio <~ find_req.map{|f| [["#{port} got find_req #{f.inspect}"]]}
+#    stdio <~ find_req {|f| [["#{port} got find_req #{f.inspect}"]]}
     
     # convert incoming find_req messages into local find_events
     find_event <= find_req {|f| [f.key, f.from]}
@@ -39,6 +39,6 @@ module ChordFind
     end
     
     # when we receive a response, put it to the output interface
-    succ_resp <= find_resp.map { |f| [f.key, f.start, f.addr] }
+    succ_resp <= find_resp { |f| [f.key, f.start, f.addr] }
   end
 end

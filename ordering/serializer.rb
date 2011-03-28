@@ -27,8 +27,8 @@ module Serializer
   end
   
   #bloom :clock do
-  #  localtick <~ enqueue.map{|s| [s] }
-  #  localtick <~ dequeue.map{|s| [s] }
+  #  localtick <~ enqueue {|s| [s] }
+  #  localtick <~ dequeue {|s| [s] }
   #end
 
   bloom :actions do

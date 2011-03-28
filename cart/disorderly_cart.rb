@@ -41,7 +41,7 @@ module DisorderlyCart
       memo
     end).to_a
 
-    response_msg <~ out.map do |k, v|
+    response_msg <~ out do |k, v|
       k << v
     end
   end
@@ -52,8 +52,8 @@ module ReplicatedDisorderlyCart
   include Multicast
 
   bloom :replicate do
-    send_mcast <= action_msg.map {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
-    cart_action <= mcast_done.map {|m| m.payload}
-    cart_action <= pipe_chan.map {|c| c.payload}
+    send_mcast <= action_msg {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
+    cart_action <= mcast_done {|m| m.payload}
+    cart_action <= pipe_chan {|c| c.payload}
   end
 end

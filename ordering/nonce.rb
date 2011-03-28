@@ -53,8 +53,8 @@ module TimestepNonce
 
   bloom do
     # ignore IP for now
-    nonce <= permo.map{|p| [p.ident + @budtime] }
-    #nonce <= localtick.map{|l| [(@port << 16) + @budtime]  }
+    nonce <= permo {|p| [p.ident + @budtime] }
+    #nonce <= localtick {|l| [(@port << 16) + @budtime]  }
   end
 end
 
@@ -72,7 +72,7 @@ module NNonce
   end
 
   bloom do
-    storage_tab <+ storage_tab.map {|s| [s.ident + 1]}
+    storage_tab <+ storage_tab {|s| [s.ident + 1]}
     storage_tab <- storage_tab
     nonce <= storage_tab
   end
@@ -92,6 +92,6 @@ module SNNonce
 
   bloom do
     nonce <= storage_tab
-    storage_tab <+ storage_tab.map {|s| puts "BUMP " + s.inspect or [s.ident + 1]}
+    storage_tab <+ storage_tab {|s| puts "BUMP " + s.inspect or [s.ident + 1]}
   end
 end

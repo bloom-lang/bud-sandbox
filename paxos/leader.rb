@@ -33,13 +33,13 @@ module LeaderElection
 
   bloom :decide do
     temp :proofj <= (proof * current_state)
-    current_state <+ proofj.map do |p, s|
+    current_state <+ proofj do |p, s|
       if p.view > s.view 
         ['follower', p.src, p.view, s.timeout]
       end
     end 
 
-    current_state <- proofj.map{ |p, s| s }
+    current_state <- proofj { |p, s| s }
 
     # use multicast lib?
     
@@ -50,17 +50,17 @@ module LeaderElection
       end
     end
     
-    #packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or (b.content.unshift(b.ident)) } 
-    packet <= ballot.map{ |b| (puts ip_port + " ballot: " +b.inspect) or [b.ident, b.content.fetch(0), b.content.fetch(1), b.content.fetch(2)] } 
-    #stdio <~ packet.map{|p| ["packet: " + p.inspect] } 
+    #packet <= ballot { |b| (puts ip_port + " ballot: " +b.inspect) or (b.content.unshift(b.ident)) } 
+    packet <= ballot { |b| (puts ip_port + " ballot: " +b.inspect) or [b.ident, b.content.fetch(0), b.content.fetch(1), b.content.fetch(2)] } 
+    #stdio <~ packet {|p| ["packet: " + p.inspect] } 
     temp :pacstate <= (packet * current_state)
-    start_le <= pacstate.map do |p, c|
+    start_le <= pacstate do |p, c|
       if p.view > c.view
         puts ip_port + " JUMP views to " + p.inspect + " from " + c.inspect or [p.host, p.view, c.timeout]
       end
     end
 
-    cast_vote <= pacstate.map do |p, c| 
+    cast_vote <= pacstate do |p, c| 
       puts ip_port + " cast vote " + p.inspect or [p.nonce, "yes"] if p.view >= c.view
     end
     #cast_vote <= (packet * start_le).pairs {|p, s| puts ip_port +  " cast vote for "+ s.inspect or [s, "yes"] }
@@ -75,15 +75,15 @@ module LeaderElection
 
     
 
-    set_alarm <= start_le.map{ |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeout * 2] }
+    set_alarm <= start_le { |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeout * 2] }
 
 
     temp :csj <=  (current_state* start_le)
     current_state <- csj {|c, s| c } 
     current_state <+ csj {|c, s| ['election', s.host, s.view, s.timeout * 2] } 
 
-    packet_in <= victor.map{ |v| puts ip_port + "@" + @budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
-    current_state <+ packet_in.map do |p|
+    packet_in <= victor { |v| puts ip_port + "@" + @budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
+    current_state <+ packet_in  do |p|
       if p.host == ip_port
         ['leader', ip_port, p.view, p.timeout]
       else
@@ -93,6 +93,6 @@ module LeaderElection
   
     current_state <- (current_state * packet_in).pairs{ |c, p| c }
 
-    localtick <~ victor.map {|v| [ip_port]}
+    localtick <~ victor {|v| [ip_port]}
   end
 end

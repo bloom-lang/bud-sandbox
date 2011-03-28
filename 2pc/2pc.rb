@@ -30,9 +30,9 @@ module TwoPCVotingMaster
       end
     end
 
-    vote_status <+ victor.map{|v| v }
-    vote_status <- victor.map{|v| [v.ident, v.content, 'in flight'] }
-    #localtick <~ victor.map{|v| [@ip_port]}
+    vote_status <+ victor {|v| v }
+    vote_status <- victor {|v| [v.ident, v.content, 'in flight'] }
+    #localtick <~ victor {|v| [@ip_port]}
   end
 end
 
@@ -48,23 +48,23 @@ module TwoPCMaster
   end
 
   bloom :boots do
-    xact <= request_commit.map{|r| [r.xid, r.data, 'prepare'] }
-    #stdio <~ request_commit.map{|r| ["begin that vote"]}
-    begin_vote <= request_commit.map{|r| [r.xid, r.data] }
+    xact <= request_commit {|r| [r.xid, r.data, 'prepare'] }
+    #stdio <~ request_commit {|r| ["begin that vote"]}
+    begin_vote <= request_commit {|r| [r.xid, r.data] }
   end
 
   bloom :panic_or_rejoice do
     temp :decide <= (xact * vote_status).pairs(:xid => :ident)
-    xact <+ decide.map do |x, s|
+    xact <+ decide do |x, s|
       [x.xid, x.data, "abort"] if s.response == "N"
     end
 
-    xact <- decide.map do |x, s|
+    xact <- decide do |x, s|
       x if s.response == "N"
     end
 
-    stdio <~ decide.map { |x, s| ["COMMITTING"] if s.response == "Y" }
-    xact <+ decide.map { |x, s| [x.xid, x.data, "commit"] if s.response == "Y" }
+    stdio <~ decide { |x, s| ["COMMITTING"] if s.response == "Y" }
+    xact <+ decide { |x, s| [x.xid, x.data, "commit"] if s.response == "Y" }
   end
 
 end
@@ -90,27 +90,27 @@ module Monotonic2PCMaster
   end
 
   bloom :boots do
-    xact_accum <= request_commit.map{|r| [r.xid, r.data, 'prepare'] }
-    begin_vote <= request_commit.map{|r| [r.xid, r.data] }
+    xact_accum <= request_commit {|r| [r.xid, r.data, 'prepare'] }
+    begin_vote <= request_commit {|r| [r.xid, r.data] }
   end
 
   bloom :panic_or_rejoice do
     decide = (xact_accum*vote_status).pairs(:xid => :ident)
-    xact_accum <= decide.map do |x, s|
+    xact_accum <= decide do |x, s|
       [x.xid, x.data, "abort"] if s.response == "N"
     end
 
-    xact_accum <= decide.map do |x, s|
+    xact_accum <= decide do |x, s|
       [x.xid, x.data, "commit"] if s.response == "Y"
     end
   end
 
   bloom :twopc_status do
-    sj <= (xact_accum*xact_order).pairs(:status => :status).map do |x,o|
+    sj <= (xact_accum*xact_order).pairs(:status => :status) do |x,o|
       [x.xid, x.data, x.status, o.ordinal]
     end
     xact_final <= sj.group([sj.xid], max(sj.ordinal))
-    xact <= (sj*xact_final).pairs(:ordinal => :ordinal).map do |s, x|
+    xact <= (sj*xact_final).pairs(:ordinal => :ordinal) do |s, x|
       [s.xid, s.data, s.status]
     end
   end
