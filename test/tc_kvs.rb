@@ -47,7 +47,7 @@ class TestKVS < Test::Unit::TestCase
     workload1(v)
     # what are we going to do about name-mangling in the module system?
     v.sync_do{ assert_equal(1, v.kvs__kvstate.length) }
-    v.sync_do{ assert_equal("bak", v.kvs__kvstate.first[1]) } 
+    v.sync_do{ assert_equal("bak", v.kvs__kvstate.first[1]) }
     v2.sync_do{ assert_equal(1, v2.kvs__kvstate.length) }
     v2.sync_do{ assert_equal("bak", v2.kvs__kvstate.first[1]) }
     v.stop_bg
@@ -55,14 +55,14 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_simple
-    v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')
+    v = SingleSiteKVS.new(:tag => 'simple')
     v.run_bg
     workload1(v)
-    v.sync_do{ assert_equal(1, v.kvstate.length) }
-    v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
+    v.sync_do { assert_equal(1, v.kvstate.length) }
+    v.sync_do { assert_equal("bak", v.kvstate.first[1]) }
 
-    v.sync_do{ v.kvget <+ [[1234, 'foo']] }
-    s.sync_do{ 
+    v.sync_do { v.kvget <+ [[1234, 'foo']] }
+    s.sync_do {
       assert_equal(1, v.kvget_response.length)
       assert_equal("bak", v.kvget_response.first[1])
     }
@@ -70,17 +70,15 @@ class TestKVS < Test::Unit::TestCase
     v.stop_bg
   end
 
-  
-
   def test_del
-    v = SingleSiteKVS.new(:port => 12360, :tag => 'simple')
+    v = SingleSiteKVS.new(:tag => 'simple')
     v.run_bg
     workload1(v)
-    v.sync_do{ assert_equal(1, v.kvstate.length) }
-    v.sync_do{ assert_equal("bak", v.kvstate.first[1]) }
+    v.sync_do { assert_equal(1, v.kvstate.length) }
+    v.sync_do { assert_equal("bak", v.kvstate.first[1]) }
 
-    v.sync_do {v.kvdel <+ [['foo', 23525]]}
-    v.sync_do{}
+    v.sync_do { v.kvdel <+ [['foo', 23525]] }
+    v.sync_do
     v.sync_do { assert_equal(0, v.kvstate.length) }
     v.stop_bg
   end

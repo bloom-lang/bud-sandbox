@@ -150,8 +150,8 @@ class TestBFS < Test::Unit::TestCase
   def test_client
     b = BFSMasterServer.new(@opts)
     b.run_bg
-    dn = new_datanode(11117, b.ip_port)
-    dn2= new_datanode(11118, b.ip_port)
+    dn = new_datanode(11117, b.port)
+    dn2= new_datanode(11118, b.port)
 
     s = BFSShell.new(b.ip_port)
     s.run_bg
