@@ -50,7 +50,7 @@ class TestBFS < Test::Unit::TestCase
     super
   end
   def test_directorystuff1
-    b = BFSMasterServer.new(@opts.merge(:port => "65432", :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
     b.run_bg
     s = BFSShell.new("localhost:65432")
     s.run_bg
@@ -92,7 +92,7 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_fsmaster
-    b = FSC.new(@opts.merge(:trace => true))
+    b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg

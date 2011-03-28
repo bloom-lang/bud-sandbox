@@ -66,7 +66,7 @@ class TestFind < Test::Unit::TestCase
   def test_find
     @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
     @my_nodes = @addrs.values.map do |a|
-      LilChord.new(:port => a) #, :trace => true)
+      LilChord.new(:port => a)
     end
     @my_nodes.each{|n| n.run_bg}
     @my_nodes.each{|n| n.sync_do {n.load_data}}
@@ -84,12 +84,12 @@ class TestFind < Test::Unit::TestCase
   # def test_join
   #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
   #   @my_nodes = @addrs.values.map do |a|
-  #     LilChord.new(:port => a, :trace => true)
+  #     LilChord.new(:port => a)
   #   end
   #   @my_nodes.each{|n| n.run_bg}
   #   @my_nodes.each{|n| n.async_do {n.load_data}}
   #   @addrs[6] = 12346
-  #   newnode = LilChord.new(:port => 12346, :trace => true)
+  #   newnode = LilChord.new(:port => 12346)
   #   @my_nodes << newnode
   #   newnode.run_bg
   #   newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}

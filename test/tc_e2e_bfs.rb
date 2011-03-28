@@ -18,7 +18,6 @@ end
 
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
-    #@opts = {:trace => true}
     @opts = {}
     clean
     super
@@ -82,7 +81,7 @@ class TestBFS < Test::Unit::TestCase
   end
     
   def ntest_many_datanodes
-    b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "33333"))
     b.run_bg
     
     dns = []
@@ -149,8 +148,7 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_client
-    b = BFSMasterServer.new(@opts.merge(:port => "65433"))#, :trace => true))
-    #b = BFSMasterServer.new(@opts.merge(:port => "65433", :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "65433"))
     b.run_bg
     dn = new_datanode(11117, 65433)
     dn2= new_datanode(11118, 65433)
