@@ -18,7 +18,7 @@ class LilChord
   end
 
   state do
-    table :succ_cache, succ_resp.key_cols => succ_resp.val_cols
+    table :succ_cache, succ_resp.schema
   end
 
   # figure 3(b) from stoica's paper
@@ -64,22 +64,22 @@ end
 
 class TestFind < Test::Unit::TestCase
   def test_find
-    @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
-    @my_nodes = @addrs.values.map do |a|
-      LilChord.new(:port => a)
+    ports = [12340, 12341, 12343]
+    my_nodes = ports.map do |p|
+      LilChord.new(:port => p)
     end
-    @my_nodes.each{|n| n.run_bg}
-    @my_nodes.each{|n| n.sync_do {n.load_data}}
-    @my_nodes.each{|n| n.sync_do {n.do_lookups}}
+    my_nodes.each{|n| n.run_bg}
+    my_nodes.each{|n| n.sync_do {n.load_data}}
+    my_nodes.each{|n| n.sync_do {n.do_lookups}}
     sleep 2
-    @my_nodes.each{|n| n.stop_bg}
+    my_nodes.each{|n| n.stop_bg}
     
     # [0,1,2].each do |num|
-    #   puts "node #{@my_nodes[num].port} : #{@my_nodes[num].succ_cache.map.inspect}"
+    #   puts "node #{my_nodes[num].port} : #{my_nodes[num].succ_cache.map.inspect}"
     # end
-    assert_equal(3, @my_nodes[0].succ_cache.length)
-    assert_equal(@my_nodes[0].succ_cache.to_a.sort, @my_nodes[1].succ_cache.to_a.sort)
-    assert_equal(@my_nodes[1].succ_cache.to_a.sort, @my_nodes[2].succ_cache.to_a.sort)
+    assert_equal(3, my_nodes[0].succ_cache.length)
+    assert_equal(my_nodes[0].succ_cache.to_a.sort, my_nodes[1].succ_cache.to_a.sort)
+    assert_equal(my_nodes[1].succ_cache.to_a.sort, my_nodes[2].succ_cache.to_a.sort)
   end
   # def test_join
   #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}

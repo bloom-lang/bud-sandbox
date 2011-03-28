@@ -7,7 +7,7 @@ module ChordJoin
 
   state do
     channel :join_req, [:@to, :requestor_addr] => [:start]
-    table   :join_pending, join_req.key_cols => join_req.val_cols
+    table   :join_pending, join_req.schema
     # table :finger, [:index] => [:start, 'hi', :succ, :succ_addr]
     # interface output, :succ_resp, [:key] => [:start, :addr]
     channel :finger_table_req, [:@to,:requestor_addr]

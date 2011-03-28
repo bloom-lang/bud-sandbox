@@ -15,7 +15,7 @@ module FSUtil
   include FSProtocol
 
   state do
-    table :remember_resp, fsret.key_cols => fsret.val_cols
+    table :remember_resp, fsret.schema
   end
 
   bloom :remz do
