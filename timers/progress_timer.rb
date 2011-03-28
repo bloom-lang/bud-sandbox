@@ -33,7 +33,7 @@ module ProgressTimer
       end
     end
 
-    timer_state <- join([timer_state, alarm], [timer_state.name, alarm.name]).map {|s, a| s}
-    timer_state <- join([timer_state, del_alarm], [timer_state.name, del_alarm.name]).map {|s, a| s}
+    timer_state <- (timer_state * alarm).lefts(:name => :name)
+    timer_state <- (timer_state * del_alarm).lefts(:name => :name)
   end
 end

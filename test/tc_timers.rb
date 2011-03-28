@@ -9,7 +9,7 @@ class TT
 end
 
 class TestTimers < Test::Unit::TestCase
-  def test_besteffort_delivery
+  def test_simple_timers
     tt = TT.new
     tt.run_bg
     tt.sync_do {
