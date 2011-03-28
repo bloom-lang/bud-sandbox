@@ -23,7 +23,7 @@ module DisorderlyCart
     status <= (action_cnt * action_cnt * checkout_msg).combos do |a1, a2, c|
       if a1.session == a2.session and a1.item == a2.item and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
         if (a1.cnt - a2.cnt) > 0
-          puts "STAT" or [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
+          [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
         end
       end
     end

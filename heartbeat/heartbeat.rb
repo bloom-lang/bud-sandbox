@@ -32,7 +32,7 @@ module HeartbeatAgent
 
   bloom :selfness do
     my_address <+ return_address
-    my_address <- (my_address * return_address).pairs{ |m, r| puts "update my addresss" or m }
+    my_address <- (my_address * return_address).lefts
   end
 
   bloom :announce do
@@ -59,7 +59,7 @@ module HeartbeatAgent
   bloom :reckon do
     heartbeat_buffer <= heartbeat {|h| [h.src, h.sender, h.payload] }
     heartbeat_log <= (hb_timer * heartbeat_buffer).pairs {|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
-    heartbeat_buffer <- (hb_timer * heartbeat_buffer).pairs {|t, h| h }
+    heartbeat_buffer <- (hb_timer * heartbeat_buffer).rights
   end
 
   bloom :current_output do

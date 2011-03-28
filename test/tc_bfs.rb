@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'test/unit'
-require 'digest/md5'
 require 'bfs/fs_master'
 require 'bfs/datanode'
 require 'bfs/hb_master'
@@ -129,11 +128,6 @@ class TestBFS < Test::Unit::TestCase
     m.sync_do
     m.sync_do
     m.sync_do
-    m.sync_do do 
-      m.kvstate.each do |k|
-        puts "STATE: #{k.inspect}"
-      end
-    end   
 
     m.stop_bg
     b.stop_bg
@@ -150,7 +144,7 @@ class TestBFS < Test::Unit::TestCase
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
-    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts.merge(:port => 65432))
     b.run_bg
     do_basic_fs_tests(b)
     do_addchunks(b)
@@ -216,4 +210,3 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 end
-
