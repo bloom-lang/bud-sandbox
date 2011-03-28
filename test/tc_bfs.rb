@@ -125,11 +125,10 @@ class TestBFS < Test::Unit::TestCase
 
     ret = b.dispatch_command(['ls', '/'])
 
-
-    m.sync_do{}
-    m.sync_do{}
-    m.sync_do{}
-    m.sync_do{}
+    m.sync_do
+    m.sync_do
+    m.sync_do
+    m.sync_do
     m.sync_do do 
       m.kvstate.each do |k|
         puts "STATE: #{k.inspect}"
@@ -139,7 +138,6 @@ class TestBFS < Test::Unit::TestCase
     m.stop_bg
     b.stop_bg
   end
-  
   
   def new_datanode(dp, master_port)
     dn = DN.new(dp, @opts)
