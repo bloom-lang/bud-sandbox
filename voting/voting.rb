@@ -64,7 +64,6 @@ module VotingMaster
     # this stub changes vote_status only on a
     # complete and unanimous vote.
     # a subclass will likely override this
-    # paa -- fix potentially global scope of join aliases somehow...
     temp :sj <= join([vote_status, member_cnt, vote_cnt],
                      [vote_status.ident, vote_cnt.ident])
     victor <= sj.map do |s,m,v|
@@ -76,7 +75,6 @@ module VotingMaster
     vote_status <- victor.map do |v|
       [v.ident, v.content, 'in flight']
     end
-    #localtick <~ victor
   end
 end
 
