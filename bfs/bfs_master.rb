@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'bud'
-require 'bud/rendezvous'
 require 'bfs/bfs_client_proto'
 require 'bfs/background'
 require 'bfs/chunking'
@@ -26,8 +25,9 @@ module BFSMasterGlue
   end
 
   bloom :response_glue do
-    stdio <~ fsret.map{|r| ["return: #{r.inspect}"] }
-    response_msg <~ (fsret * rendez).pairs(:reqid => :reqid) do |f, r|
+    temp :resp <= (fsret * rendez).pairs(:reqid => :reqid)
+    stdio <~ resp {|rs, rq| ["CALL: (#{rq.rtype}, #{rq.args.inspect}) ==> (#{rs.inspect})"]}
+    response_msg <~ resp do |f, r|
       [r.source, r.master, f.reqid, f.status, f.data]
     end
   end 
