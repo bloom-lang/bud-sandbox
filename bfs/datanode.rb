@@ -32,7 +32,10 @@ module BFSDatanode
 
     to_payload <= join([dir_contents, nonce]).map do |c, n|
       unless server_knows.map{|s| s.file}.include? c.file
+        #puts "BCAST #{c.file}; server doesn't know" or [n.ident, c.file, c.time]
         [n.ident, c.file, c.time]
+      else
+        #puts "server knows about #{server_knows.length} files"
       end
     end
     # base case
