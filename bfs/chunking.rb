@@ -35,8 +35,8 @@ module ChunkedKVSFS
     lookup <= fschunklist
     lookup <= fsaddchunk
 
-    kvget <= lookup.map{ |a| [a.reqid, a.file] } 
-    fsret <= lookup.map do |a|
+    kvget <= lookup { |a| [a.reqid, a.file] } 
+    fsret <= lookup do |a|
       unless kvget_response.map{ |r| r.reqid}.include? a.reqid
         [a.reqid, false, "File not found: #{a.file}"]
       end
@@ -44,32 +44,32 @@ module ChunkedKVSFS
   end
 
   bloom :getchunks do
-    chunk_buffer <= join([fschunklist, kvget_response, chunk], [fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]).map{ |l, r, c| [l.reqid, c.chunkid] }
+    chunk_buffer <= (fschunklist * kvget_response * chunk).combos([fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]) { |l, r, c| [l.reqid, c.chunkid] }
     chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
-    fsret <= chunk_buffer2.map{ |c| [c.reqid, true, c.chunklist] }
+    fsret <= chunk_buffer2 { |c| [c.reqid, true, c.chunklist] }
     # handle case of empty file / haven't heard about chunks yet
   end
 
   bloom :getnodes do
-    fsret <= fschunklocations.map do |l|
+    fsret <= fschunklocations do |l|
       unless chunk_cache_alive.map{|c| c.chunkid}.include? l.chunkid
         [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache_alive.length}"]
       end
     end
 
     # chunkjoin will have rows if the block above doesn't.
-    temp :chunkjoin <= join([fschunklocations, chunk_cache_alive], [fschunklocations.chunkid, chunk_cache_alive.chunkid])
-    host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
+    temp :chunkjoin <= (fschunklocations * chunk_cache).pairs(:chunkid => :chunkid)
+    host_buffer <= chunkjoin {|l, c| [l.reqid, c.node] }
     host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
-    fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
+    fsret <= host_buffer2 {|c| [c.reqid, true, c.hostlist] }
   end
 
   bloom :addchunks do
     #stdio <~ "Warning: no available datanodes" if available.empty?
-    temp :minted_chunk <= join([kvget_response, fsaddchunk, available, nonce], [kvget_response.reqid, fsaddchunk.reqid])
-    chunk <= minted_chunk.map{ |r, a, v, n| [n.ident, a.file, 0] }
-    fsret <= minted_chunk.map{ |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]] }
-    fsret <= join([kvget_response, fsaddchunk], [kvget_response.reqid, fsaddchunk.reqid]).map do |r, a|
+    temp :minted_chunk <= (kvget_response * fsaddchunk * available * nonce).combos(kvget_response.reqid => fsaddchunk.reqid)
+    chunk <= minted_chunk { |r, a, v, n| [n.ident, a.file, 0] }
+    fsret <= minted_chunk { |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]] }
+    fsret <= (kvget_response * fsaddchunk).pairs(:reqid => :reqid) do |r, a|
       if available.empty? or available.first.pref_list.length < REP_FACTOR
         [r.reqid, false, "datanode set cannot satisfy REP_FACTOR = #{REP_FACTOR} with [#{available.first.nil? ? "NIL" : available.first.pref_list.inspect}]"]
       end

@@ -8,7 +8,7 @@ require 'ordering/assigner'
 class ST
   include Bud
   include Serializer
-  
+
   state do
     table :mems, [:reqid, :ident, :payload]
   end
@@ -38,12 +38,12 @@ class TestSer < Test::Unit::TestCase
     gn.add_member <+ [['bar', 2]]
     gn.add_member <+ [['baz', 3]]
     gn.seed <+ [[nil]]
-    
+
     gn.run_bg
 
     (0..30).each do |t|
       rem = nil
-      gn.sync_do{ rem = gn.nonce.first }
+      gn.sync_do { rem = gn.nonce.first }
       assert_equal(t * 3 + 1, rem[0])
     end
     gn.stop_bg
@@ -55,7 +55,7 @@ class TestSer < Test::Unit::TestCase
 
     old_val = 0
     (0..10).each do |i|
-      sn.sync_do { 
+      sn.sync_do {
         val = sn.nonce.first.ident
         assert(val != old_val, "nonce had same value: #{old_val} (on run #{i})")
         old_val = val
@@ -64,27 +64,27 @@ class TestSer < Test::Unit::TestCase
       #sn.localtick <~ [['1234']]
     end
     sn.stop_bg
-  end 
+  end
 
   def test_serialization
     st = ST.new
     st.run_bg
 
-    st.async_do{ st.enqueue <+ [[1, 'foo']] } 
-    st.async_do{ st.enqueue <+ [[2, 'bar']] }
-    s.async_do{ st.enqueue <+ [[3, 'baz']] }
-    st.sync_do{ }
-    st.sync_do{ 
-      st.dequeue <+ [[1234]] 
-    }
-    st.sync_do{ }
+    st.async_do { st.enqueue <+ [[1, 'foo']] }
+    st.async_do { st.enqueue <+ [[2, 'bar']] }
+    s.async_do { st.enqueue <+ [[3, 'baz']] }
+    st.sync_do
     st.sync_do {
-      assert_equal(1, st.mems.length) 
+      st.dequeue <+ [[1234]]
+    }
+    st.sync_do
+    st.sync_do {
+      assert_equal(1, st.mems.length)
       assert_equal([1234, 1, 'foo'], st.mems.first)
     }
 
-    st.sync_do{ st.dequeue <+ [[2345]] }
-    st.sync_do{ }
+    st.sync_do { st.dequeue <+ [[2345]] }
+    st.sync_do
     st.sync_do {
       assert_equal(2, st.mems.length)
       st.mems.each_with_index do |m, i|

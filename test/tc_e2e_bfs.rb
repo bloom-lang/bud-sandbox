@@ -18,14 +18,13 @@ end
 
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
-    #@opts = {:trace => true}
     @opts = {}
     clean
     super
   end
 
   def clean
-    `rm -r #{DATADIR}`
+    `rm -rf #{DATADIR}`
   end
 
   def md5_of(name)
@@ -81,7 +80,7 @@ class TestBFS < Test::Unit::TestCase
   end
     
   def ntest_many_datanodes
-    b = BFSMasterServer.new(@opts.merge(:port => "33333"))#, :trace => true))
+    b = BFSMasterServer.new(@opts.merge(:port => "33333"))
     b.run_bg
     
     dns = []
@@ -96,7 +95,7 @@ class TestBFS < Test::Unit::TestCase
     s.run_bg
 
     s.dispatch_command(["create", "/peter"])
-    s.sync_do{}
+    s.sync_do
     rd = File.open(TEST_FILE, "r")
     s.dispatch_command(["append", "/peter"], rd)
     rd.close
@@ -148,27 +147,26 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_client
-    b = BFSMasterServer.new(@opts.merge(:port => "65433"))#, :trace => true))
-    #b = BFSMasterServer.new(@opts.merge(:port => "65433", :trace => true))
+    b = BFSMasterServer.new(@opts)
     b.run_bg
-    dn = new_datanode(11117, 65433)
-    dn2= new_datanode(11118, 65433)
+    dn = new_datanode(11117, b.port)
+    dn2= new_datanode(11118, b.port)
 
-    s = BFSShell.new("localhost:65433")
+    s = BFSShell.new(b.ip_port)
     s.run_bg
 
     s.dispatch_command(["mkdir", "/foo"])
     s.dispatch_command(["mkdir", "/bar"])
     s.dispatch_command(["mkdir", "/baz"])
-    s.sync_do{}
+    s.sync_do
     s.dispatch_command(["mkdir", "/foo/bam"])
     s.dispatch_command(["create", "/peter"])
 
-    s.sync_do{}
+    s.sync_do
     rd = File.open(TEST_FILE, "r")
     s.dispatch_command(["append", "/peter"], rd)
     rd.close  
-    s.sync_do{}
+    s.sync_do
     do_read(s)
 
     dn.stop_datanode
@@ -206,7 +204,5 @@ class TestBFS < Test::Unit::TestCase
     dn.run_bg
     return dn
   end
-
-  
 end
 

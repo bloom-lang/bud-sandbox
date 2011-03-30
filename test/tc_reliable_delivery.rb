@@ -24,26 +24,16 @@ class RED
     }
   end
 
-  def check_buf_empty
+  def buf_empty?
+    rv = nil
     sync_do {
-      raise unless rd.buf.empty?
+      rv = rd.buf.empty?
     }
+    return rv
   end
 end
 
 class TestReliableDelivery < Test::Unit::TestCase
-  def ntest_delivery1
-    rd = RED.new(:port => 12222, :dump => true)
-    rd.run_bg
-
-    sendtup = ['localhost:12223', 'localhost:12222', 1, 'foobar']
-    rd.sync_do { rd.pipe_in <+ [ sendtup ] }
-
-    # transmission not 'complete'
-    rd.sync_do { assert(rd.pipe_log.empty?) }
-    rd.stop_bg
-  end
-
   def test_rdelivery
     rd = RED.new
     rd2 = RED.new
@@ -63,9 +53,22 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd.send_msg(tuples)
     tuples.length.times { q.pop }
     rd.sync_do { assert_equal(tuples, rd.pipe_log.to_a.sort) }
-    rd.check_buf_empty
+    assert(rd.buf_empty?)
 
     rd.stop_bg
     rd2.stop_bg
+  end
+
+  def test_not_delivered
+    rd = RED.new
+    rd.run_bg
+
+    sendtup = ['localhost:999', rd.ip_port, 1, 'foobar']
+    rd.send_msg([sendtup])
+
+    # transmission not 'complete'
+    assert_equal(false, rd.buf_empty?)
+    rd.sync_do { assert_equal([], rd.pipe_log.to_a.sort) }
+    rd.stop_bg
   end
 end

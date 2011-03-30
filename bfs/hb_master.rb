@@ -22,9 +22,9 @@ module HBMaster
 
   bloom :hbmasterlogic do
     #stdio <~ last_heartbeat.inspected
-    chunk_cache <+ join([master_duty_cycle, last_heartbeat]).flat_map do |d, l| 
+    chunk_cache <+ (master_duty_cycle * last_heartbeat).flat_map do |d, l| 
       l.payload[1].map do |pay|
-        unless chunk_cache.map{|c| c.chunkid}.include? pay
+        unless chunk_cache{|c| c.chunkid}.include? pay
           [l.peer, pay, Time.parse(d.val).to_f] unless pay.nil?
         end
       end 
@@ -32,16 +32,10 @@ module HBMaster
 
     chunk_cache_alive <= (chunk_cache * last_heartbeat).lefts
 
-    hb_ack <~ last_heartbeat.map do |l|
+    hb_ack <~ last_heartbeat do |l|
       [l.sender, l.payload[0]] unless l.payload[1] == [nil]
     end
 
-    #chunk_cache <- join([master_duty_cycle, chunk_cache]).map do |t, c|
-    #  c unless last_heartbeat.map{|h| h.peer}.include? c.node
-    #end
-
-    #chunk_cache_nodes <= chunk_cache.map{ |cc| [cc.node] }
     available <= last_heartbeat.group(nil, accum(last_heartbeat.peer))
-    #available <= chunk_cache_nodes.group(nil, accum(chunk_cache_nodes.node))
   end
 end

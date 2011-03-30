@@ -20,35 +20,24 @@ end
 
 
 class TestHB < Test::Unit::TestCase
-
   def test_heartbeat_group
-    hb = HB.new(:port => 46362)
-    hb2 = HB.new(:port => 46363)
-    hb3 = HB.new(:port => 46364)
-    hb.payload << ['foo']
-    hb2.payload << ['foo']
-    hb3.payload << ['foo']
-    hb.run_bg
-    hb2.run_bg
-    hb3.run_bg
-
+    port_list = [46362, 46363, 46364]
+    hb_list = port_list.map {|p| HB.new(:port => p)}
+    hb_list.each {|h| h.run_bg}
 
     # wait for the heartbeats to start appearing
-    q = Queue.new
-    ref = hb.register_callback(:last_heartbeat) {|c| q.push true}
-    q.pop
-    hb.unregister_callback(ref)
+    hb_list.first.delta(:last_heartbeat)
 
-    [hb, hb2, hb3].each do |h|
-      h.sync_do { 
-        #assert_equal(3, h.last_heartbeat.length) 
+    hb_list.each do |h|
+      h.sync_do {
+#        assert_equal(3, h.last_heartbeat.length)
       }
       s = nil
-      h.sync_do{ s = h.last_heartbeat.map{|b| b.peer } }
+      h.sync_do { s = h.last_heartbeat.map {|b| b.peer } }
       hosts = []
-      [46362, 46363, 46364].each do |b|
-        if h.port != b
-          hosts << "localhost:#{b}"
+      port_list.each do |p|
+        if h.port != p
+          hosts << "localhost:#{p}"
         end
       end
 
@@ -56,8 +45,7 @@ class TestHB < Test::Unit::TestCase
         assert(s.include? c)
       end
     end
-    hb.stop_bg
-    hb2.stop_bg
-    hb3.stop_bg
+
+    hb_list.each {|h| h.stop_bg}
   end
 end

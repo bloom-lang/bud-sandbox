@@ -7,7 +7,7 @@ module ChordJoin
 
   state do
     channel :join_req, [:@to, :requestor_addr] => [:start]
-    table   :join_pending, join_req.key_cols => join_req.val_cols
+    table   :join_pending, join_req.schema
     # table :finger, [:index] => [:start, 'hi', :succ, :succ_addr]
     # interface output, :succ_resp, [:key] => [:start, :addr]
     channel :finger_table_req, [:@to,:requestor_addr]
@@ -37,18 +37,18 @@ module ChordJoin
     succ_req <= join_req.map{|j| [j.start+1]}
     # upon response to successor request, ask the successor to send the contents
     #  of its finger table directly to the new node.
-    stdio <~ join([join_pending, succ_resp]).inspected
-    finger_table_req <~ join([join_pending, succ_resp]).map do |j, s|
+    stdio <~ (join_pending * succ_resp).pairs.inspected
+    finger_table_req <~ (join_pending * succ_resp).pairs do |j, s|
       [s.addr, j.requestor_addr] if j.start+1 == s.key
     end
-    # stdio <~ join([join_pending, succ_resp]).map do |j, s|
+    # stdio <~ (join_pending * succ_resp).pairs do |j, s|
     #   ["found successor " + [s.addr, j.requestor_addr].inspect] if j.start+1 == s.key
     # end
   end
 
   bloom :join_rules_successor do
     # at successor, upon receiving finger_table_req, ship finger table entries directly to new node
-    finger_table_resp <~ join([finger_table_req, finger]).map do |ftreq, f|
+    finger_table_resp <~ (finger_table_req * finger).pairs do |ftreq, f|
       # finger tuple prefixed with requestor_addr
       [ftreq.requestor_addr] + f
     end
@@ -65,11 +65,11 @@ module ChordJoin
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
     # XXX THESE pred_req/pred_resp rules are wrong!
-    pred_req <~ join([me,offsets]).map do |m,o|
+    pred_req <~ (me * offsets).pairs do |m,o|
       [m.start - 2**o.val, o.val]
     end
     # upon pred_resp, send a finger_upd message to the node that was found to point here
-    finger_upd <~ join([me, pred_resp]).map do |m, resp|
+    finger_upd <~ (me * pred_resp).pairs do |m, resp|
       [resp.referrer_addr, resp.referrer_index, m.start, ip_port]
     end
   end
@@ -78,12 +78,12 @@ module ChordJoin
     # update finger entries upon a finger_upd if the new one works: insert new, delete old
     # XXX would be nice to have an update pattern in Bloom for this
     stdio <~ finger_upd.inspected
-    temp :k <= join([finger_upd, finger], [finger_upd.referrer_index, finger.index])
-    stdio <~ k.map {|u,f| ["[#{u.inspect}], [#{f.inspect}]"]}
-    finger <+ k.map do |u, f|
+    temp :k <= (finger_upd * finger).pairs(finger_upd.referrer_index => finger.index)
+    stdio <~ k.inspected
+    finger <+ k do |u, f|
       [f.index, f.start, f.hi, u.my_start, u.from] if in_range(u.my_start, f.start, f.hi)
     end
-    finger <- k.map do |u, f|
+    finger <- k do |u, f|
       f if in_range(u.my_start, f.start, f.hi)
     end
   end

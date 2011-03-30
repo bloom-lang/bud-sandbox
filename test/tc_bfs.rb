@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'test/unit'
-require 'digest/md5'
 require 'bfs/fs_master'
 require 'bfs/datanode'
 require 'bfs/hb_master'
@@ -16,7 +15,7 @@ module FSUtil
   include FSProtocol
 
   state do
-    table :remember_resp, fsret.key_cols => fsret.val_cols
+    table :remember_resp, fsret.schema
   end
 
   bloom :remz do
@@ -46,13 +45,13 @@ end
 class TestBFS < Test::Unit::TestCase
   def initialize(args)
     @opts = {}
-    `rm -r #{DATADIR}`
+    `rm -rf #{DATADIR}`
     super
   end
   def test_directorystuff1
-    b = BFSMasterServer.new(@opts.merge(:port => "65432", :trace => true))
+    b = BFSMasterServer.new(@opts)
     b.run_bg
-    s = BFSShell.new("localhost:65432")
+    s = BFSShell.new(b.ip_port)
     s.run_bg
 
     s.dispatch_command(["mkdir", "/foo"])
@@ -92,16 +91,16 @@ class TestBFS < Test::Unit::TestCase
   end
 
   def test_fsmaster
-    b = FSC.new(@opts.merge(:trace => true))
+    b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
     b.stop_bg
   end
 
   def test_rms
-    m = BFSMasterServer.new(@opts.merge(:port => 46363))
+    m = BFSMasterServer.new(@opts)
     m.run_bg
-    b = BFSShell.new("localhost:46363")
+    b = BFSShell.new(m.ip_port)
     b.run_bg
     
     b.dispatch_command(['mkdir', '/a'])
@@ -125,21 +124,14 @@ class TestBFS < Test::Unit::TestCase
 
     ret = b.dispatch_command(['ls', '/'])
 
-
-    m.sync_do{}
-    m.sync_do{}
-    m.sync_do{}
-    m.sync_do{}
-    m.sync_do do 
-      m.kvstate.each do |k|
-        puts "STATE: #{k.inspect}"
-      end
-    end   
+    m.sync_do
+    m.sync_do
+    m.sync_do
+    m.sync_do
 
     m.stop_bg
     b.stop_bg
   end
-  
   
   def new_datanode(dp, master_port)
     dn = DN.new(dp, @opts)
@@ -152,7 +144,7 @@ class TestBFS < Test::Unit::TestCase
     dn = new_datanode(11112, 65432)
     #dn2 = new_datanode(11113, 65432)
 
-    b = BFSMasterServer.new(@opts.merge(:port => "65432"))
+    b = BFSMasterServer.new(@opts.merge(:port => 65432))
     b.run_bg
     do_basic_fs_tests(b)
     do_addchunks(b)
@@ -218,4 +210,3 @@ class TestBFS < Test::Unit::TestCase
     assert_resp(b, 126, ["subsub1"])
   end
 end
-

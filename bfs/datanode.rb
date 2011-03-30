@@ -30,7 +30,7 @@ module BFSDatanode
       files.map {|f| [f, Time.parse(t.val).to_f]}
     end
 
-    to_payload <= join([dir_contents, nonce]).map do |c, n|
+    to_payload <= (dir_contents * nonce).pairs do |c, n|
       unless server_knows.map{|s| s.file}.include? c.file
         #puts "BCAST #{c.file}; server doesn't know" or [n.ident, c.file, c.time]
         [n.ident, c.file, c.time]
@@ -39,17 +39,17 @@ module BFSDatanode
       end
     end
     # base case
-    to_payload <= nonce.map {|n| [n.ident, nil, -1]}
+    to_payload <= nonce {|n| [n.ident, nil, -1]}
     # remember the stuff we cast
     last_dir_contents <+ to_payload
     # if we get an ack, permanently remember
     temp :acked_contents <= (hb_ack * last_dir_contents).pairs(:val => :nonce)
-    server_knows <= acked_contents.map {|a, c| [c.file]}
+    server_knows <= acked_contents {|a, c| [c.file]}
     # and clean up the cache
-    last_dir_contents <- acked_contents.map{|a, c| c}
+    last_dir_contents <- acked_contents {|a, c| c}
     # turn a set into an array
     payload_buff <= to_payload.group([to_payload.nonce], accum(to_payload.file))
-    payload <= payload_buff.map {|b| [[b.nonce, b.payload]]}
+    payload <= payload_buff {|b| [[b.nonce, b.payload]]}
   end
 
   def initialize(dataport=nil, opts={})

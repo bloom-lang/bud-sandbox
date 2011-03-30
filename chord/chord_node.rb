@@ -22,11 +22,11 @@ module ChordNode
   bloom :node_views do
     # for each find_event for an id, find index of the closest finger
     # start by finding all fingers with IDs between this node and the search key
-    candidate <= join([find_event,finger,me]).map do |e,f,m|
+    candidate <= (find_event * finger * me).combos do |e,f,m|
                    [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] if in_range(f.succ, m.start, e.key)
                  end
     # now for each key pick the highest-index candidate; it's the closest
     closest <= candidate.argmax([candidate.key], candidate.index)
-    # stdio <~ closest.map {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"]}
+    # stdio <~ closest {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"]}
   end
 end

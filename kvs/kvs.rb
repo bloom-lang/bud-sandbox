@@ -20,13 +20,13 @@ module BasicKVS
   end
 
   bloom :mutate do
-    kvstate <+ kvput.map {|s|  [s.key, s.value]}
+    kvstate <+ kvput {|s|  [s.key, s.value]}
     kvstate <- (kvstate * kvput).lefts(:key => :key)
   end
 
   bloom :get do
     temp :getj <= (kvget * kvstate).pairs(:key => :key)
-    kvget_response <= getj.map do |g, t|
+    kvget_response <= getj do |g, t|
       [g.reqid, t.key, t.value]
     end
   end
@@ -42,26 +42,18 @@ module ReplicatedKVS
   include MulticastProtocol
   import BasicKVS => :kvs
 
-  bloom :super_stuff do
-    # it would be nice if this sort of thing were automatic
-    # the visualization made it easy to spot this issue
-    kvs.kvget <= kvget
-    kvs.kvdel <= kvdel
-    kvget_response <= kvs.kvget_response
-  end
-
   bloom :local_indir do
     # if I am the master, multicast store requests
-    send_mcast <= kvput.map do |k|
+    send_mcast <= kvput do |k|
       unless member.include? [k.client]
         [k.reqid, [@addy, k.key, k.reqid, k.value]]
       end
     end
 
-    kvs.kvput <= mcast_done.map {|m| m.payload }
+    kvs.kvput <= mcast_done {|m| m.payload }
 
     # if I am a replica, store the payload of the multicast
-    kvs.kvput <= pipe_chan.map do |d|
+    kvs.kvput <= pipe_chan do |d|
       if d.payload.fetch(1) != @addy
         d.payload
       end
