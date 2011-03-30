@@ -8,7 +8,7 @@ require 'bfs/bfs_config'
 module BFSBackgroundTasks
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
-    periodic :bg_timer, MASTER_DUTY_CYCLE
+    periodic :bg_timer, (MASTER_DUTY_CYCLE * 5)
     scratch :chunk_cnts_chunk, [:chunkid, :replicas]
     scratch :chunk_cnts_host, [:host, :chunks]
     scratch :candidate_nodes, [:chunkid, :host, :chunks]
@@ -21,7 +21,8 @@ module BFSBackgroundTasks
   end
 
   bloom :replication do
-    cc_demand <= join([bg_timer, chunk_cache]).map {|t, c| c}
+    #cc_demand <= join([bg_timer, chunk_cache]).map {|t, c| puts "DEMAND"; c}
+    stdio <~ bg_timer { ["DEMAND OVER #{chunk_cache.length} items"] }
 
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))
     chunk_cnts_host <= cc_demand.group([cc_demand.node], count(cc_demand.chunkid))

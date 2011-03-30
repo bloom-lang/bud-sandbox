@@ -28,6 +28,7 @@ module BFSMasterGlue
   end
 
   bloom :response_glue do
+    stdio <~ fsret.map{|r| ["return: #{r.inspect}"] }
     response_msg <~ join([fsret, rendez], [fsret.reqid, rendez.reqid]).map do |f, r|
       [r.source, r.master, f.reqid, f.status, f.data]
     end

@@ -6,9 +6,9 @@ require 'time'
 
 module ProgressTimerProto
   state do
-    interface :input, :set_alarm, [:name, :time_out]
+    interface :input, :set_alarm, [:name, :timeout]
     interface :input, :del_alarm, [:name]
-    interface :output, :alarm, [:name, :time_out]
+    interface :output, :alarm, [:name, :timeout]
   end
 end
 
@@ -16,7 +16,7 @@ module ProgressTimer
   include ProgressTimerProto
 
   state do
-    table :timer_state, [:name] => [:start_tm, :time_out]
+    table :timer_state, [:name] => [:start_tm, :timeout]
     table :alrm_buf, set_alarm.schema
     periodic :timer, 0.2
   end
@@ -24,12 +24,12 @@ module ProgressTimer
   bloom :timer_logic do
     alrm_buf <= set_alarm
     temp :cyc <= (alrm_buf * timer)
-    timer_state <= cyc.map {|s, t| [s.name, Time.parse(t.val).to_f, s.time_out]}
+    timer_state <= cyc.map {|s, t| [s.name, Time.parse(t.val).to_f, s.timeout]}
     alrm_buf <- cyc.map{|s, t| s}
 
     alarm <= (timer_state * timer).map do |s, t|
-      if Time.parse(t.val).to_f - s.start_tm > s.time_out
-        [s.name, s.time_out]
+      if Time.parse(t.val).to_f - s.start_tm > s.timeout
+        [s.name, s.timeout]
       end
     end
 

@@ -52,13 +52,13 @@ module ChunkedKVSFS
 
   bloom :getnodes do
     fsret <= fschunklocations.map do |l|
-      unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
-        [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache.length}"]
+      unless chunk_cache_alive.map{|c| c.chunkid}.include? l.chunkid
+        [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache_alive.length}"]
       end
     end
 
     # chunkjoin will have rows if the block above doesn't.
-    temp :chunkjoin <= join([fschunklocations, chunk_cache], [fschunklocations.chunkid, chunk_cache.chunkid])
+    temp :chunkjoin <= join([fschunklocations, chunk_cache_alive], [fschunklocations.chunkid, chunk_cache_alive.chunkid])
     host_buffer <= chunkjoin.map{|l, c| [l.reqid, c.node] }
     host_buffer2 <= host_buffer.group([host_buffer.reqid], accum(host_buffer.host))
     fsret <= host_buffer2.map{|c| [c.reqid, true, c.hostlist] }
