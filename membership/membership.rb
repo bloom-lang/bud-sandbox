@@ -15,12 +15,12 @@ end
 module StaticMembership
   include MembershipProtocol
 
-  bloom :member_logic do
+  bloom do
     member <= add_member do |m|
       if @budtime == 0
         m
       else
-        puts "REJECT #{m.inspect} @ #{@budtime}"
+        raise "REJECT #{m.inspect} @ #{@budtime}"
       end
     end
     local_id <= my_id {|m| m if @budtime == 0}

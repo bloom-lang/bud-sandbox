@@ -2,7 +2,6 @@ require 'rubygems'
 require 'bud'
 
 module KVSWorkloads
-
   def add_members(b, *hosts)
     hosts.each do |h|
       #print "ADD MEMBER: #{h.inspect}\n"
@@ -27,4 +26,3 @@ module KVSWorkloads
     v.sync_do
   end
 end
-

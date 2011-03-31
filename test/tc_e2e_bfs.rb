@@ -179,9 +179,9 @@ class TestBFS < Test::Unit::TestCase
     assert_raise(IOError) {do_read(s)}
 
     # resurrect a datanode and its state
-    dn3 = new_datanode(11117, 65433)
+    dn3 = new_datanode(11117, b.port)
     # and an amnesiac
-    dn4 = new_datanode(11119, 65433)
+    dn4 = new_datanode(11119, b.port)
 
     do_read(s)
 
