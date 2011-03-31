@@ -61,7 +61,6 @@ class TestBFS < Test::Unit::TestCase
     s2.dispatch_command(["append", "/test2"], rd2)
     rd2.close
 
-    sleep 6
 
 
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
@@ -190,6 +189,7 @@ class TestBFS < Test::Unit::TestCase
     dn3.stop_datanode
 
     # and run off the replica
+    #sleep 10
     do_read(s)
 
     dn4.stop_datanode

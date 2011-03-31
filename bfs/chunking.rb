@@ -52,8 +52,8 @@ module ChunkedKVSFS
 
   bloom :getnodes do
     fsret <= fschunklocations do |l|
-      unless chunk_cache.map{|c| c.chunkid}.include? l.chunkid
-        [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache.length}"]
+      unless chunk_cache_alive.map{|c| c.chunkid}.include? l.chunkid
+        [l.reqid, false, "no datanodes found for #{l.chunkid} in cc, now #{chunk_cache_alive.length}"]
       end
     end
 
