@@ -38,6 +38,9 @@ module BFSDatanode
         #puts "server knows about #{server_knows.length} files"
       end
     end
+
+    #stdio <~ hb_timer {["DB: #{@data_port}: payload #{to_payload.length}"] if to_payload.length > 2}
+
     # base case
     to_payload <= nonce {|n| [n.ident, nil, -1]}
     # remember the stuff we cast

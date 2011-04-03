@@ -23,7 +23,7 @@ class DataProtocolClient
     rescue
       puts "(connect #{host}:#{port})EXCEPTION ON SEND: #{$!}"
     end 
-    raise "failed to replicate"
+    ###raise "failed to replicate"
   end
 
   def DataProtocolClient::read_chunk(chunkid, nodelist)

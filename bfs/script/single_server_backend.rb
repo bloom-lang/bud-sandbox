@@ -6,4 +6,4 @@ require 'bfs/datanode'
 require 'bfs/background'
 
 s = BFSMasterServer.new(:port => 12345)
-s.run
+s.run_fg
