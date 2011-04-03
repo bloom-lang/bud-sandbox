@@ -169,13 +169,9 @@ class TestBFS < Test::Unit::TestCase
     s.sync_do
     do_read(s)
 
-    #sleep 5
-
 
     puts "DB: @#{b.budtime}, KILL1"
     dn.stop_datanode
-
-    #sleep 2
 
     # failover
     do_read(s)
@@ -192,7 +188,7 @@ class TestBFS < Test::Unit::TestCase
 
     puts "DB: @{b.budtime}, 11117 and 9 up"
     
-    sleep 5
+    #sleep 5
     b.delta(:heartbeat)
 
     do_read(s)
@@ -205,7 +201,7 @@ class TestBFS < Test::Unit::TestCase
 
 
     puts "DB: #{b.budtime}, only amnesiac up"
-    sleep 5
+    #sleep 5
     b.delta(:heartbeat)
     do_read(s)
 
