@@ -8,7 +8,7 @@ require 'bfs/bfs_config'
 module BFSBackgroundTasks
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
-    periodic :bg_timer, (MASTER_DUTY_CYCLE * 5)
+    periodic :bg_timer, (MASTER_DUTY_CYCLE * 3)
     scratch :chunk_cnts_chunk, [:chunkid, :replicas]
     scratch :chunk_cnts_host, [:host, :chunks]
     scratch :candidate_nodes, [:chunkid, :host, :chunks]
