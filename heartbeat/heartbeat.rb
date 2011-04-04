@@ -3,7 +3,7 @@ require 'bud'
 require 'time'
 require 'membership/membership'
 
-HB_EXPIRE = 6.0
+HB_EXPIRE = 4.0
 
 module HeartbeatProtocol
   include MembershipProtocol
@@ -38,7 +38,7 @@ module HeartbeatAgent
   bloom :announce do
     heartbeat <~ (hb_timer * member * payload_buffer * my_address).combos do |t, m, p, r|
       unless m.host == r.addy
-       [m.host, r.addy, ip_port, p.payload]
+        [m.host, r.addy, ip_port, p.payload]
       end
     end
 
@@ -57,6 +57,7 @@ module HeartbeatAgent
   end
 
   bloom :reckon do
+    #stdio <~ heartbeat {|h| ["HB RCV @ #{h.src} from #{h.sender}"]}
     heartbeat_buffer <= heartbeat {|h| [h.src, h.sender, h.payload] }
     heartbeat_log <= (hb_timer * heartbeat_buffer).pairs {|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
     heartbeat_buffer <- (hb_timer * heartbeat_buffer).rights

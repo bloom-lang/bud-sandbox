@@ -8,7 +8,7 @@ require 'bfs/bfs_config'
 module BFSBackgroundTasks
   state do
     interface output, :copy_chunk, [:chunkid, :owner, :newreplica]
-    periodic :bg_timer, (MASTER_DUTY_CYCLE * 5)
+    periodic :bg_timer, (MASTER_DUTY_CYCLE * 3)
     scratch :chunk_cnts_chunk, [:chunkid, :replicas]
     scratch :chunk_cnts_host, [:host, :chunks]
     scratch :candidate_nodes, [:chunkid, :host, :chunks]
@@ -16,29 +16,29 @@ module BFSBackgroundTasks
     scratch :chosen_dest, [:chunkid, :host]
     scratch :sources, [:chunkid, :host]
     scratch :best_src, [:chunkid, :host]
-
-    scratch :cc_demand, chunk_cache.schema
+    scratch :lowchunks, [:chunkid]
+    scratch :cc_demand, chunk_cache_alive.schema
   end
 
   bloom :replication do
-    stdio <~ bg_timer { ["DEMAND OVER #{chunk_cache.length} items"] }
-    cc_demand <= (bg_timer * chunk_cache).pairs {|t, c| c}
-
+    cc_demand <= (bg_timer * chunk_cache_alive).rights
+    cc_demand <= (bg_timer * last_heartbeat).pairs {|b, h| [h.peer, nil, nil]}
     chunk_cnts_chunk <= cc_demand.group([cc_demand.chunkid], count(cc_demand.node))
     chunk_cnts_host <= cc_demand.group([cc_demand.node], count(cc_demand.chunkid))
 
-    temp :danger <= (bg_timer * chunk_cnts_chunk * cc_demand * chunk_cnts_host).combos(cc_demand.node => chunk_cnts_host.host)
-    candidate_nodes <= danger do |t, ccc, cc, cch|
-      if ccc.replicas < REP_FACTOR
-        unless cc_demand.map{|c| c.node if c.chunkid == ccc.chunkid}.include?  cc.node
-          [ccc.chunkid, cc.node, cch.chunks]
-        end
+    lowchunks <= chunk_cnts_chunk { |c| [c.chunkid] if c.replicas < REP_FACTOR and !c.chunkid.nil?}
+
+    # nodes in possession of such chunks
+    sources <= (cc_demand * lowchunks).pairs(:chunkid => :chunkid) {|a, b| [a.chunkid, a.node]}
+    # nodes not in possession of such chunks, and their fill factor
+    candidate_nodes <= (chunk_cnts_host * lowchunks).pairs do |c, p|
+      unless chunk_cache_alive.map{|a| a.node if a.chunkid == p.chunkid}.include? c.host
+        [p.chunkid, c.host, c.chunks]
       end
     end
 
     best_dest <= candidate_nodes.argagg(:min, [candidate_nodes.chunkid], candidate_nodes.chunks)
     chosen_dest <= best_dest.group([best_dest.chunkid], choose(best_dest.host))
-    sources <= (cc_demand * candidate_nodes).pairs(:chunkid => :chunkid) {|c, cn| [c.chunkid, c.node]}
     best_src <= sources.group([sources.chunkid], choose(sources.host))
     copy_chunk <= (chosen_dest * best_src).pairs(:chunkid => :chunkid) do |d, s|
       [d.chunkid, s.host, d.host]

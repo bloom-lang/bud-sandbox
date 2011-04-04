@@ -20,7 +20,7 @@ module BFSClient
   bloom :cglue do
     # every request involves some communication with the master.
     #stdio <~ request.map{|r| ["REQUEST: #{r.inspect}"] }
-    #stdio <~ response.map{|r| ["response: #{r.inspect}"] }
+    #stdio <~ response_msg.map{|r| ["response: #{r.inspect}"] }
     request_msg <~ (request * master).pairs{|r, m| [m.master, ip_port, r.reqid, r.rtype, r.arg] }
   
     response <= response_msg.map do |r|

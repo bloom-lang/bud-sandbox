@@ -169,12 +169,17 @@ class TestBFS < Test::Unit::TestCase
     s.sync_do
     do_read(s)
 
+
+    puts "DB: @#{b.budtime}, KILL1"
     dn.stop_datanode
 
     # failover
     do_read(s)
 
+    
+
     dn2.stop_datanode
+    puts "DB: @#{b.budtime}, }all down"
 
     assert_raise(IOError) {do_read(s)}
 
@@ -183,15 +188,18 @@ class TestBFS < Test::Unit::TestCase
     # and an amnesiac
     dn4 = new_datanode(11119, b.port)
 
+    puts "DB: @{b.budtime}, 11117 and 9 up"
+    b.delta(:bg_timer)
+
     do_read(s)
 
     # kill the memory node
     dn3.stop_datanode
 
     # and run off the replica
-    #sleep 10
+    puts "DB: #{b.budtime}, only amnesiac up"
+    b.delta(:bg_timer)
     do_read(s)
-
     dn4.stop_datanode
     s.stop_bg
     b.stop_bg
