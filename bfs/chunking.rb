@@ -66,9 +66,9 @@ module ChunkedKVSFS
 
   bloom :addchunks do
     #stdio <~ "Warning: no available datanodes" if available.empty?
-    temp :minted_chunk <= (kvget_response * fsaddchunk * available * nonce).combos(kvget_response.reqid => fsaddchunk.reqid)
-    chunk <= minted_chunk { |r, a, v, n| [n.ident, a.file, 0] }
-    fsret <= minted_chunk { |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]] }
+    temp :minted_chunk <= (kvget_response * fsaddchunk * available * nonce).combos(kvget_response.reqid => fsaddchunk.reqid) {|r| r if last_heartbeat.length >= REP_FACTOR}
+    chunk <= minted_chunk { |r, a, v, n| [n.ident, a.file, 0]}
+    fsret <= minted_chunk { |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]]}
     fsret <= (kvget_response * fsaddchunk).pairs(:reqid => :reqid) do |r, a|
       if available.empty? or available.first.pref_list.length < REP_FACTOR
         [r.reqid, false, "datanode set cannot satisfy REP_FACTOR = #{REP_FACTOR} with [#{available.first.nil? ? "NIL" : available.first.pref_list.inspect}]"]

@@ -29,9 +29,11 @@ class Test2PC < Test::Unit::TestCase
       assert_equal("prepare", t.xact.first[2]) 
     }
 
+
     t2.sync_do{ assert_equal(1, t2.waiting_ballots.length) }
 
     t2.sync_do{ t2.cast_vote <+ [[ 1, "Y" ]] }
+
     t.delta(:vote) 
     t.sync_do{ assert_equal(1, t.votes_rcvd.length) }
     t.sync_do{ 
@@ -40,18 +42,15 @@ class Test2PC < Test::Unit::TestCase
     }
     t3.sync_do{ t3.cast_vote <+ [[ 1, "Y" ]] }
 
-    ready = false
-    until ready
-      tbl = t.delta(:decide)
-      tbl.each do |row|
-        if row[0][2] == "commit"
-          ready = true
-        end
-      end
+    t.delta(:decide)
+    t.sync_do{}
+    
+    t.sync_do do 
+      assert_equal(1, t.vote_status.length)
+      assert_equal("Y", t.vote_status.first[2])
     end
-  
+
     t.sync_do {  
-      #t.xact.each {|x| puts "XACT: #{x.inspect}" }  
       assert_equal(1, t.xact.length)
       assert_equal("commit", t.xact.first[2])
     }
