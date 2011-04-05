@@ -43,6 +43,10 @@ module ReplicatedKVS
   import BasicKVS => :kvs
 
   bloom :local_indir do
+    kvget_response <= kvs.kvget_response
+    kvs.kvdel <= kvdel
+    kvs.kvget <= kvget
+
     # if I am the master, multicast store requests
     send_mcast <= kvput do |k|
       unless member.include? [k.client]
