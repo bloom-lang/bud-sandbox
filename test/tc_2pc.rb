@@ -14,7 +14,7 @@ end
 
 class Test2PC < Test::Unit::TestCase
   def test_singlenode
-    t = TPCM.new(:port => 32345, :dump_rewrite => true)
+    t = TPCM.new(:port => 32345)
     t2 = TPCA.new(:port => 32346)
     t3 = TPCA.new(:port => 32347)
     t.add_member <+ [['localhost:32346']]
