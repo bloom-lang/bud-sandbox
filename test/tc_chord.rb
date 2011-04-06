@@ -30,16 +30,17 @@ class LilChord
   #   table :localkeys, ['key'], ['val']
 
   def load_data
-    me << [@options[:port].to_i%10]
-    if me.first == [0]
-      finger <= [[0,1,2,1,@addrs[1]], [1,2,4,3,@addrs[3]], [2,4,0,0,@addrs[0]]]
-      localkeys <= [[6, '']]
-    elsif me.first == [1]
-      finger <= [[0,2,3,3,@addrs[3]], [1,3,5,3,@addrs[3]], [2,5,1,0,@addrs[0]]]
-      localkeys <= [[1, '']]
-    elsif me.first == [3]
-      finger <= [[0,4,5,0,@addrs[0]], [1,5,7,0,@addrs[0]], [2,7,3,0,@addrs[0]]]
-      localkeys <= [[2, '']]
+    mod = @options[:port].to_i%10
+    me <+ [[mod]]
+    if mod == 0
+      finger <+ [[0,1,2,1,@addrs[1]], [1,2,4,3,@addrs[3]], [2,4,0,0,@addrs[0]]]
+      localkeys <+ [[6, '']]
+    elsif mod == 1
+      finger <+ [[0,2,3,3,@addrs[3]], [1,3,5,3,@addrs[3]], [2,5,1,0,@addrs[0]]]
+      localkeys <+ [[1, '']]
+    elsif mod == 3
+      finger <+ [[0,4,5,0,@addrs[0]], [1,5,7,0,@addrs[0]], [2,7,3,0,@addrs[0]]]
+      localkeys <+ [[2, '']]
     end
   end
   
@@ -71,12 +72,15 @@ class TestFind < Test::Unit::TestCase
     my_nodes.each{|n| n.run_bg}
     my_nodes.each{|n| n.sync_do {n.load_data}}
     my_nodes.each{|n| n.sync_do {n.do_lookups}}
-    sleep 2
+
+    q = Queue.new
+    my_nodes.each do |n|
+      n.register_callback(:succ_cache) { q.push(true) }
+    end
+    
+    9.times {q.pop} # should be 3 succ_cache entries in each of 3 nodes
     my_nodes.each{|n| n.stop_bg}
     
-    # [0,1,2].each do |num|
-    #   puts "node #{my_nodes[num].port} : #{my_nodes[num].succ_cache.map.inspect}"
-    # end
     assert_equal(3, my_nodes[0].succ_cache.length)
     assert_equal(my_nodes[0].succ_cache.to_a.sort, my_nodes[1].succ_cache.to_a.sort)
     assert_equal(my_nodes[1].succ_cache.to_a.sort, my_nodes[2].succ_cache.to_a.sort)
