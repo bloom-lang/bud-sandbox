@@ -1,0 +1,3 @@
+The paxos implementation is a work in progress.  Leader election is 
+(mostly) done, prepare phase is getting there, propose phase is
+nonexistent. -- palvaro
