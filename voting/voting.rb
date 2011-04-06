@@ -40,8 +40,7 @@ module VotingMaster
   bloom :initiation do
     # when stimulated by begin_vote, send ballots
     # to members, set status to 'in flight'
-    temp :j <= (begin_vote * member)
-    ballot <~ j.pairs do |b,m|
+    ballot <~ (begin_vote * member).pairs do |b,m|
       [m.host, ip_port, b.ident, b.content]
     end
     vote_status <+ begin_vote do |b|
