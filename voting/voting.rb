@@ -21,7 +21,6 @@ module VoteInterface
   state do
     channel :ballot, [:@peer, :master, :ident] => [:content]
     channel :vote, [:@master, :peer, :ident] => [:response]
-    channel :tickler, [:@master] unless defined? tickler
   end
 end
 
