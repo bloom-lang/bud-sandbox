@@ -8,12 +8,17 @@ require 'cart/cart_protocol'
 module DestructiveCart
   include CartProtocol
   include KVSProtocol
+  
+  def delete_one(a, i)
+    a.delete_at(a.index(i))
+    return a
+  end
 
   bloom :queueing do
-    kvget <= action_msg {|a| puts "test" or [a.reqid, a.session] }
+    kvget <= action_msg {|a| [a.reqid, a.session] }
     kvput <= action_msg do |a| 
       if a.action == "Add" and not kvget_response.map{|b| b.key}.include? a.session
-        puts "PUT EMPTY" or [a.client, a.session, a.reqid, Array.new.push(a.item)]
+        [a.client, a.session, a.reqid, Array.new.push(a.item)]
       end
     end
 
@@ -31,7 +36,7 @@ module DestructiveCart
     kvget <= checkout_msg{|c| [c.reqid, c.session] }
     temp :lookup <= (kvget_response * checkout_msg).pairs(:key => :session)
     response_msg <~ lookup do |r, c|
-      puts "RESP" or [r.client, r.server, r.key, r.value, nil]
+      [c.client, c.server, r.key, r.value, nil]
     end
   end
 end

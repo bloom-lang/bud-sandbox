@@ -43,6 +43,7 @@ class DummyDC
   include CartClient
   include CartProtocol
   include DestructiveCart
+  include StaticMembership
   include BasicKVS
   include Remember
 
@@ -72,7 +73,7 @@ class TestCart < Test::Unit::TestCase
     cart_test(prog)
   end
 
-  def ntest_destructive_cart
+  def test_destructive_cart
     prog = DummyDC.new(:port => 32575)
     cart_test(prog)
   end
