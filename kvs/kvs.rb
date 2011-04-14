@@ -36,6 +36,35 @@ module BasicKVS
   end
 end
 
+module PersistentKVS
+  include KVSProtocol
+  #import BasicKVS => :kvs
+  include BasicKVS
+
+  state do
+    tctable :kvstate_backing, kvstate.schema
+  end
+
+  bootstrap do
+    puts "BOOTZ:"
+    kvstate <= kvstate_backing {|b| puts "BACK: #{b.inspect}"; b}
+  end
+
+  bloom do
+    #stdio <~ kvstate_backing.inspected
+    kvstate <+ kvstate_backing do |b| 
+      if kvstate.empty?
+        puts "EMPTY"
+        b
+    #  else
+    #    puts "not empty"
+      end
+    end
+    # declaratively ok. 
+    kvstate_backing <= kvstate
+  end
+end
+
 
 module ReplicatedKVS
   include KVSProtocol

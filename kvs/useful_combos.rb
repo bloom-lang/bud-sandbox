@@ -12,6 +12,11 @@ class SingleSiteKVS
   include BasicKVS
 end
 
+class SSPKVS
+  include Bud
+  include PersistentKVS
+end
+
 # was RKV
 class BestEffortReplicatedKVS
   include Bud
