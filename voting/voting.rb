@@ -5,22 +5,21 @@ require 'membership/membership'
 module VoteMasterProto
   state do
     interface input, :begin_vote, [:ident, :content]
-    interface output, :victor, [:ident, :content, :response]
+    interface output, :victor, [:ident, :content, :response, :resp_content]
   end
 end
 
 module VoteAgentProto
   state do
-    interface input, :cast_vote, [:ident, :response]
+    interface input, :cast_vote, [:ident] => [:response, :content]
   end
 end
 
 module VoteInterface
   # channels used by both ends of the voting protocol
-  # paa: TODO: figure out the right way to mix in state
   state do
     channel :ballot, [:@peer, :master, :ident] => [:content]
-    channel :vote, [:@master, :peer, :ident] => [:response]
+    channel :vote, [:@master, :peer, :ident] => [:response, :content]
   end
 end
 
@@ -30,10 +29,11 @@ module VotingMaster
   include StaticMembership
 
   state do
-    table :vote_status, [:ident, :content, :response]
-    table :votes_rcvd, [:ident, :response, :peer]
+    table :vote_status, [:ident, :content, :response, :resp_content]
+    #table :votes_rcvd, [:ident, :response, :peer, :content]
+    table :votes_rcvd, vote.schema
     scratch :member_cnt, [:cnt]
-    scratch :vote_cnt, [:ident, :response, :cnt]
+    scratch :vote_cnt, [:ident, :response, :cnt, :content]
   end
 
   bloom :initiation do
@@ -51,11 +51,10 @@ module VotingMaster
   bloom :counting do
     # accumulate votes into votes_rcvd table,
     # calculate current counts
-    #stdio <~ vote { |v| ["GOT VOTE: " + v.inspect] }
-    votes_rcvd <= vote { |v| [v.ident, v.response, v.peer] }
+    votes_rcvd <= vote
     vote_cnt <= votes_rcvd.group(
       [votes_rcvd.ident, votes_rcvd.response],
-      count(votes_rcvd.peer))
+      count(votes_rcvd.peer), accum(votes_rcvd.content))
   end
 
   bloom :summary do
@@ -63,11 +62,12 @@ module VotingMaster
     # complete and unanimous vote.
     # a subclass will likely override this
     temp :sj <= (vote_status * member_cnt * vote_cnt).combos(vote_status.ident => vote_cnt.ident)
-    victor <= sj do |s,m,v|
+    victor <= sj do |s, m, v|
       if s.response == 'in flight' and m.cnt == v.cnt
-        [v.ident, s.content, v.response]
+        [v.ident, s.content, v.response, v.content]
       end
     end
+
     vote_status <+ victor
     vote_status <- victor do |v|
       [v.ident, v.content, 'in flight']
@@ -95,7 +95,7 @@ module VotingAgent
     #stdio <~ ballot {|b| [ip_port + " PUT ballot " + b.inspect] }
     # whenever we cast a vote on a waiting ballot, send the vote
     vote <~ (cast_vote * waiting_ballots).pairs(:ident => :ident) do |v, c|
-      [c.master, ip_port, v.ident, v.response]
+      [c.master, ip_port, v.ident, v.response, v.content]
     end
   end
 end
@@ -107,11 +107,11 @@ module MajorityVotingMaster
   bloom :summary do
     victor <= (vote_status * member_cnt * vote_cnt).combos(vote_status.ident => vote_cnt.ident) do |s, m, v|
       if s.response == "in flight" and v.cnt > m.cnt / 2
-        [v.ident, s.content, v.response]
+        [v.ident, s.content, v.response, v.content]
       end
     end
     vote_status <+ victor
-    vote_status <- victor {|v| [v.ident, v.content, 'in flight'] }
+    vote_status <- victor {|v| [v.ident, v.content, 'in flight', nil] }
     #localtick <~ victor
   end
 end

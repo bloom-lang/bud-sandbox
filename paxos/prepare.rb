@@ -1,16 +1,25 @@
 require 'rubygems'
 require 'bud'
+require 'backports'
 
 require 'voting/voting'
 
+module PaxosDatalist
+  state do
+    scratch :datalist_schm, [:view, :aru_requested, :seq, :update, :dltype]
+  end
+end
+
 module PaxosPrepare 
   include MajorityVotingMaster
+  include PaxosDatalist
 
   state do
     table :local_aru, [] => [:host, :aru]
     scratch :leader_change, [:host] => [:leader, :view]
   
     scratch :prepare, [:view, :aru]
+    scratch :catchup_info, datalist_schm.schema
     table :quorum, [:view, :aru]
   end
 
@@ -33,11 +42,16 @@ module PaxosPrepare
   end
 
   bloom :establish_quorum do
-    quorum <= vote_status do |v|
-      puts "VOTE_STATUS: #{v.inspect}"
-      if v.response.class == Array 
-        [ v.response.fetch(0), v.response.fetch(1) ] if v.response.fetch(4) == 'bottom'
+    stdio <~ catchup_info {|c| ["CEE: #{c.inspect}"]}
+    catchup_info <= victor.flat_map do |v|
+      v.resp_content.flat_map do |c|
+        c
       end
+    end
+
+    # apply state!
+    quorum <= catchup_info do |c|
+      [c.view, c.aru_requested] if c.dltype == 'bottom'
     end
 
     stdio <~ quorum {|q| ["QUORUM: #{q.inspect}"] }
@@ -47,9 +61,12 @@ end
 
 module PaxosPrepareAgent 
   include VotingAgent
+  include PaxosDatalist
 
   state do
-    table :datalist, [:view, :aru_requested, :seq, :update, :dltype]
+    #table :datalist, [:view, :aru_requested, :seq, :update, :dltype]
+    table :datalist, datalist_schm.schema
+    scratch :datalist_nest, [:view, :nest]
     scratch :datalist_agg, [:view, :contents]
     table :datalist_length, [:aru, :len]
     table :global_history, [:host, :seqno] => [:requestor, :update]
@@ -65,7 +82,7 @@ module PaxosPrepareAgent
     stdio <~ ballot {|b| ["got ballot: #{b.inspect}"] }
     datalist <= (ballot * last_installed).pairs do |d, l|
       if d.ident > l.view
-        print "AROO\n" or [d.ident, d.content, -1, "none", "bottom"]
+        [d.ident, d.content, -1, "none", "bottom"]
       else 
         print "ACHOO " + d.inspect + ":: " + l.inspect + " vs. " +d.ident.to_s + "\n"
       end
@@ -87,20 +104,15 @@ module PaxosPrepareAgent
       end
     end
 
-    datalist_agg <= datalist.group([datalist.view], accum([datalist.aru_requested, datalist.seq, datalist.update, datalist.dltype]))
-    #datalist_length <= datalist.group([datalist.aru_requested], count())
-
+    datalist_nest <= datalist {|d| [d.view, d]}
+    datalist_agg <= datalist_nest.group([datalist_nest.view], accum(datalist_nest.nest))
     stdio <~ datalist_agg {|d| ["DLA: #{d.inspect}"] } 
   end
 
   bloom :decide do
     temp :dj <= (datalist * datalist_length)
-    #cast_vote <+ dj do |d, l|
-    #  print "SEND " +d.view.to_s + ": " + d.inspect + "\n" or [d.view, [d.view, d.aru_requested, d.seq, d.update, d.dltype, l.len]]
-    #end
-    cast_vote <= datalist_agg {|d| [d.view, d.contents] } 
-  
-    #datalist <- dj {|d, l| d}
+    cast_vote <= datalist_agg {|d| [d.view, "Y", d.contents] } 
+    datalist <- dj {|d, l| d}
   end 
 end
 
