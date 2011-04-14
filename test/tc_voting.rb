@@ -53,7 +53,7 @@ class TestVoting < Test::Unit::TestCase
     t2.sync_do{}
     t2.sync_do{ assert([[1,'me for king', 'localhost:12346'], [1,'me for king', '127.0.0.1:12346']].include? t2.waiting_ballots.first) }
     t3.sync_do{ assert([[1,'me for king', 'localhost:12346'], [1,'me for king', '127.0.0.1:12346']].include? t3.waiting_ballots.first) }
-    t.sync_do{ assert_equal([1, 'yes', 2, [nil. nil]], t.vote_cnt.first) }
+    t.sync_do{ assert_equal([1, 'yes', 2, [nil, nil]], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'yes', [nil, nil]], t.vote_status.first) }
 
     t.stop_bg
