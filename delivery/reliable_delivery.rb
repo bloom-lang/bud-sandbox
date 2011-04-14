@@ -2,6 +2,9 @@ require 'rubygems'
 require 'bud'
 require 'delivery/delivery'
 
+# Note that this provides at-least-once semantics. If you need exactly-once, the
+# receiver-side can record the message IDs that have been received to avoid
+# processing duplicate messages.
 module ReliableDelivery
   include DeliveryProtocol
   import BestEffortDelivery => :bed
