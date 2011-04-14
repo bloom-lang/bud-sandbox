@@ -37,12 +37,12 @@ class TestHB < Test::Unit::TestCase
       hosts = []
       port_list.each do |p|
         if h.port != p
-          hosts << "localhost:#{p}"
+          hosts << "#{h.ip}:#{p}"
         end
       end
 
       hosts.each do |c|
-        assert(s.include? c)
+        assert(s.include?(c), "missing host #{c.inspect}")
       end
     end
 
