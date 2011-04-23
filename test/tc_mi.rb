@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'test/unit'
-require 'mi_cache'
+require 'cache_comi_cache'
 
 
 class DumbDir
