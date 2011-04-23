@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'cache_consistency/mi/mi_protocol'
+require 'cache_coherence/mi/mi_protocol'
 
 module MICPUInterface
   state do

@@ -1,4 +1,4 @@
-require 'cache_consistency/mi/mi_protocol'
+require 'cache_coherence/mi/mi_protocol'
 
 module MIDirectory
   include MIProtocol
