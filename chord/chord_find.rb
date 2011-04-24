@@ -3,20 +3,29 @@ require 'bud'
 require 'chord/chord_node'
 
 module ChordFind
-  include ChordNode
-
   state do
     interface input, :succ_req, [:key]
     interface output, :succ_resp, [:key] => [:start, :addr]    
+    
+    scratch :find_event, [:key, :from]
+    scratch :candidate, [:key, :index, :start, :hi, :succ, :succ_addr]
+    scratch :closest, [:key] => [:index, :start, :hi, :succ, :succ_addr]
     
     channel :find_req, [:@dest, :key, :from]
     channel :find_resp, [:@dest, :key] => [:start, :addr]      
   end
   
-  def at_successor(event, me, fing)
-    fing.index == 0 and in_range(event.key, me.start, fing.succ, true)
+  bloom :node_views do
+    # for each find_event for an id, find index of the closest finger
+    # start by finding all fingers with IDs between this node and the search key
+    candidate <= (find_event * finger * me).combos do |e,f,m|
+                   [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] if in_range(f.succ, m.start, e.key)
+                 end
+    # now for each key pick the highest-index candidate; it's the closest
+    closest <= candidate.argmax([candidate.key], candidate.index)
+    # stdio <~ closest {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"]}
   end
-
+  
   bloom :find_recursive do
     # convert local successor requests into local find_events
     find_event <= succ_req {|s| [s.key, ip_port]}

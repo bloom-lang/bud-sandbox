@@ -4,6 +4,7 @@ require 'chord/chord_find'
 
 module ChordJoin
   include ChordFind
+  # import ChordFind => :pred_finder
 
   state do
     channel :join_req, [:@to, :requestor_addr] => [:start]
@@ -12,14 +13,10 @@ module ChordJoin
     # interface output, :succ_resp, [:key] => [:start, :addr]
     channel :finger_table_req, [:@to,:requestor_addr]
     channel :finger_table_resp, [:@requestor_addr] + finger.key_cols => finger.val_cols
-    channel :pred_req, [:referrer_key, :referrer_index]
-    channel :pred_resp, [:referrer_key, :referrer_index, :referrer_addr]
-    channel :finger_upd, [:referrer_addr, :referrer_index, :my_start, :my_addr]
+    channel :pred_req, [:@referrer_addr, :referrer_key, :referrer_index]
+    channel :pred_resp, [:@requestor_addr, :referrer_key, :referrer_index, :referrer_addr]
+    channel :finger_upd, [:@referrer_addr, :referrer_index, :my_start, :my_addr]
     table :offsets, [:val]
-  end
-
-  def log2(x)
-    Math.log(x)/Math.log(2)
   end
 
   bootstrap do
@@ -37,13 +34,12 @@ module ChordJoin
     succ_req <= join_req.map{|j| [j.start+1]}
     # upon response to successor request, ask the successor to send the contents
     #  of its finger table directly to the new node.
-    stdio <~ (join_pending * succ_resp).pairs.inspected
     finger_table_req <~ (join_pending * succ_resp).pairs do |j, s|
       [s.addr, j.requestor_addr] if j.start+1 == s.key
     end
-    # stdio <~ (join_pending * succ_resp).pairs do |j, s|
-    #   ["found successor " + [s.addr, j.requestor_addr].inspect] if j.start+1 == s.key
-    # end
+    stdio <~ (join_pending * succ_resp).pairs do |j, s|
+      ["found successor " + [s.addr, j.requestor_addr].inspect] if j.start+1 == s.key
+    end
   end
 
   bloom :join_rules_successor do
@@ -56,7 +52,9 @@ module ChordJoin
 
   bloom :join_rules_new_node do
     # at new member, install finger entries
-    # stdio <~ finger_table_resp.inspected
+    stdio <~ finger_table_resp do |f|
+      ["got finger_table_resp " + f.inspect]
+    end
     finger <= finger_table_resp.map do |f|
       # construct tuple that contains all the finger columns in f
       # [f.index, f.start, f.hi, f.succ, f.succ_addr]
@@ -64,9 +62,13 @@ module ChordJoin
     end
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
-    # XXX THESE pred_req/pred_resp rules are wrong!
-    pred_req <~ (me * offsets).pairs do |m,o|
-      [m.start - 2**o.val, o.val]
+    succ_req <= (me * offsets * finger_table_resp).pairs do |m,o,f|
+      # puts "succ_req for [(m.start - 2**o.val) % @maxkey]"
+      [(m.start - 2**o.val) % @maxkey]
+    end
+    pred_req <~ (me * offsets * succ_resp).combos do |m,o,s|
+      # puts [s.addr, s.key, o.val].inspect
+      [s.addr, s.key, o.val]
     end
     # upon pred_resp, send a finger_upd message to the node that was found to point here
     finger_upd <~ (me * pred_resp).pairs do |m, resp|
