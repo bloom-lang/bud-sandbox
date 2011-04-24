@@ -8,7 +8,7 @@ require 'chord/chord_join'
 class LilChord
   include Bud
   include ChordNode
-  include ChordFind
+  import ChordFind => :finder
   include ChordJoin
 
   def initialize(opts)
@@ -18,7 +18,7 @@ class LilChord
   end
 
   state do
-    table :succ_cache, succ_resp.schema
+    table :succ_cache, finder.succ_resp.schema
   end
 
   # figure 3(b) from stoica's paper
@@ -53,12 +53,12 @@ class LilChord
   def do_lookups
     # issue local lookups for 1,2,6
     [1,2,6].each do |num|
-      succ_req <+ [[num]]
+      finder.succ_req <+ [[num]]
     end
   end
 
   bloom :persist_resps do
-    succ_cache <= succ_resp
+    succ_cache <= finder.succ_resp
     # stdio <~ succ_resp {|s| [s.inspect]}
   end
 end
@@ -67,7 +67,7 @@ class TestFind < Test::Unit::TestCase
   def test_find
     ports = [12340, 12341, 12343]
     my_nodes = ports.map do |p|
-      LilChord.new(:port => p)
+      LilChord.new(:port => p, :dump_rewrite=>true)
     end
     my_nodes.each{|n| n.run_bg}
     my_nodes.each{|n| n.sync_do {n.load_data}}
