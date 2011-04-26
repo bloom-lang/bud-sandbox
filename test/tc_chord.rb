@@ -8,7 +8,7 @@ require 'chord/chord_join'
 class LilChord
   include Bud
   include ChordNode
-  include ChordFind
+  import ChordFind => :finder
   include ChordJoin
 
   def initialize(opts)
@@ -18,7 +18,7 @@ class LilChord
   end
 
   state do
-    table :succ_cache, succ_resp.schema
+    table :succ_cache, finder.succ_resp.schema
   end
 
   # figure 3(b) from stoica's paper
@@ -53,12 +53,12 @@ class LilChord
   def do_lookups
     # issue local lookups for 1,2,6
     [1,2,6].each do |num|
-      succ_req <+ [[num]]
+      finder.succ_req <+ [[num]]
     end
   end
 
   bloom :persist_resps do
-    succ_cache <= succ_resp
+    succ_cache <= finder.succ_resp
     # stdio <~ succ_resp {|s| [s.inspect]}
   end
 end
@@ -67,7 +67,7 @@ class TestFind < Test::Unit::TestCase
   def test_find
     ports = [12340, 12341, 12343]
     my_nodes = ports.map do |p|
-      LilChord.new(:port => p)
+      LilChord.new(:port => p, :dump_rewrite=>true)
     end
     my_nodes.each{|n| n.run_bg}
     my_nodes.each{|n| n.sync_do {n.load_data}}
@@ -88,12 +88,12 @@ class TestFind < Test::Unit::TestCase
   # def test_join
   #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
   #   @my_nodes = @addrs.values.map do |a|
-  #     LilChord.new(:port => a)
+  #     LilChord.new(:port => a)#, :trace => true, :tag => "node#{a}")
   #   end
   #   @my_nodes.each{|n| n.run_bg}
   #   @my_nodes.each{|n| n.async_do {n.load_data}}
   #   @addrs[6] = 12346
-  #   newnode = LilChord.new(:port => 12346)
+  #   newnode = LilChord.new(:port => 12346)#, :trace => true, :tag => "node12346")
   #   @my_nodes << newnode
   #   newnode.run_bg
   #   newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}
@@ -101,8 +101,7 @@ class TestFind < Test::Unit::TestCase
   #   @my_nodes.each{|n| n.sync_do {n.do_lookups}}
   #   sleep 2
   #   @my_nodes.each{|n| n.stop_bg}
-  #   # assert_equal(4, @my_nodes[0].succ_cache.length)
-  #   assert_equal(@my_nodes[0].finger, nil)
+  #   assert_equal(4, @my_nodes[0].succ_cache.length)
   #   assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
   #   assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
   #   assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[3].succ_cache.map{|s| s})

@@ -36,7 +36,7 @@ class TestKVS < Test::Unit::TestCase
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => true))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true))
     v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346))
     add_members(v, v.ip_port, v2.ip_port)
     add_members(v2, v.ip_port, v2.ip_port)
@@ -62,9 +62,9 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do { assert_equal("bak", v.kvstate.first[1]) }
 
     v.sync_do { v.kvget <+ [[1234, 'foo']] }
-    s.sync_do {
+    v.sync_do {
       assert_equal(1, v.kvget_response.length)
-      assert_equal("bak", v.kvget_response.first[1])
+      assert_equal("bak", v.kvget_response.first[2])
     }
 
     v.stop_bg
