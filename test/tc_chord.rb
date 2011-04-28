@@ -5,18 +5,16 @@ require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
 
-class LilChord
-  include Bud
-  include ChordNode
+module LilChord
   import ChordFind => :finder
-  include ChordJoin
 
-  def initialize(opts)
-    @addrs = {0 =>'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
-    @maxkey = 8
-    super
+  def do_lookups
+    # issue local lookups for 1,2,6
+    [1,2,6].each do |num|
+      finder.succ_req <+ [[num]]
+    end
   end
-
+  
   state do
     table :succ_cache, finder.succ_resp.schema
   end
@@ -28,6 +26,24 @@ class LilChord
   #   table :me, [], ['start']
   #   scratch :smaller, ['key', 'index', 'start', 'hi', 'succ', 'succ_addr']
   #   table :localkeys, ['key'], ['val']
+
+  bloom :persist_resps do
+    succ_cache <= finder.succ_resp
+    # stdio <~ (finder.succ_resp * me).pairs {|s,m| ["#{m.start}: #{s.inspect}"]}
+  end
+end
+
+class LilChordClass
+  include Bud
+  include ChordNode
+  include LilChord
+  include ChordJoin
+  
+  def initialize(opts)
+    @addrs = {0 =>'localhost:12340', 1 => 'localhost:12341', 3 => 'localhost:12343'}
+    @maxkey = 8
+    super
+  end
 
   def load_data
     mod = @options[:port].to_i%10
@@ -49,61 +65,56 @@ class LilChord
     stdio <~ [['sending to localhost:12340']]
     join_req <~ [['localhost:12340', 'localhost:12346', 6]]
   end
-   
-  def do_lookups
-    # issue local lookups for 1,2,6
-    [1,2,6].each do |num|
-      finder.succ_req <+ [[num]]
-    end
-  end
-
-  bloom :persist_resps do
-    succ_cache <= finder.succ_resp
-    # stdio <~ succ_resp {|s| [s.inspect]}
-  end
 end
 
 class TestFind < Test::Unit::TestCase
   def test_find
     ports = [12340, 12341, 12343]
     my_nodes = ports.map do |p|
-      LilChord.new(:port => p, :dump_rewrite=>true)
+      LilChordClass.new(:port => p, :dump_rewrite=>true)
     end
+
+    q = Queue.new
+    p = Queue.new
+    my_nodes.each do |n|
+      n.register_callback(:succ_cache) { |sc| q.push([sc.bud_instance.port, sc.length]) }
+    end
+
     my_nodes.each{|n| n.run_bg}
     my_nodes.each{|n| n.sync_do {n.load_data}}
     my_nodes.each{|n| n.sync_do {n.do_lookups}}
 
-    q = Queue.new
-    my_nodes.each do |n|
-      n.register_callback(:succ_cache) { q.push(true) }
-    end
-    
-    9.times {q.pop} # should be 3 succ_cache entries in each of 3 nodes
+    # wait for succ_cache of length 3 on each of 3 nodes
+    ha = {}
+    begin  
+      it = q.pop
+      ha[it[0]] = true if it[1] == 3
+    end while ha.size < 3
     my_nodes.each{|n| n.stop_bg}
     
     assert_equal(3, my_nodes[0].succ_cache.length)
     assert_equal(my_nodes[0].succ_cache.to_a.sort, my_nodes[1].succ_cache.to_a.sort)
     assert_equal(my_nodes[1].succ_cache.to_a.sort, my_nodes[2].succ_cache.to_a.sort)
   end
-  # def test_join
-  #   @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
-  #   @my_nodes = @addrs.values.map do |a|
-  #     LilChord.new(:port => a)#, :trace => true, :tag => "node#{a}")
-  #   end
-  #   @my_nodes.each{|n| n.run_bg}
-  #   @my_nodes.each{|n| n.async_do {n.load_data}}
-  #   @addrs[6] = 12346
-  #   newnode = LilChord.new(:port => 12346)#, :trace => true, :tag => "node12346")
-  #   @my_nodes << newnode
-  #   newnode.run_bg
-  #   newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}
-  #   sleep 2
-  #   @my_nodes.each{|n| n.sync_do {n.do_lookups}}
-  #   sleep 2
-  #   @my_nodes.each{|n| n.stop_bg}
-  #   assert_equal(4, @my_nodes[0].succ_cache.length)
-  #   assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
-  #   assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
-  #   assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[3].succ_cache.map{|s| s})
-  # end
+  def test_join
+    @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
+    @my_nodes = @addrs.values.map do |a|
+      LilChordClass.new(:port => a)#, :trace => true, :tag => "node#{a}")
+    end
+    @my_nodes.each{|n| n.run_bg}
+    @my_nodes.each{|n| n.async_do {n.load_data}}
+    @addrs[6] = 12346
+    newnode = LilChordClass.new(:port => 12346)#, :trace => true, :tag => "node12346")
+    @my_nodes << newnode
+    newnode.run_bg
+    newnode.async_do{newnode.join_req <~ [['localhost:12340', 'localhost:12346', 6]]}
+    sleep 2
+    @my_nodes.each{|n| n.sync_do {n.do_lookups}}
+    sleep 4
+    @my_nodes.each{|n| n.stop_bg}
+    assert_equal(4, @my_nodes[0].succ_cache.length)
+    assert_equal(@my_nodes[0].succ_cache.map{|s| s}, @my_nodes[1].succ_cache.map{|s| s})
+    assert_equal(@my_nodes[1].succ_cache.map{|s| s}, @my_nodes[2].succ_cache.map{|s| s})
+    assert_equal(@my_nodes[2].succ_cache.map{|s| s}, @my_nodes[3].succ_cache.map{|s| s})
+  end
 end

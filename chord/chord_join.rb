@@ -3,8 +3,7 @@ require 'bud'
 require 'chord/chord_find'
 
 module ChordJoin
-  include ChordFind
-  # import ChordFind => :pred_finder
+  import ChordFind => :join_finder
 
   state do
     channel :join_req, [:@to, :requestor_addr] => [:start]
@@ -17,6 +16,8 @@ module ChordJoin
     channel :pred_resp, [:@requestor_addr, :referrer_key, :referrer_index, :referrer_addr]
     channel :finger_upd, [:@referrer_addr, :referrer_index, :my_start, :my_addr]
     table :offsets, [:val]
+    table :ftable_req_cnt, [:cnt]
+    table :ftable_resp_cnt, [:cnt]
   end
 
   bootstrap do
@@ -31,13 +32,19 @@ module ChordJoin
     # cache the request
     join_pending <= join_req
     # asynchronously, find out who owns start+1
-    succ_req <= join_req.map{|j| [j.start+1]}
+    join_finder.succ_req <= join_req.map{|j| [j.start+1]}
     # upon response to successor request, ask the successor to send the contents
     #  of its finger table directly to the new node.
-    finger_table_req <~ (join_pending * succ_resp).pairs do |j, s|
+    finger_table_req <~ (join_pending * join_finder.succ_resp).pairs do |j, s|
       [s.addr, j.requestor_addr] if j.start+1 == s.key
     end
-    stdio <~ (join_pending * succ_resp).pairs do |j, s|
+    
+    temp :f_req_cnt <= (join_pending * join_finder.succ_resp).pairs do |j, s|
+      [s.addr, j.requestor_addr] if j.start+1 == s.key
+    end
+    ftable_req_cnt <= f_req_cnt.group([], count)
+    
+    stdio <~ (join_pending * join_finder.succ_resp).pairs do |j, s|
       ["found successor " + [s.addr, j.requestor_addr].inspect] if j.start+1 == s.key
     end
   end
@@ -62,11 +69,14 @@ module ChordJoin
     end
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
-    succ_req <= (me * offsets * finger_table_resp).pairs do |m,o,f|
-      # puts "succ_req for [(m.start - 2**o.val) % @maxkey]"
-      [(m.start - 2**o.val) % @maxkey]
+    ftable_resp_cnt <= finger_table_resp.group([], count)
+    
+    join_finder.succ_req <= (me * offsets * ftable_req_cnt * ftable_resp_cnt).combos do |m,o,f_req,f_resp|
+      puts "f_req.cnt = #{f_req.cnt}, f_resp.cnt = #{f_resp.cnt}"
+      puts "succ_req for [(m.start - 2**o.val) % @maxkey]" if f_req.cnt == f_resp.cnt
+      [(m.start - 2**o.val) % @maxkey] if f_req.cnt == f_resp.cnt
     end
-    pred_req <~ (me * offsets * succ_resp).combos do |m,o,s|
+    pred_req <~ (me * offsets * join_finder.succ_resp).combos do |m,o,s|
       # puts [s.addr, s.key, o.val].inspect
       [s.addr, s.key, o.val]
     end
