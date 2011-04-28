@@ -20,7 +20,7 @@ module Multicast
 
   bloom :snd_mcast do
     pipe_in <= (send_mcast * member).pairs do |s, m|
-      [m.host, @ip_port, s.ident, s.payload]
+      [m.host, ip_port, s.ident, s.payload] unless m.host == ip_port
     end
   end
 
