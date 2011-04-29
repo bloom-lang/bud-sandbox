@@ -2,22 +2,24 @@ require 'rubygems'
 require 'bud'
 
 module CartWorkloads
-  def run_cart(program)
+  def run_cart(program, client)
     addy = "#{program.ip}:#{program.port}"
-    program.async_do {
-      program.client_action <+ [[addy, 1234, 123, 'meat', 'Add']]
-      program.client_action <+ [[addy, 1234, 124, 'beer', 'Add']]
-      program.client_action <+ [[addy, 1234, 125, 'diapers', 'Add']]
-      program.client_action <+ [[addy, 1234, 126, 'meat', 'Del']]
+    client.async_do {
+      client.client_action <+ [[addy, 1234, 123, 'meat', 'Add']]
+      client.client_action <+ [[addy, 1234, 124, 'beer', 'Add']]
+      client.client_action <+ [[addy, 1234, 125, 'diapers', 'Add']]
+      client.client_action <+ [[addy, 1234, 126, 'meat', 'Del']]
 
 
-      program.client_action <+ [[addy, 1234, 127, 'beer', 'Add']]
-      program.client_action <+ [[addy, 1234, 128, 'beer', 'Add']]
-      program.client_action <+ [[addy, 1234, 129, 'beer', 'Add']]
-      program.client_action <+ [[addy, 1234, 130, 'beer', 'Del']]
+      client.client_action <+ [[addy, 1234, 127, 'beer', 'Add']]
+      client.client_action <+ [[addy, 1234, 128, 'beer', 'Add']]
+      client.client_action <+ [[addy, 1234, 129, 'beer', 'Add']]
+      client.client_action <+ [[addy, 1234, 130, 'beer', 'Del']]
     }
+    client.sync_do{}
+    puts "start blocking"
     # block until we see the checkout message come in
-    program.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg)
+    client.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg)
   end
 
   def run_cart2(program)
