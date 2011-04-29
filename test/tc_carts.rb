@@ -6,13 +6,17 @@ require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
 
 
-module Remember
+class CCli
+  include Bud
+  include CartClient
+ 
   state do
     table :memo, [:client, :server, :session, :array]
   end
 
   bloom :memm do
     memo <= response_msg
+    #stdio <~ client_action.inspected
   end
 end
 
@@ -22,19 +26,20 @@ class BCS
   include BestEffortMulticast
   include ReplicatedDisorderlyCart
   include CartClient
-  include Remember
+  #include Remember
 end
 
 
 class DCR
   include Bud
-  include CartClientProtocol
-  include CartClient
+  #include CartClientProtocol
+  #include CartClient
   include CartProtocol
   include DestructiveCart
   include ReplicatedKVS
   include BestEffortMulticast
-  include Remember
+  include StaticMembership
+  #include Remember
 end
 
 class DummyDC
@@ -45,7 +50,7 @@ class DummyDC
   include DestructiveCart
   include StaticMembership
   include BasicKVS
-  include Remember
+  #include Remember
 
   state do
     table :members, [:peer]
@@ -68,30 +73,40 @@ end
 class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
-  def ntest_replicated_destructive_cart
-    prog = DCR.new(:port => 53525)
+  def test_replicated_destructive_cart
+    cli = CCli.new(:tag => "client", :trace => true)
+    cli.run_bg
+    prog = DCR.new(:port => 53525, :tag => "master", :trace => true)
+    rep = DCR.new(:port => 53526, :tag => "backup", :trace => true)
+    rep.run_bg
+    cart_test(prog, cli, rep)
+  end
+
+  def ntest_destructive_cart
+    prog = DummyDC.new(:port => 32575, :tag => "dest", :trace => true)
     cart_test(prog)
   end
 
-  def test_destructive_cart
-    prog = DummyDC.new(:port => 32575)
-    cart_test(prog)
-  end
-
-  def test_disorderly_cart
-    program = BCS.new(:port => 23765)
+  def ntest_disorderly_cart
+    program = BCS.new(:port => 23765, :tag => "dis", :trace => true)
     cart_test(program)
   end
 
-  def cart_test(program)
+  def cart_test(program, client=nil, *others)
     addy = "#{program.ip}:#{program.port}"
     add_members(program, addy)
+    others.each do |o|
+      addy = "#{program.ip}:#{o.port}"
+      puts "add #{addy} to members"
+      add_members(program, addy)
+    end
     program.run_bg
-    run_cart(program)
+    run_cart(program, client)
     
     program.sync_do {
-      assert_equal(1, program.memo.length)
-      assert_equal(4, program.memo.first.array.length)
+      assert_equal(1, client.memo.length)
+      puts "I got #{client.memo.first.array.inspect}"
+      assert_equal(4, client.memo.first.array.length)
     }
     program.stop_bg
   end
