@@ -27,12 +27,12 @@ class TestVoting < Test::Unit::TestCase
 
   def start_kind(kind, port)
     t = nil
-    eval "t = #{kind}.new(@opts.merge(:port => #{port}, :tag => #{port}))"
+    eval "t = #{kind}.new(@opts.merge(:port => #{port}, :tag => #{port}, :trace => false))"
     return t
   end
 
   def start_three(one, two, three, kind)
-    t = VM.new(@opts.merge(:port => one))
+    t = VM.new(@opts.merge(:port => one, :tag => "master", :trace => false))
     t2 = start_kind(kind, two)
     t3 = start_kind(kind, three)
 

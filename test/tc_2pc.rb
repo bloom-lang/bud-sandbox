@@ -14,9 +14,9 @@ end
 
 class Test2PC < Test::Unit::TestCase
   def test_singlenode
-    t = TPCM.new(:port => 32345)
-    t2 = TPCA.new(:port => 32346)
-    t3 = TPCA.new(:port => 32347)
+    t = TPCM.new(:port => 32345, :tag => "master", :trace => false)
+    t2 = TPCA.new(:port => 32346, :tag => "a1", :trace => false)
+    t3 = TPCA.new(:port => 32347, :tag => "a2", :trace => false)
     t.add_member <+ [['localhost:32346']]
     t.add_member <+ [['localhost:32347']]
     t.run_bg

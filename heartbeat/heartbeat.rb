@@ -59,7 +59,7 @@ module HeartbeatAgent
   bloom :reckon do
     #stdio <~ heartbeat {|h| ["HB RCV @ #{h.src} from #{h.sender}"]}
     heartbeat_buffer <= heartbeat {|h| [h.src, h.sender, h.payload] }
-    heartbeat_log <= (hb_timer * heartbeat_buffer).pairs {|t, h| [h.peer, h.sender, Time.parse(t.val).to_f, h.payload] }
+    heartbeat_log <= (hb_timer * heartbeat_buffer).pairs {|t, h| [h.peer, h.sender, t.val.to_f, h.payload] }
     heartbeat_buffer <- (hb_timer * heartbeat_buffer).rights
   end
 
@@ -68,7 +68,7 @@ module HeartbeatAgent
     last_heartbeat_stg <= heartbeat_log.argagg(:max, [heartbeat_log.peer], heartbeat_log.time)
     last_heartbeat <= last_heartbeat_stg.group([last_heartbeat_stg.peer, last_heartbeat_stg.sender, last_heartbeat_stg.time], choose(last_heartbeat_stg.payload))
     to_del <= (heartbeat_log * hb_timer).pairs do |log, t|
-      if ((Time.parse(t.val).to_f) - log.time) > HB_EXPIRE
+      if (t.val.to_f - log.time) > HB_EXPIRE
         log
       end
     end
