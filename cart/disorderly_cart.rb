@@ -16,7 +16,8 @@ module DisorderlyCart
   bloom :saved do
     # store actions against the "cart;" that is, the session.
     cart_action <= action_msg { |c| [c.session, c.reqid, c.item, c.action] }
-    action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid))
+    temp :checkout_actions <= (checkout_msg * cart_action).rights
+    action_cnt <= checkout_actions.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid))
   end
 
   bloom :consider do
