@@ -27,7 +27,7 @@ module BFSDatanode
       dir = Dir.new("#{DATADIR}/#{@data_port}")
       files = dir.to_a.map{|d| d.to_i unless d =~ /^\./}.uniq!
       dir.close
-      files.map {|f| [f, Time.parse(t.val).to_f]}
+      files.map {|f| [f, t.val.to_f]}
     end
 
     to_payload <= (dir_contents * nonce).pairs do |c, n|

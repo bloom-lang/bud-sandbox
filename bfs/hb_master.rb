@@ -22,13 +22,13 @@ module HBMaster
     chunk_cache <+ (master_duty_cycle * last_heartbeat).flat_map do |d, l| 
       l.payload[1].map do |pay|
         unless chunk_cache{|c| c.chunkid if c.node == l.peer}.include? pay
-          [l.peer, pay, Time.parse(d.val).to_f] unless pay.nil?
+          [l.peer, pay, d.val.to_f] unless pay.nil?
         end
       end 
     end
 
     chunk_cache_alive <+ (master_duty_cycle * chunk_cache * last_heartbeat).combos(chunk_cache.node => last_heartbeat.peer) do |l, c, h|
-      c if (Time.parse(l.val).to_f - h.time) < 3
+      c if (l.val.to_f - h.time) < 3
     end
     
     chunk_cache_alive <- (master_duty_cycle * chunk_cache_alive).rights
