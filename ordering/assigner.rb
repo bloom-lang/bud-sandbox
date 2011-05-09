@@ -32,7 +32,6 @@ module AggAssign
 
   state do
     scratch :holder, [:array]
-    scratch :holder2, [:array]
   end
 
   bloom :grouping do
