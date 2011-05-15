@@ -65,6 +65,7 @@ module TwoPCMaster
 
     #stdio <~ decide { |x, s| ["COMMITTING"] if s.response == "Y" }
     xact <+ decide { |x, s| [x.xid, x.data, "commit"] if s.response == "Y" }
+    xact <- decide { |x, s| [x.xid, x.data, "prepare"] if s.response == "Y" }
   end
 
 end
