@@ -67,47 +67,47 @@ class LilChordClass
 end
 
 class TestFind < Test::Unit::TestCase
-  def test_find
-    ports = [12340, 12341, 12343]
-    my_nodes = ports.map do |p|
-      LilChordClass.new(:port => p)#, :dump_rewrite=>true)
-    end
-  
-    p = Queue.new
-    q = Queue.new
-    fq = Queue.new
-    my_nodes.each do |n|
-      n.register_callback(:finder__pred_resp) { |pc| p.push([pc.bud_instance.port, pc.first.key, pc.first.start]) }
-      n.register_callback(:finder__succ_resp) { |sc| q.push([sc.bud_instance.port, sc.first.key, sc.first.start]) }
-    end
-  
-    my_nodes.each{|n| n.run_bg}
-    my_nodes.each{|n| n.sync_do {n.load_data}}
-    my_nodes.each{|n| n.sync_do {n.do_lookups}}
-  
-    # wait for pred_resp and succ_resp of length 3 on each of 3 nodes
-    print "checking lookups"
-    [p,q].each do |queue|
-      ha = {}
-      while ha.keys.size < 3 or ha.map{|k,v| v.length}.uniq != [3]
-        print "."
-        it = queue.pop
-        ha[it[0]] ||= []
-        ha[it[0]] << [it[1], it[2]]
-        ha[it[0]].uniq!
-      end 
-    end
-    puts "done"
-    my_nodes.each{|n| n.stop_bg}
-    
-    assert_equal(3, my_nodes[0].pred_cache.length)
-    assert_equal(my_nodes[0].pred_cache.to_a.sort, my_nodes[1].pred_cache.to_a.sort)
-    assert_equal(my_nodes[1].pred_cache.to_a.sort, my_nodes[2].pred_cache.to_a.sort)
-  
-    assert_equal(3, my_nodes[0].succ_cache.length)
-    assert_equal(my_nodes[0].succ_cache.to_a.sort, my_nodes[1].succ_cache.to_a.sort)
-    assert_equal(my_nodes[1].succ_cache.to_a.sort, my_nodes[2].succ_cache.to_a.sort)
-    end
+  # def test_find
+  #   ports = [12340, 12341, 12343]
+  #   my_nodes = ports.map do |p|
+  #     LilChordClass.new(:port => p)#, :dump_rewrite=>true)
+  #   end
+  # 
+  #   p = Queue.new
+  #   q = Queue.new
+  #   fq = Queue.new
+  #   my_nodes.each do |n|
+  #     n.register_callback(:finder__pred_resp) { |pc| p.push([pc.bud_instance.port, pc.first.key, pc.first.start]) }
+  #     n.register_callback(:finder__succ_resp) { |sc| q.push([sc.bud_instance.port, sc.first.key, sc.first.start]) }
+  #   end
+  # 
+  #   my_nodes.each{|n| n.run_bg}
+  #   my_nodes.each{|n| n.sync_do {n.load_data}}
+  #   my_nodes.each{|n| n.sync_do {n.do_lookups}}
+  # 
+  #   # wait for pred_resp and succ_resp of length 3 on each of 3 nodes
+  #   print "checking lookups"
+  #   [p,q].each do |queue|
+  #     ha = {}
+  #     while ha.keys.size < 3 or ha.map{|k,v| v.length}.uniq != [3]
+  #       print "."
+  #       it = queue.pop
+  #       ha[it[0]] ||= []
+  #       ha[it[0]] << [it[1], it[2]]
+  #       ha[it[0]].uniq!
+  #     end 
+  #   end
+  #   puts "done"
+  #   my_nodes.each{|n| n.stop_bg}
+  #   
+  #   assert_equal(3, my_nodes[0].pred_cache.length)
+  #   assert_equal(my_nodes[0].pred_cache.to_a.sort, my_nodes[1].pred_cache.to_a.sort)
+  #   assert_equal(my_nodes[1].pred_cache.to_a.sort, my_nodes[2].pred_cache.to_a.sort)
+  # 
+  #   assert_equal(3, my_nodes[0].succ_cache.length)
+  #   assert_equal(my_nodes[0].succ_cache.to_a.sort, my_nodes[1].succ_cache.to_a.sort)
+  #   assert_equal(my_nodes[1].succ_cache.to_a.sort, my_nodes[2].succ_cache.to_a.sort)
+  #   end
     
     def test_join
       # allow us to see status messages mid-line
@@ -124,18 +124,17 @@ class TestFind < Test::Unit::TestCase
       @my_nodes << newnode
       newnode.run_bg
       newnode.sync_do{newnode.me <+ [[6, nil, nil]]}
-      newnode.sync_do{newnode.join_up <+ [['127.0.0.1:12340', 6]]}
     
       p = Queue.new
       q = Queue.new
       xq = Queue.new
       ffq = Queue.new
-      fuq = Queue.new
+      nfq = Queue.new
       @my_nodes.each do |n|
         n.register_callback(:succ_upd_pred) { |s| p.push([n.me.first.start, s.first.pred_id]) }
         n.register_callback(:node_pred_resp) { |f| p.push([n.me.first.start, f.first.pred_id]) }
         n.register_callback(:finder__succ_resp) { |sc| q.push([sc.bud_instance.port, sc.to_a]) }
-        n.register_callback(:finger_upd) { |f| fuq.push([f.bud_instance.port, f.to_a]) }
+        n.register_callback(:new_finger) { |f| nfq.push([f.bud_instance.port, f.to_a]) }
        end    
       # @my_nodes[0].register_callback(:xfer_keys_ack) {|x| xq.push(x.first)}
       newnode.register_callback(:fix_finger_finder__succ_resp) {|f| ffq.push(f.to_a)} 
@@ -177,7 +176,7 @@ class TestFind < Test::Unit::TestCase
       puts "done"
     
       print "checking fingers"
-      7.times{fuq.pop; print "."}
+      4.times {t = nfq.pop}
       @my_nodes.each { |n| n.sync_do }
       # check fingers
       assert_equal([[0, 7, 0, 0, "127.0.0.1:12340"], [1, 0, 2, 0, "127.0.0.1:12340"], [2, 2, 6, 3, "127.0.0.1:12343"]],
