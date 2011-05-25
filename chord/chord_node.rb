@@ -9,6 +9,7 @@ module ChordNode
   end
   
   def in_range(key, lo, hi, inclusive_lo = false, inclusive_hi=false)
+    return false if lo.nil? or hi.nil? or key.nil?
     if hi >= lo
       return ((inclusive_lo ? key >= lo : key > lo) and (inclusive_hi ? key <= hi : key < hi))
     else
@@ -21,7 +22,8 @@ module ChordNode
     Math.log(x)/Math.log(2)
   end
   
-  def at_successor(event, me, fing)
-    fing.index == 0 and in_range(event.key, me.start, fing.succ, false, true)
+  def at_successor(key)
+    return false if key.nil? or me.nil? or me.length == 0 or me.first.start.nil? or finger[[0]].nil? or finger[[0]].succ.nil?
+    return in_range(key, me.first.start, finger[[0]].succ, false, true)
   end
 end

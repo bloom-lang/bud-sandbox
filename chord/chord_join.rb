@@ -5,7 +5,6 @@ require 'chord/chord_find'
 module ChordJoin
   import ChordFind => :join_finder
   import ChordFind => :upd_others_finder
-  import ChordFind => :fix_finger_finder
 
   state do
     interface input, :join_up, [:to, :start]
@@ -24,7 +23,6 @@ module ChordJoin
     scratch :new_finger, finger.schema
     scratch :got_fingers, [:val]
     table :done_fingers, got_fingers.schema
-    periodic :fix_fingers, 5
     
     channel :xfer_keys_ack, [:@ackee, :keyval, :acker, :ack_start]
     channel :xfer_keys, [:@receiver, :keyval, :sender]
@@ -125,28 +123,6 @@ module ChordJoin
     #   ["got finger_table_resp #{f.inspect}, finger=#{finger.to_a.inspect}"]
     # end
     
-    # and start fixing our fingers
-    fix_finger_finder.succ_req <= (me * offsets * fix_fingers).combos do |m,o,g|
-      [m.start + 2**(o.val - 1)]
-    end
-    # table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
-    # interface output, :succ_resp, [:key] => [:start, :addr]
-    
-    finger <+ (fix_finger_finder.succ_resp * finger * me).combos do |fix, fing, m|
-      if ((m.start + 2**(fing.index)) % @maxkey) == fix.key
-        newfing = [fing.index, fing.start, fing.hi, fix.start, fix.addr] 
-        unless newfing == fing
-          newfing
-        end
-      end
-    end
-    finger <- (fix_finger_finder.succ_resp * finger * me).combos do |fix, fing, m|
-      newfing = [fing.index, fing.start, fing.hi, fix.start, fix.addr] 
-      if ((m.start + 2**(fing.index)) % @maxkey) == fix.key and newfing != fing
-        fing 
-      end
-    end
-    
     # update my predecessor info; ignore if successor's predecessor is me!
     me <+ (me * node_pred_resp).pairs do |m,n|
       [m.start, n.pred_id, n.pred_addr] if m.pred_id.nil? and not n.pred_id == m.start
@@ -195,6 +171,7 @@ module ChordJoin
     new_finger <= k do |u,f|
       [f.index, f.start, f.hi, u.my_start, u.my_addr] if in_range(u.my_start, f.start, f.succ)
     end
+    # stdio <~ new_finger {|n| ["applying new finger #{n.inspect}"] if ip_port == '127.0.0.1:12340'}
     finger <- k do |u, f|
       f if in_range(u.my_start, f.start, f.succ)
     end
