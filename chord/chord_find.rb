@@ -21,11 +21,20 @@ module ChordFind
     # for each find_event for an id, find index of the closest finger
     # start by finding all fingers with IDs between this node and the search key
     candidate <= (find_event * finger * me).combos do |e,f,m|
-                   [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] if in_range(f.succ, m.start, e.key)
+                   [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] if (not f.succ.nil?) and in_range(f.succ, m.start, e.key)
                  end
     # now for each key pick the highest-index candidate; it's the closest
     closest <= candidate.argmax([candidate.key], candidate.index)
-    # stdio <~ closest {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"]}
+    
+    # if no candidates found, forward to successor
+    closest <= find_event do |e| 
+      f = finger[[0]]
+      if candidate.length == 0 and not f.nil? and not f.succ.nil?
+        # puts "at #{me.first.start}, no candidates for #{e.key}, closest is successor #{f.succ}"
+        [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] 
+      end
+    end
+    # stdio <~ closest {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"] if m.succ_addr.nil?}
   end
   
   bloom :find_recursive do
@@ -37,19 +46,21 @@ module ChordFind
     find_event <= find_req {|f| [f.key, f.from, f.pred_or_succ]}
     
     # if not at successor, forward to closest finger   
-    find_req <~ (find_event * finger * closest * me).combos(find_event.key => closest.key) do |e, f, c, m| 
+    find_req <~ (find_event * closest).combos(:key => :key) do |e, c| 
        # stdio <~ [["#{m.start}: forwarding #{e.key} from #{e.from} to closest finger, #{c.succ_addr}!"]] unless at_successor(e,m,f) or e.from == ip_port
-      [c.succ_addr, e.key, e.from, e.pred_or_succ] unless at_successor(e,m,f)
+      [c.succ_addr, e.key, e.from, e.pred_or_succ] unless at_successor(e.key)
     end
 
     # if at successor, respond accordingly
-    find_resp <~ (find_event * finger * me).combos do |e, f, m|
+    find_resp <~ find_event do |e|
       # stdio <~ [["#{m.start}: #{e.key} req from #{e.from} found at successor #{f.succ_addr}!"]] if at_successor(e,m,f)
-      if at_successor(e,m,f)
+      if at_successor(e.key) and me.first
         if e.pred_or_succ == 'pred'
-          [e.from, e.key, e.pred_or_succ, m.start, ip_port] 
-        elsif e.pred_or_succ == 'succ'
-          [e.from, e.key, e.pred_or_succ, f.succ, f.succ_addr]
+          [e.from, e.key, e.pred_or_succ, me.first.start, ip_port] 
+        elsif e.pred_or_succ == 'succ' and finger[[0]] and not finger[[0]].succ.nil?
+          [e.from, e.key, e.pred_or_succ, finger[[0]].succ, finger[[0]].succ_addr]
+        else
+          nil
         end
       else
         nil

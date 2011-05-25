@@ -5,7 +5,6 @@ require 'chord/chord_find'
 module ChordJoin
   import ChordFind => :join_finder
   import ChordFind => :upd_others_finder
-  import ChordFind => :fix_finger_finder
 
   state do
     interface input, :join_up, [:to, :start]
@@ -21,6 +20,7 @@ module ChordJoin
     channel :finger_upd, [:@referrer_addr, :referrer_index, :my_start, :my_addr]
     channel :succ_upd_pred, [:@to, :pred_id, :addr]
     table :offsets, [:val]
+    scratch :new_finger, finger.schema
     scratch :got_fingers, [:val]
     table :done_fingers, got_fingers.schema
     
@@ -37,8 +37,6 @@ module ChordJoin
     # when it receives a join req from new node, it requests successors on the new
     # node's behalf
 
-    # send out the join request
-    join_req <~ join_up {|j| [j.to, ip_port, j.start]}
     # cache the request
     join_pending <= join_req
     
@@ -62,6 +60,7 @@ module ChordJoin
   end
 
   bloom :join_rules_at_successor do
+    # stdio <~ finger_table_req {|f| ["received finger_table req #{f.inspect}"]}
     # at successor, upon receiving finger_table_req, ship finger table entries directly to new node
     finger_table_resp <~ (finger_table_req * finger).pairs do |ftreq, f|
       # finger tuple prefixed with requestor_addr
@@ -69,7 +68,7 @@ module ChordJoin
     end
     # also manufacture a finger entry pointing to me for new node to consider
     finger_table_resp <~ (finger_table_req * me).pairs do |f, m|
-      [f.requestor_addr, -1, m.start, (m.start+1 % @maxkey), m.start, ip_port]
+      [f.requestor_addr, -1, -1, -1, m.start, ip_port]
     end
     # and ship predecessor info directly to new node
     node_pred_resp <~ (finger_table_req * me).pairs do |f, m|
@@ -100,41 +99,29 @@ module ChordJoin
   end
 
   bloom :join_rules_at_new_node do
-    # # at new member, install successor in finger table
-    # finger <= (me * node_pred_resp).pairs do |m,n|
-    #   [0, (m.start + 1) % @maxkey, (m.start+2) % @maxkey, n.start, n.from]
-    # end
-    # 
-    # install non-successor fingers based on entries from successor
-    finger <+ (finger_table_resp * offsets * me).pairs do |f,o,m|
+    # send out the join request
+    join_req <~ join_up {|j| [j.to, ip_port, j.start]}
+
+    # initialize new member's finger table with proxy for all empty entries
+    finger <= (join_up * offsets * me).combos do |j,o,m|
+      [o.val - 1, (m.start + 2**(o.val-1)) % @maxkey, (m.start + 2**o.val) % @maxkey, 0, j.to]
+    end
+    
+    # when we get finger_table responses from successor, overwrite the old entries
+    finger <+ (finger_table_resp * offsets * me).combos do |f,o,m|
       if in_range((m.start + 2**(o.val-1)) % @maxkey, f.start, f.hi, true, false)
-        [o.val - 1, (m.start + 2**(o.val-1)) % @maxkey, (m.start + 2**o.val) % @maxkey, f.succ, f.succ_addr] 
+        [o.val - 1, (m.start + 2**(o.val-1)) % @maxkey, (m.start + 2**o.val) % @maxkey, f.succ, f.succ_addr]
       end
     end
-    got_fingers <= finger_table_resp { |f| [true] if done_fingers.empty? and finger.length > (2*offsets.length / 3)} 
-    done_fingers <+ got_fingers
+    finger <- (finger_table_resp * offsets * me * finger).combos do |f,o,m,fing|
+      if in_range((m.start + 2**(o.val-1)) % @maxkey, f.start, f.hi, true, false) and (o.val-1) == fing.index
+        fing
+      end
+    end
     
-    # and start fixing our fingers
-    fix_finger_finder.succ_req <= (me * offsets * got_fingers).combos do |m,o,g|
-      [m.start + 2**(o.val - 1)]
-    end
-    # table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
-    # interface output, :succ_resp, [:key] => [:start, :addr]
-    
-    finger <+ (fix_finger_finder.succ_resp * finger * me).combos do |fix, fing, m|
-      if ((m.start + 2**(fing.index)) % @maxkey) == fix.key
-        newfing = [fing.index, fing.start, fing.hi, fix.start, fix.addr] 
-        unless newfing == fing
-          newfing
-        end
-      end
-    end
-    finger <- (fix_finger_finder.succ_resp * finger * me).combos do |fix, fing, m|
-      newfing = [fing.index, fing.start, fing.hi, fix.start, fix.addr] 
-      if ((m.start + 2**(fing.index)) % @maxkey) == fix.key and newfing != fing
-        fing 
-      end
-    end
+    # stdio <~ finger_table_resp do |f| 
+    #   ["got finger_table_resp #{f.inspect}, finger=#{finger.to_a.inspect}"]
+    # end
     
     # update my predecessor info; ignore if successor's predecessor is me!
     me <+ (me * node_pred_resp).pairs do |m,n|
@@ -146,16 +133,18 @@ module ChordJoin
       [n.from, m.start, ip_port]
     end
 
+    got_fingers <= finger_table_resp {|f| [true] if finger_table_resp.length >= (2/3)*offsets.length}
+
     # once fingers are installed, initiate update_others():
-    # XXX Actually we should fix our fingers first. XXX
     # update all nodes whose finger tables should refer here
     # first, for each offset o find last node whose o'th finger might be the new node's id
     
     upd_others_finder.pred_req <= (me * offsets * got_fingers).combos do |m,o,g|
       [(m.start - 2**(o.val-1)) % @maxkey]
     end
-
-    # stdio <~ upd_others_finder.pred_req {|p| ["finding #{p.inspect}"]}
+    
+    # stdio <~ got_fingers {|g| ["got finger #{g.inspect}"]}
+    # stdio <~ upd_others_finder.pred_resp {|p| ["got upd_others pred_resp #{p.inspect}"]}
     # upon pred_resp, send a finger_upd message to the node that was found to point here
     finger_upd <~ (me * offsets * upd_others_finder.pred_resp).pairs do |m, o, resp|
       [resp.addr, o.val-1, m.start, ip_port] if resp.key == ((m.start - 2**(o.val-1)) % @maxkey)
@@ -178,15 +167,16 @@ module ChordJoin
     #   ["applying finger_upd: #{u.inspect}"] if in_range(u.my_start, f.start, f.succ)
     # end
     
-    finger <+ k do |u,f|
+    # use the new_finger scratch to enable callbacks on pending finger updates.
+    new_finger <= k do |u,f|
       [f.index, f.start, f.hi, u.my_start, u.my_addr] if in_range(u.my_start, f.start, f.succ)
     end
-    # stdio <~ k do |u, f|
-    #   ["at #{ip_port} deleting finger #{f.inspect}"] if in_range(u.my_start, f.start, f.succ)
-    # end
+    # stdio <~ new_finger {|n| ["applying new finger #{n.inspect}"] if ip_port == '127.0.0.1:12340'}
     finger <- k do |u, f|
       f if in_range(u.my_start, f.start, f.succ)
     end
+    finger <+ new_finger
+    
     # # and forward to predecessor if it worked here
     finger_upd <~ (finger_upd * finger * me).combos(:referrer_index => :index) do |u,f,m| 
       [m.pred_addr, u.referrer_index, u.my_start, u.my_addr] if in_range(u.my_start, f.start, f.succ)
