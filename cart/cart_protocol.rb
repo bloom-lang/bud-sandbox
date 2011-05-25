@@ -26,7 +26,7 @@ module CartClient
   include CartClientProtocol
 
   bloom :client do
-    action_msg <~ client_action {|a| puts "try to send msg to #{a.server}"; [a.server, ip_port, a.session, a.reqid, a.item, a.action]}
+    action_msg <~ client_action {|a| [a.server, ip_port, a.session, a.reqid, a.item, a.action]}
     checkout_msg <~ client_checkout {|a| [a.server, ip_port, a.session, a.reqid]}
     client_response <= response_msg
   end
