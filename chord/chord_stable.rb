@@ -9,7 +9,7 @@ module ChordStabilize
 
   state do
     periodic :fix_fingers, 2
-    periodic :stable_timer, 4
+    periodic :stable_timer, 2
     interface input, :join_up, [:to, :start]
     channel :proxy_succ, [:@to, :succ, :succ_addr]
     channel :join_req, [:@to, :requestor_addr, :start]
@@ -66,6 +66,9 @@ module ChordStabilize
       end
     end
     succ_pred_resp <~ succ_pred_req { |s| [s.from, ip_port, me.first.pred_id, me.first.pred_addr] }
+        
+    # upon response:
+    # if response is between me and finger[0], update finger[0] and notify
     finger <+ succ_pred_resp do |s|
       if in_range(s.pred_id, me.first.start, finger[[0]].succ)
         # puts "at #{ip_port}, updating successor to #{s.pred_id}(#{s.pred_addr})"
@@ -117,8 +120,7 @@ module ChordStabilize
     localkeys <- xfer_keys_ack do |x|
       # puts "deleting #{x.keyval.inspect}" if in_range(x.keyval[0], x.ack_start, me.first.start, true, false)
       x.keyval if in_range(x.keyval[0], me.first.start, x.ack_start, false, true)
-    end        
-    
+    end            
   end
 
   bloom :fix_dem_fingers do
