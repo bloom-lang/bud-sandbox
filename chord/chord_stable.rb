@@ -22,6 +22,10 @@ module ChordSuccPred
     # map interfaces to channels
     sp_req <~ succ_pred_req
     succ_pred_resp <= sp_resp
+    
+    # tracing
+    # stdio <~ succ_pred_req {|s| ["#{ip_port} succ_pred_req: #{s.inspect}"] if s.hops > 1}
+    # stdio <~ succ_pred_resp {|s| ["#{ip_port} succ_pred_resp: #{s.inspect}"] if s.hop_num > 1}
   end
 end
 
@@ -99,14 +103,16 @@ module ChordStabilize
         finger[[0]]
       end      
     end
-    # each round of stabilization update proper successor node to point its predecessor here
+    # update successor node to point its predecessor here (if it doesn't already)
     succ_notify <~ sp.succ_pred_resp do |s| 
-      if in_range(s.pred_id, me.first.start, finger[[0]].succ)
-        dest = s.pred_addr
-      else
-        dest = finger[[0]].succ_addr
+      if s.pred_id != me.first.start 
+        if in_range(s.pred_id, me.first.start, finger[[0]].succ)
+          dest = s.pred_addr
+        else
+          dest = finger[[0]].succ_addr
+        end
+        [dest, me.first.start, ip_port]
       end
-      [dest, me.first.start, ip_port]
     end
   end
 
@@ -155,7 +161,7 @@ module ChordStabilize
     # we'd like this next line to produce a singleton set, but the worry is that the
     # evaluator may call the rhs multiple times, so we also run an argagg on the result
     # to pick randomly among the random values each time.
-    rands <= [[rand(log2(@maxkey))]]
+    rands <= fix_fingers { [rand(log2(@maxkey))] }
     rand_ix <= rands.argagg(:choose_rand, [], :val)
 
     # find successor of the random finger's start value
