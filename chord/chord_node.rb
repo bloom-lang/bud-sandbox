@@ -1,10 +1,11 @@
 require 'rubygems'
 require 'bud'
 
+# basic state and macros
 module ChordNode  
   state do
-    table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
     table :me, [] => [:start, :pred_id, :pred_addr]
+    table :finger, [:index] => [:start, :hi, :succ, :succ_addr]
     table :localkeys
   end
   
@@ -23,7 +24,17 @@ module ChordNode
   end
   
   def at_successor(key)
-    return false if key.nil? or me.nil? or me.length == 0 or me.first.start.nil? or finger[[0]].nil? or finger[[0]].succ.nil?
+    return false if key.nil? or me.first.nil? or me.first.start.nil? \
+                    or finger[[0]].nil? or finger[[0]].succ.nil?
     return in_range(key, me.first.start, finger[[0]].succ, false, true)
+  end
+  
+  def at_local(key)
+    return (me.first and me.first.start and key == me.first.start) ? true : false
+  end
+  
+  def at_finger(key, index)
+    return false if finger[[index]].nil? or finger[[index]].start.nil?
+    return in_range(key % @maxkey, finger[[index]].start, finger[[index]].hi, true, false)
   end
 end

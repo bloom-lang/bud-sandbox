@@ -160,7 +160,7 @@ class TestChord < Test::Unit::TestCase
                         , nodes[2].finger.to_a.sort)
   end
 
-  def no_test_find
+  def test_find
     STDOUT.sync = true
     puts "beginning static find test"
     ports = [12340, 12341, 12343]
@@ -181,7 +181,7 @@ class TestChord < Test::Unit::TestCase
     my_nodes.each{|n| n.stop_bg}
   end
     
-  def no_test_join
+  def test_join
     STDOUT.sync = true
     
     puts "beginning node join test"
@@ -305,9 +305,11 @@ class TestChord < Test::Unit::TestCase
       do_joined_finger_tests(@my_nodes)
       puts "done"
       
-      puts "checking multiple successors"
-      @my_nodes.each do |n|
-        puts "#{n.ip_port}: #{n.successors.to_a.inspect}"
+      if @my_nodes[0].respond_to?(:successors)
+        puts "checking multiple successors"
+        @my_nodes.each do |n|
+          puts "#{n.ip_port}: #{n.successors.to_a.inspect}"
+        end
       end
                  
       # check lookup consistency
