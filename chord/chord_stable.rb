@@ -2,33 +2,6 @@ require 'rubygems'
 require 'bud'
 require 'chord/chord_find'
 
-# utility module to get the predecessor of one's successor
-module ChordSuccPred
-  state do
-    interface :input, :succ_pred_req, [:to, :from, :hops]
-    interface :output, :succ_pred_resp, [:@to, :from, :pred_id, :pred_addr, :hop_num]
-    channel :sp_req, [:@to, :from, :hops]
-    channel :sp_resp, [:@to, :from, :pred_id, :pred_addr, :hop_num]
-  end
-  
-  bloom do
-    # respond to request
-    sp_resp <~ sp_req { |s| [s.from, ip_port, me.first.pred_id, me.first.pred_addr, s.hops] }
-    # and forward along if hops > 1
-    sp_req  <~ sp_req do |s| 
-      [finger[[0]].succ_addr, s.from, s.hops - 1] unless finger[[0]].nil? or s.hops <= 1
-    end
-    
-    # map interfaces to channels
-    sp_req <~ succ_pred_req
-    succ_pred_resp <= sp_resp
-    
-    # tracing
-    # stdio <~ succ_pred_req {|s| ["#{ip_port} succ_pred_req: #{s.inspect}"] if s.hops > 1}
-    # stdio <~ succ_pred_resp {|s| ["#{ip_port} succ_pred_resp: #{s.inspect}"] if s.hop_num > 1}
-  end
-end
-
 # Stabilization protocol from the Chord paper.
 module ChordStabilize
   import ChordFind => :new_succ_finder
@@ -36,7 +9,6 @@ module ChordStabilize
   import ChordSuccPred => :sp
 
   state do
-    periodic :fix_fingers, 2
     periodic :stable_timer, 2
     interface input, :join_up, [:to, :start]
     channel :proxy_succ, [:@to, :succ, :succ_addr]
@@ -46,6 +18,7 @@ module ChordStabilize
     channel :xfer_keys_ack, [:@ackee, :keyval, :acker, :ack_start]
     channel :xfer_keys, [:@receiver, :keyval, :sender]
     table :offsets, [:val]
+    scratch :fix_finger, [:index]
     scratch :rands, [:val]
     scratch :rand_ix, [] => [:val]
   end
@@ -60,10 +33,7 @@ module ChordStabilize
     join_req <~ join_up {|j| [j.to, ip_port, j.start]}
 
     # the proxy handles the join request by asynchronously finding new node's successor
-    new_succ_finder.succ_req <= join_req do |j| 
-      # puts "at #{ip_port}, received join_req from #{j.requestor_addr}"
-      [j.start]
-    end
+    new_succ_finder.succ_req <= join_req { |j| [j.start] }
     join_pending <= join_req
     # upon response to the async find, respond to the new node's join request
     proxy_succ <~ (new_succ_finder.succ_resp * join_pending).pairs(:key => :start) do |s,j| 
@@ -93,13 +63,13 @@ module ChordStabilize
         
     # upon receiving response, if it is between me and finger[0], update finger[0] to successors predecessor
     finger <+ sp.succ_pred_resp do |s|
-      if in_range(s.pred_id, me.first.start, finger[[0]].succ)
+      if finger[[0]] and in_range(s.pred_id, me.first.start, finger[[0]].succ)
         # puts "at #{ip_port}, updating successor to #{s.pred_id}(#{s.pred_addr})"
         [0, (me.first.start + 1) % @maxkey, (me.first.start + 2) % @maxkey, s.pred_id, s.pred_addr]
       end
     end
     finger <- sp.succ_pred_resp do |s|
-      if in_range(s.pred_id, me.first.start, finger[[0]].succ)
+      if finger[[0]] and in_range(s.pred_id, me.first.start, finger[[0]].succ)
         finger[[0]]
       end      
     end
@@ -113,6 +83,12 @@ module ChordStabilize
         end
         [dest, me.first.start, ip_port]
       end
+    end
+    
+    # if successor times out, proactively fix finger
+    fix_finger <= (sp.succ_pred_timeout * finger).pairs(:to => :succ_addr) do |t,f| 
+      puts "timed out on #{t.to}, fixing #{f.succ}"
+      [f.succ] 
     end
   end
 
@@ -150,8 +126,12 @@ module ChordStabilize
 
   # periodically fix up fingers
   bloom :fix_dem_fingers do
+    # fix_finger is the "interface" here.
+    fix_finger_finder.succ_req <= fix_finger
+
     # try to fix any nil fingers
-    fix_finger_finder.succ_req <= (fix_fingers * finger).pairs do |fix, fing|
+    fix_finger <= (stable_timer * finger).pairs do |fix, fing|
+      puts "at #{ip_port}, initializing finger #{fing.start}" if fing.succ.nil?
       [fing.start] if fing.succ.nil?
     end
     
@@ -161,11 +141,11 @@ module ChordStabilize
     # we'd like this next line to produce a singleton set, but the worry is that the
     # evaluator may call the rhs multiple times, so we also run an argagg on the result
     # to pick randomly among the random values each time.
-    rands <= fix_fingers { [rand(log2(@maxkey))] }
+    rands <= stable_timer { [rand(log2(@maxkey))] }
     rand_ix <= rands.argagg(:choose_rand, [], :val)
 
     # find successor of the random finger's start value
-    fix_finger_finder.succ_req <= fix_fingers do |f|
+    fix_finger <= stable_timer do |f|
       unless rand_ix.length == 0 or finger[ [rand_ix.first.val] ].nil? or finger[ [rand_ix.first.val] ].start.nil? or finger[ [rand_ix.first.val] ].succ.nil?
         [finger[ [rand_ix.first.val] ].start]        
       end

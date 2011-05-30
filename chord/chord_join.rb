@@ -4,7 +4,7 @@ require 'chord/chord_find'
 
 # This module for reference/experimentation only! 
 # It is the "algorithm of Section 4" from the paper, 
-# superceded by the stabilization protocol presented in Section 4 
+# superceded by the stabilization protocol presented in Section 5 
 # (and in chord_stable.rb here).
 #
 # Do not import this module and ChordStable together!

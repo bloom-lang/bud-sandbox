@@ -1,1 +1,1 @@
-This implements Chord following the paper by Stoica, et al.  The ChordJoin module in chord_join.rb is for reference only: it is the "algorithm of Section 4" from the paper, that is superceded by the stabilization protocol presented in Section 4 (and in chord_stable.rb here).
+This implements Chord following the paper by Stoica, et al.  The ChordJoin module in chord_join.rb is for reference only: it is the "algorithm of Section 4" from the paper, that is superceded by the stabilization protocol presented in Section 5 (and in chord_stable.rb here).
