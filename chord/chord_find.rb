@@ -2,80 +2,79 @@ require 'rubygems'
 require 'bud'
 require 'chord/chord_node'
 
+# Logic for doing key lookups in a Chord ring.
 module ChordFind
   state do
+    # External interfaces
+    # Find successor of a key (the node responsible for the key)
     interface input, :succ_req, [:key]
     interface output, :succ_resp, [:key] => [:start, :addr]
+    # Find predecessor of a key
     interface input, :pred_req, [:key]
     interface output, :pred_resp, [:key] => [:start, :addr]
     
+    # private state
     scratch :find_event, [:key, :from, :pred_or_succ]
     scratch :candidate, [:key, :index, :start, :hi, :succ, :succ_addr]
     scratch :closest, [:key] => [:index, :start, :hi, :succ, :succ_addr]
     
+    # private communication channels
     channel :find_req, [:@dest, :key, :from, :pred_or_succ]
     channel :find_resp, [:@dest, :key, :pred_or_succ] => [:start, :addr]      
   end
   
-  bloom :node_views do
-    # for each find_event for an id, find index of the closest finger
-    # start by finding all fingers with IDs between this node and the search key
+  # for each find_event, we find the index of the local finger closest to find_event.key.
+  bloom :get_closest do
+    # we begin by finding all fingers with IDs between this node and the search key
     candidate <= (find_event * finger * me).combos do |e,f,m|
                    [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] if (not f.succ.nil?) and in_range(f.succ, m.start, e.key)
                  end
-    # now for each key pick the highest-index candidate; it's the closest
+    # then pick the highest-index candidate; it's the closest
     closest <= candidate.argmax([candidate.key], candidate.index)
     
-    # if no candidates found, forward to successor
+    # if no candidates found, just send to successor
     closest <= find_event do |e| 
       f = finger[[0]]
       if candidate.length == 0 and not f.nil? and not f.succ.nil?
-        # puts "at #{me.first.start}, no candidates for #{e.key}, closest is successor #{f.succ}"
         [e.key, f.index, f.start, f.hi, f.succ, f.succ_addr] 
       end
     end
-    # stdio <~ closest {|m| ["closest@#{me.first.start.to_s}: #{m.inspect}"] if m.succ_addr.nil?}
   end
   
+  # resolve the find request.  If not local, forward the request to nearest finger.
+  # the chord people call this "recursive" lookup in Section 6.1.
   bloom :find_recursive do
-    # convert local requests into local find_events
+    # Merge local req's and inbound net req's into a single scratch.
+    # first merge local requests into local find_events
     find_event <= pred_req {|s| [s.key, ip_port, 'pred']}
     find_event <= succ_req {|s| [s.key, ip_port, 'succ']}
-    
-    # convert incoming find_req messages into local find_events
+    # and convert network-delivered find_req messages into local find_events
     find_event <= find_req {|f| [f.key, f.from, f.pred_or_succ]}
     
-    # if not at successor, forward to closest finger   
-    find_req <~ (find_event * closest).combos(:key => :key) do |e, c| 
-       # stdio <~ [["#{m.start}: forwarding #{e.key} from #{e.from} to closest finger, #{c.succ_addr}!"]] unless at_successor(e,m,f) or e.from == ip_port
-      [c.succ_addr, e.key, e.from, e.pred_or_succ] unless at_successor(e.key)
-    end
-
-    # if at successor, respond accordingly
+    # we can respond locally for keys that are here or at our successor
     find_resp <~ find_event do |e|
-      # stdio <~ [["#{m.start}: #{e.key} req from #{e.from} found at successor #{f.succ_addr}!"]] if at_successor(e,m,f)
-      if at_successor(e.key) and me.first
+      start = nil    
+      # if at successor:
+      if at_successor(e.key)   
         if e.pred_or_succ == 'pred'
-          [e.from, e.key, e.pred_or_succ, me.first.start, ip_port] 
+          start = me.first.start; addr = ip_port
         elsif e.pred_or_succ == 'succ' and finger[[0]] and not finger[[0]].succ.nil?
-          [e.from, e.key, e.pred_or_succ, finger[[0]].succ, finger[[0]].succ_addr]
-        else
-          nil
+          start = finger[[0]].succ; addr = finger[[0]].succ_addr
         end
-      else
-        nil
-      end
-    end
-
-    # if local, respond accordingly.  (The forwarding logic won't match!)
-    find_resp <~ (find_event * me).pairs do |e, m|
-      if e.key == m.start
+      # else if local:
+      elsif at_local(e.key)
         if e.pred_or_succ == 'pred'
-          [e.from, e.key, e.pred_or_succ, m.pred_id, m.pred_addr]
+          start = me.first.pred_id; addr = me.first.pred_addr
         elsif e.pred_or_succ == 'succ'
-          [e.from, e.key, e.pred_or_succ, m.start, ip_port]
+          start = me.first.start; addr = ip_port
         end
       end
+      [e.from, e.key, e.pred_or_succ, start, addr] unless start.nil?
+    end
+    
+    # for keys that are not at successor, forward to closest finger   
+    find_req <~ (find_event * closest).combos(:key => :key) do |e, c| 
+      [c.succ_addr, e.key, e.from, e.pred_or_succ] unless at_successor(e.key) or at_local(e.key)
     end
     
     # when we receive a response, put it to the output interface

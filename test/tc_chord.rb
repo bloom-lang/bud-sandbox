@@ -5,6 +5,7 @@ require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
 require 'chord/chord_stable'
+require 'chord/chord_successors'
 
 module LilChord
   import ChordFind => :finder
@@ -72,6 +73,7 @@ class LilChordStable
   include ChordNode
   include LilChord
   include ChordStabilize
+  include ChordSuccessors
 end
 
 class TestChord < Test::Unit::TestCase
@@ -302,6 +304,13 @@ class TestChord < Test::Unit::TestCase
       print "waiting for finger updates"
       do_joined_finger_tests(@my_nodes)
       puts "done"
+      
+      if @my_nodes[0].respond_to?(:successors)
+        puts "checking multiple successors"
+        @my_nodes.each do |n|
+          puts "#{n.ip_port}: #{n.successors.to_a.inspect}"
+        end
+      end
                  
       # check lookup consistency
       print "checking lookups"
