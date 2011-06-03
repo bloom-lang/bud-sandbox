@@ -14,7 +14,7 @@ module BFSBackgroundTasks
     scratch :candidate_nodes, [:chunkid, :host, :chunks]
     scratch :best_dest, [:chunkid, :host]
     scratch :chosen_dest, [:chunkid, :host]
-    scratch :sources, [:chunkid, :host]
+    scratch :source, [:chunkid, :host]
     scratch :best_src, [:chunkid, :host]
     scratch :lowchunks, [:chunkid]
     scratch :cc_demand, chunk_cache_alive.schema
@@ -29,7 +29,7 @@ module BFSBackgroundTasks
     lowchunks <= chunk_cnts_chunk { |c| [c.chunkid] if c.replicas < REP_FACTOR and !c.chunkid.nil?}
 
     # nodes in possession of such chunks
-    sources <= (cc_demand * lowchunks).pairs(:chunkid => :chunkid) {|a, b| [a.chunkid, a.node]}
+    source <= (cc_demand * lowchunks).pairs(:chunkid => :chunkid) {|a, b| [a.chunkid, a.node]}
     # nodes not in possession of such chunks, and their fill factor
     candidate_nodes <= (chunk_cnts_host * lowchunks).pairs do |c, p|
       unless chunk_cache_alive.map{|a| a.node if a.chunkid == p.chunkid}.include? c.host
@@ -39,7 +39,7 @@ module BFSBackgroundTasks
 
     best_dest <= candidate_nodes.argagg(:min, [candidate_nodes.chunkid], candidate_nodes.chunks)
     chosen_dest <= best_dest.group([best_dest.chunkid], choose(best_dest.host))
-    best_src <= sources.group([sources.chunkid], choose(sources.host))
+    best_src <= source.group([source.chunkid], choose(source.host))
     copy_chunk <= (chosen_dest * best_src).pairs(:chunkid => :chunkid) do |d, s|
       [d.chunkid, s.host, d.host]
     end
