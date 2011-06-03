@@ -42,7 +42,7 @@ module PersistentKVS
   include BasicKVS
 
   state do
-    tctable :kvstate_backing, kvstate.schema
+    sync :kvstate_backing, :bud, kvstate.schema
   end
 
   bootstrap do
