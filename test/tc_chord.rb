@@ -141,7 +141,7 @@ class TestChord < Test::Unit::TestCase
                          [2, 7, 3, 0, "127.0.0.1:12340"]] \
                         == nodes[2].finger.to_a.sort
       wait += 1
-    end while status == 0 and wait < 120
+    end while status == 0 and wait < 20
     
     assert_equal(       [[0, 7, 0, 0, "127.0.0.1:12340"],
                          [1, 0, 2, 0, "127.0.0.1:12340"],
@@ -168,39 +168,31 @@ class TestChord < Test::Unit::TestCase
       sleep 1
       print "."
       status = 1
-      status = 0 unless [[0, 0, "127.0.0.1:12340", 1], 
-                         [1, 1, "127.0.0.1:12341", 3], 
+      status = 0 unless [[1, 1, "127.0.0.1:12341", 3], 
                          [2, 3, "127.0.0.1:12343", 5]] \
                         == nodes[3].successors.to_a.sort
-      status = 0 unless [[0, 1, "127.0.0.1:12341", 1], 
-                         [1, 3, "127.0.0.1:12343", 3], 
+      status = 0 unless [[1, 3, "127.0.0.1:12343", 3], 
                          [2, 6, "127.0.0.1:12346", 6]] \
                         == nodes[0].finger.to_a.sort
-      status = 0 unless [[0, 3, "127.0.0.1:12343", 1], 
-                         [1, 6, "127.0.0.1:12346", 5], 
+      status = 0 unless [[1, 6, "127.0.0.1:12346", 5], 
                          [2, 0, "127.0.0.1:12340", 7]] \
                         == nodes[1].successors.to_a.sort
-      status = 0 unless [[0, 6, "127.0.0.1:12346", 1], 
-                         [1, 0, "127.0.0.1:12340", 5], 
+      status = 0 unless [[1, 0, "127.0.0.1:12340", 5], 
                          [2, 1, "127.0.0.1:12341", 6]] \
                         == nodes[2].successors.to_a.sort
       wait += 1
     end while status == 0 and wait < 120
     
-    assert_equal(       [[0, 0, "127.0.0.1:12340", 1], 
-                         [1, 1, "127.0.0.1:12341", 3], 
+    assert_equal(       [[1, 1, "127.0.0.1:12341", 3], 
                          [2, 3, "127.0.0.1:12343", 5]] \
                         , nodes[3].successors.to_a.sort)
-    assert_equal(       [[0, 1, "127.0.0.1:12341", 1], 
-                         [1, 3, "127.0.0.1:12343", 3], 
+    assert_equal(       [[1, 3, "127.0.0.1:12343", 3], 
                          [2, 6, "127.0.0.1:12346", 6]] \
                         , nodes[0].successors.to_a.sort)
-    assert_equal(       [[0, 3, "127.0.0.1:12343", 1], 
-                         [1, 6, "127.0.0.1:12346", 5], 
+    assert_equal(       [[1, 6, "127.0.0.1:12346", 5], 
                          [2, 0, "127.0.0.1:12340", 7]] \
                         , nodes[1].successors.to_a.sort)
-    assert_equal(       [[0, 6, "127.0.0.1:12346", 1], 
-                         [1, 0, "127.0.0.1:12340", 5], 
+    assert_equal(       [[1, 0, "127.0.0.1:12340", 5], 
                          [2, 1, "127.0.0.1:12341", 6]] \
                         , nodes[2].successors.to_a.sort)
   end
@@ -210,7 +202,7 @@ class TestChord < Test::Unit::TestCase
     puts "beginning static find test"
     ports = [12340, 12341, 12343]
     my_nodes = ports.map do |p|
-      LilChordJoin.new(:port => p)#, :dump_rewrite=>true)
+      LilChordJoin.new(:port => p, :metrics => true)#, :dump_rewrite=>true)
     end
     my_nodes.each{|n| n.run_bg}
     my_nodes.each{|n| n.sync_do {n.load_data}}
@@ -238,7 +230,7 @@ class TestChord < Test::Unit::TestCase
     @my_nodes.each{|n| n.sync_do {n.load_data}}
     
     @addrs[6] = 12346
-    newnode = LilChordJoin.new(:port => 12346)#, :trace => true, :tag => "node12346")
+    newnode = LilChordJoin.new(:port => 12346) #, :metrics => true)#, :trace => true, :tag => "node12346")
     @my_nodes << newnode
     newnode.run_bg
     newnode.sync_do{newnode.me <+ [[6, nil, nil]]}
@@ -314,12 +306,12 @@ class TestChord < Test::Unit::TestCase
     puts "beginning test of join via stabilization"
     @addrs = {0 => 12340, 1 => 12341, 3 => 12343}
     @my_nodes = @addrs.values.map do |a|
-      LilChordStable.new(:port => a)#, :trace => true, :tag => "node#{a}")
+      LilChordStable.new(:port => a, :metrics=>true)# :trace => true, :tag => "node#{a}")
     end
     @my_nodes.each{|n| n.run_bg}
     @my_nodes.each{|n| n.sync_do {n.load_data}}
     @addrs[6] = 12346
-    newnode = LilChordStable.new(:port => 12346)#, :trace => true, :tag => "node12346")
+    newnode = LilChordStable.new(:port => 12346, :metrics => true)#, :trace => true, :tag => "node12346")
     @my_nodes << newnode
     newnode.run_bg
     
@@ -370,7 +362,25 @@ class TestChord < Test::Unit::TestCase
       raise
     end
     puts "done"
-        
+    
+    # # now stop node 1 and check result of stabilization again
+    # # clear xferq
+    # (1..xferq.length).each { xferq.pop }
+    # @my_nodes[1].stop_bg
+    # # check localkeys
+    # print "checking localkeys after 1 leaves"
+    # x = xferq.pop
+    # puts "x is #{x.inspect}"
+    # print "--"
+    # @my_nodes.each_with_index { |n,i| puts "#{n.ip_port} keys: #{n.localkeys.to_a.inspect}" unless i == 1 }
+    # @my_nodes.each_with_index { |n,i| puts "#{n.ip_port} fingers: #{n.finger.to_a.inspect}" unless i == 1 }
+    # # assert_equal([["127.0.0.1:12340", []], 
+    # #               ["127.0.0.1:12341", [[1, ""]]], 
+    # #               ["127.0.0.1:12343", [[2, ""]]], 
+    # #               ["127.0.0.1:12346", [[6, ""]]]],
+    # #              @my_nodes.map{|n| [n.ip_port, n.localkeys.to_a]})
+    # puts "done"    
+    
     @my_nodes.each{|n| n.stop_bg}
   end
 end

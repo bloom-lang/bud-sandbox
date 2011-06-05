@@ -24,6 +24,7 @@ module ChordStabilize
   end
 
   bootstrap do
+    # precompute the set of finger offsets
     offsets <= (1..log2(@maxkey)).map{|o| [o]}
   end
   
@@ -62,20 +63,15 @@ module ChordStabilize
     end
         
     # upon receiving response, if it is between me and finger[0], update finger[0] to successors predecessor
-    finger <+ sp.succ_pred_resp do |s|
+    finger <+- sp.succ_pred_resp do |s|
       if finger[[0]] and in_range(s.pred_id, me.first.start, finger[[0]].succ)
         # puts "at #{ip_port}, updating successor to #{s.pred_id}(#{s.pred_addr})"
         [0, (me.first.start + 1) % @maxkey, (me.first.start + 2) % @maxkey, s.pred_id, s.pred_addr]
       end
     end
-    finger <- sp.succ_pred_resp do |s|
-      if finger[[0]] and in_range(s.pred_id, me.first.start, finger[[0]].succ)
-        finger[[0]]
-      end      
-    end
     # update successor node to point its predecessor here (if it doesn't already)
     succ_notify <~ sp.succ_pred_resp do |s| 
-      if s.pred_id != me.first.start 
+      if s.pred_id != me.first.start and finger[[0]]
         if in_range(s.pred_id, me.first.start, finger[[0]].succ)
           dest = s.pred_addr
         else
@@ -95,16 +91,10 @@ module ChordStabilize
   # handle predecessor notifications
   bloom :notify do
     # replace predecessor
-    me <+ succ_notify do |s| 
+    me <+- succ_notify do |s| 
       if me.first.pred_id.nil? or in_range(s.start, me.first.pred_id, me.first.start)
         # puts "at #{ip_port} updating me for new pred: #{[me.first.start, s.start, s.addr].inspect}"
         [me.first.start, s.start, s.addr] 
-      end
-    end
-    me <- succ_notify do |s| 
-      if me.first.pred_id.nil? or in_range(s.start, me.first.pred_id, me.first.start) 
-        # puts "at #{ip_port} removing me val: #{me.first.inspect}"
-        me.first 
       end
     end
     
@@ -142,8 +132,9 @@ module ChordStabilize
     # evaluator may call the rhs multiple times, so we also run an argagg on the result
     # to pick randomly among the random values each time.
     rands <= stable_timer { [rand(log2(@maxkey))] }
-    rand_ix <= rands.argagg(:choose_rand, [], :val)
-
+    # rand_ix <= rands.argagg(:choose_rand, [], :val)
+    rand_ix <= stable_timer { rands.first }
+    
     # find successor of the random finger's start value
     fix_finger <= stable_timer do |f|
       unless rand_ix.length == 0 or finger[ [rand_ix.first.val] ].nil? or finger[ [rand_ix.first.val] ].start.nil? or finger[ [rand_ix.first.val] ].succ.nil?
@@ -152,11 +143,8 @@ module ChordStabilize
     end
     
     # upon response to successor lookup, replace finger
-    finger <+ (fix_finger_finder.succ_resp * finger).pairs(:key => :start) do |s,f|
+    finger <+- (fix_finger_finder.succ_resp * finger).pairs(:key => :start) do |s,f|
       [f.index, f.start, f.hi, s.start, s.addr] unless s.start == f.succ
-    end
-    finger <- (fix_finger_finder.succ_resp * finger).pairs(:key => :start) do |s,f|
-      f unless s.start == f.succ
     end
   end
 end

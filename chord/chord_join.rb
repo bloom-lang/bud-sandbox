@@ -27,33 +27,41 @@ module ChordJoin
     channel :finger_upd, [:@referrer_addr, :referrer_index, :my_start, :my_addr]
     channel :succ_upd_pred, [:@to, :pred_id, :addr]
     table :offsets, [:val]
+    table :upd_offsets, [:off, :me_start] => [:val]
     scratch :new_finger, finger.schema
     
     channel :xfer_keys_ack, [:@ackee, :keyval, :acker, :ack_start]
     channel :xfer_keys, [:@receiver, :keyval, :sender]
   end
 
-  # precompute the set of finger offsets
   bootstrap do
+    # precompute the set of finger offsets
     offsets <= (1..log2(@maxkey)).map{|o| [o]}
   end
 
+  bloom :first_tick do
+    # precompute the keys of nodes that should point to here for each offset
+    # this is a workaround to enable a hashjoin on this derived column
+    # since join rules currently can't include expressions
+    upd_offsets <+ offsets {|o| [o.val, me.first.start, me.first.start - (2 ** (o.val - 1)) % @maxkey] if me.first and upd_offsets.length == 0}
+  end    
 
   # an existing member serves as a proxy for the new node that wishes to join.
   # when it receives a join req from new node, it requests successors on the new
   # node's behalf
   bloom :join_rules_at_proxy do
     # cache the request
-    join_pending <= join_req
+    join_pending <= join_req {|j| [j.to, j.requestor_addr, j.start+1]}
     
     # asynchronously, find out who owns start+1
     join_finder.succ_req <= join_req.map{|j| [j.start+1]}
     
     # upon response to successor request, ask the successor to send the contents
     #  of its finger table directly to the new node.
-    finger_table_req <~ (join_pending * join_finder.succ_resp).pairs do |j, s|
-      [s.addr, j.requestor_addr] if j.start+1 == s.key
+    finger_table_req <~ (join_pending * join_finder.succ_resp).pairs(:start => :key) do |j, s|
+      [s.addr, j.requestor_addr]
     end    
+    join_pending <- (join_pending * join_finder.succ_resp).lefts(:start => :key)
   end
 
   # the successor to the new node participates by bootstrapping the new node
@@ -139,8 +147,8 @@ module ChordJoin
       [(me.first.start - 2**(o.val-1)) % @maxkey] unless me.first.nil?
     end
     # as "others" are identified, send them a finger_upd message to point here
-    finger_upd <~ (me * offsets * upd_others_finder.pred_resp).pairs do |m, o, resp|
-      [resp.addr, o.val-1, m.start, ip_port] if resp.key == ((m.start - 2**(o.val-1)) % @maxkey)
+    finger_upd <~ (upd_offsets * upd_others_finder.pred_resp).pairs(:val => :key) do |u, resp|
+      [resp.addr, u.off-1, u.me_start, ip_port]
     end
     
     # when we receive keys being transfered from successor, put them in localkeys and ack
