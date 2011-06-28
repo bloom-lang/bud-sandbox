@@ -2,6 +2,9 @@ require 'rubygems'
 require 'bud'
 require 'delivery/reliable_delivery'
 require 'delivery/multicast'
+require 'lckmgr/lckmgr'
+require 'ordering/nonce'
+require 'ordering/serializer'
 
 module KVSProtocol
   state do
@@ -92,5 +95,46 @@ module ReplicatedKVS
       end
     end
   end
+end
+
+module TwoPLTransactionalKVS
+  include KVSProtocol
+  #import BasicKVS => :kvs
+  include  BasicKVS
+  include TwoPhaseLockMgr
+  include TimestepNonce
+
+  state do
+    interface input, :xput, [:xid, :key, :data]
+    interface input, :xget, [:xid, :key]
+    interface output, :xget_response, [:xid, :key] => [:data]
+    interface output, :xput_response, [:xid, :key]
+
+    table :xput_buf, xput.schema
+    table :xget_buf, xget.schema
+
+    scratch :goods, xget.schema
+  end
+
+  bloom do
+    xput_buf <= xput
+    xget_buf <= xget
+    request_lock <= xput {|p| [p.xid, p.key]}
+    request_lock <= xget {|p| puts "try to get #{p.inspect}"; [p.xid, p.key]}
+
+    goods <= lock_status {|s| puts "GD: #{s.inspect}"; [s.xid, s.resource] if s.status == :OK}
+    xput_response <= (goods * xput_buf).lefts(:xid => :xid, :key => :key)
+    #xget_response <= (goods * xget_buf).lefts(:xid => :xid)
+    kvput <= (goods * xput_buf).rights(:xid => :xid, :key => :key) {|b| puts "PUT: #{b.inspect}"; [nil, b.key, b.xid, b.data]}
+    kvget <= (goods * xget_buf).rights(:xid => :xid, :key => :key) {|b| [b.xid, b.key]}
+
+    xput_buf <- (goods * xput_buf).rights(:xid => :xid, :key => :key)
+    xget_buf <- (goods * xget_buf).rights(:xid => :xid, :key => :key)
+
+    xget_response <= (kvget_response * xget_buf).pairs(:key => :key) do |r, b|
+      puts "RESP!"
+      [b.xid, r.key, r.value]
+    end
+  end 
 end
 

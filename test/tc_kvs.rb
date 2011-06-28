@@ -4,6 +4,8 @@ require 'test/unit'
 require 'test/kvs_workloads'
 require 'kvs/kvs'
 require 'kvs/useful_combos'
+require 'ordering/serializer'
+require 'ordering/nonce'
 
 class TestKVS < Test::Unit::TestCase
   include KVSWorkloads
@@ -36,8 +38,8 @@ class TestKVS < Test::Unit::TestCase
 
   def test_wl1
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true))
-    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => true))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => true))
     add_members(v, v.ip_port, v2.ip_port)
     add_members(v2, v.ip_port, v2.ip_port)
 
@@ -55,7 +57,7 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_simple
-    v = SingleSiteKVS.new(:tag => 'simple')
+    v = SingleSiteKVS.new(:tag => 'simple', :port => 12345)
     v.run_bg
     workload1(v)
     v.sync_do { assert_equal(1, v.kvstate.length) }
@@ -103,4 +105,40 @@ class TestKVS < Test::Unit::TestCase
     p2.sync_do { assert_equal("bak", p2.kvstate.first[1]) }
     p2.stop_bg
   end   
+
+  class XK
+    include Bud
+    include TwoPLTransactionalKVS
+  end
+
+  def test_xact_kvs
+    p = XK.new
+    p.run_bg
+
+    p.sync_callback(:xput, [[1, "foo", "bar"]], :xput_response)
+    p.sync_callback(:xput, [[1, "bam", "biz"]], :xput_response)
+    p.sync_callback(:xput, [[1, "foo", "big"]], :xput_response)
+    res = p.sync_callback(:xget, [[1, "foo"]], :xget_response)
+
+    p.register_callback(:xget_response) do |cb|
+      cb.each do |row|
+        assert_equal(1, row.xid)
+        assert_equal("big", row.value)
+      end 
+
+    end
+
+    p.sync_do { p.xget <+ [[2, "foo"]] }
+
+    p.sync_do { p.end_xact <+ [[1]] }
+
+
+    p.register_callback(:xget_response) do |cb|
+      cb.each do |row|
+        assert_equal(2, row.xid)
+        assert_equal("big", row.value)
+      end 
+    end
+
+  end
 end
