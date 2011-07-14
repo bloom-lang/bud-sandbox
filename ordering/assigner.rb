@@ -26,7 +26,11 @@ module Assigner
   end
 end
 
-
+# This assigns IDs to facts inserted via "dump", and delivers the resulting [id,
+# payload] pairs via "pickup". Note that the assignment of IDs does not require
+# multiple timesteps, but it is also not deterministic: ID assignment is based
+# on the internal order in which facts appear in collections, which is outside
+# the semantics of Bloom.
 module AggAssign
   include AssignerProto
 
