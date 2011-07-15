@@ -42,7 +42,18 @@ module AggAssign
     holder <= dump.group(nil, accum(dump.payload))
     #stdio <~ holder {|h| ["HOLD: #{h.inspect}"] }
     pickup <= holder.flat_map do |h|
-      h.array.each_with_index.map{|a, i| [i, a] }
+      h.array.each_with_index.map {|a, i| [i, a] }
     end
+  end
+end
+
+# This assigns IDs to facts inserted via "dump" in a single timestep. Unlike
+# AggAssign, it achieves determinism by using the position of an element in a
+# sorted sequence as the element's ID.
+module SortAssign
+  include AssignerProto
+
+  bloom do
+    pickup <= dump.sort.each_with_index.map {|a, i| [i, a]}
   end
 end
