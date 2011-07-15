@@ -114,4 +114,23 @@ class TestAssign < Test::Unit::TestCase
     end
     b.stop_bg
   end
+
+  class BasicSortAssignP
+    include Bud
+    include SortAssignPersist
+  end
+
+  def test_sort_assign_persist
+    b = BasicSortAssignP.new
+    b.run_bg
+    v = (1..100).to_a.map {|a| [a]}
+    10.times do |i|
+      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      start = i * 100
+      fin = start + 99
+      golden = (start..fin).to_a.zip(v)
+      assert_equal(golden, r.to_a.sort)
+    end
+    b.stop_bg
+  end
 end

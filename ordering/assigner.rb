@@ -57,3 +57,30 @@ module SortAssign
     pickup <= dump.sort.each_with_index.map {|a, i| [i, a]}
   end
 end
+
+# A common pattern: we generate IDs that are unique and increase over time by
+# recording a persistent ID high-water mark, and updating it once per timestep.
+module SortAssignPersist
+  include AssignerProto
+  import SortAssign => :sub
+
+  state do
+    table :next_id, [] => [:val]
+    scratch :cnt_dump, [] => [:cnt]
+  end
+
+  bootstrap do
+    next_id <= [[0]]
+  end
+
+  bloom do
+    sub.dump <= dump
+    pickup <= (sub.pickup * next_id).pairs do |p, n|
+      [p.ident + n.val, p.payload]
+    end
+    cnt_dump <= dump.group(nil, count)
+    next_id <+- (next_id * cnt_dump).pairs do |n, c|
+      [n.val + c.cnt]
+    end
+  end
+end
