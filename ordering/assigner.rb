@@ -66,7 +66,7 @@ module SortAssignPersist
 
   state do
     table :next_id, [] => [:val]
-    scratch :cnt_dump, [] => [:cnt]
+    scratch :dump_cnt, [] => [:cnt]
   end
 
   bootstrap do
@@ -78,8 +78,8 @@ module SortAssignPersist
     pickup <= (sub.pickup * next_id).pairs do |p, n|
       [p.ident + n.val, p.payload]
     end
-    cnt_dump <= dump.group(nil, count)
-    next_id <+- (next_id * cnt_dump).pairs do |n, c|
+    dump_cnt <= dump.group(nil, count)
+    next_id <+- (next_id * dump_cnt).pairs do |n, c|
       [n.val + c.cnt]
     end
   end
