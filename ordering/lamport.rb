@@ -65,36 +65,6 @@ module LamportClockManager
         [c.clock+to_stamp.length+retrieve_msg.length]
       end
     }
-
-=begin
-    action_buf <= to_stamp { |s| ["S", s.msg, @budtime] }
-    action_buf <= retrieve_msg { |r| ["R", r.lamportmsg, @budtime] }
-
-    temp :nextaction <= action_buf.argmin([action_buf.actiontype, action_buf.msg,
-                                            action_buf.queuetime],
-                                   action_buf.queuetime)
-
-    get_stamped <= (localclock * nextaction).pairs do |c, m|
-      if m.actiontype == "S":
-        localclock <- localclock
-        localclock <+ localclock { |cv| [cv.clock + 1] }
-        action_buf <- nextaction
-
-        [m.msg, LamportMsg.new(c.clock, m.msg)]
-      end
-    end
-
-    msg_return <= nextaction do |r|
-      if r.actiontype == "R":
-        localclock <- localclock
-        localclock <+ localclock { |cv| [[cv.clock, r.msg.clock].max()+1] }
-
-        action_buf <- nextaction
-
-        [r.msg, r.msg.msg]
-      end
-    end
-=end
   end
 end
 
