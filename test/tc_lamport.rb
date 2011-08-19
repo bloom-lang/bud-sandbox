@@ -8,6 +8,11 @@ class LT
   include LamportClockManager
 end
 
+#this test suite should probably be more relaxed to instead ensure
+#things like monotonic increasing lamport clocks instead of
+#absolute values, but the absolute values suggested (enforced)
+#here likely make debugging easier
+
 class TestLamport < Test::Unit::TestCase
   def test_simple_encode_decode
     lt = LT.new

@@ -2,6 +2,7 @@
 require 'rubygems'
 require 'bud'
 
+#simple wrapper class for easier clock/msg access
 class LamportMsg
   attr_accessor :clock
   attr_accessor :msg
@@ -19,6 +20,12 @@ class LamportMsg
     self.clock == another_msg.clock && self.msg == another_msg.msg
   end
 end
+
+#implements handling of Lamport clocks for use in both send/recieve actions
+#note that even though one can access LamportMessage msg fields without
+#passing them to retrieve_msg, neglecting to register received messages with the
+#LamportClockManager will potentially result in incorrect Lamport clock stamps
+#getting applied to outgoing messages!
 
 module LamportInterface
   state do
