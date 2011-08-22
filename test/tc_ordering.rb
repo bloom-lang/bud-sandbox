@@ -30,7 +30,6 @@ class GN
 end
 
 class TestSer < Test::Unit::TestCase
-
   def test_group_nonce
     gn = GN.new
     gn.my_id <+ [[1]]
@@ -95,5 +94,43 @@ class TestSer < Test::Unit::TestCase
       end
     }
     st.stop_bg
+  end
+end
+
+class TestAssign < Test::Unit::TestCase
+  class BasicSortAssign
+    include Bud
+    include SortAssign
+  end
+
+  def test_sort_assign
+    b = BasicSortAssign.new
+    b.run_bg
+    v = (1..100).to_a.map {|a| [a]}
+    golden = (0..99).to_a.zip(v)
+    25.times do
+      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      assert_equal(golden, r.to_a.sort)
+    end
+    b.stop_bg
+  end
+
+  class BasicSortAssignP
+    include Bud
+    include SortAssignPersist
+  end
+
+  def test_sort_assign_persist
+    b = BasicSortAssignP.new
+    b.run_bg
+    v = (1..100).to_a.map {|a| [a]}
+    10.times do |i|
+      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      start = i * 100
+      fin = start + 99
+      golden = (start..fin).to_a.zip(v)
+      assert_equal(golden, r.to_a.sort)
+    end
+    b.stop_bg
   end
 end
