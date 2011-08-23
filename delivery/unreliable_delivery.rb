@@ -30,7 +30,7 @@ module UnreliableDelivery
 
   bloom :snd do
     pipe_chan <~ (pipe_in * drop_pct).pairs do |i, p|
-      if p.pct < 1 + rand(100)
+      if p.pct <= rand(100)
         i
       end
     end
