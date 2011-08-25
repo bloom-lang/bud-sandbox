@@ -65,6 +65,46 @@ class TestURDelivery < Test::Unit::TestCase
     rcv.stop_bg
   end
   
+  def test_dd_delivery_demonic
+  	srand(0)
+    snd = URD.new
+    rcv = URD.new
+    snd.run_bg
+    rcv.run_bg
+
+    snd.sync_do {
+      snd.set_drop_pct_wrap <+ [[50]]
+    }
+    snd.sync_do
+
+    q = Queue.new
+    rcv.register_callback(:got_pipe) do
+      q.push(true)
+    end
+
+    values = [[1, 'foo'], [2, 'bar'], [3, 'baz'], [4, 'qux'], [5,'quux']]
+    tuples = values.map {|v| [rcv.ip_port, snd.ip_port] + v}
+
+    tuples.each do |t|
+      snd.sync_do {
+        snd.send_msg <+ [t]
+      }
+    end
+
+	# Under this seed, expect only messages 3-5
+    # Wait for messages to be delivered to rcv
+	    (3.times { q.pop })
+
+	rcv.sync_do
+
+    rcv.sync_do {
+      	assert_equal(tuples.sort.slice(2, tuples.length),
+      				rcv.pipe_chan_perm.to_a.sort)
+    }
+    snd.stop_bg
+    rcv.stop_bg
+  end
+  
   #testing the absence of messages is harder; to think about and do later
 
 end
