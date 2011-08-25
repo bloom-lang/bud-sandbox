@@ -2,16 +2,18 @@ require 'rubygems'
 require 'bud'
 require 'delivery/delivery'
 
-module UnreliableDeliveryControl
+#intentionally drops messages, but reports success
+
+module DemonicDeliveryControl
   state do
     #percentage chance of message loss, 0 to 100
     interface input, :set_drop_pct, [] => [:pct]
   end
 end
 
-module UnreliableDelivery
+module DemonicDelivery
   include DeliveryProtocol
-  include UnreliableDeliveryControl
+  include DemonicDeliveryControl
 
   state do
     table :drop_pct, [] => [:pct]

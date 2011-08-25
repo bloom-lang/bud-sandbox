@@ -1,36 +1,36 @@
 require 'rubygems'
 require 'test/unit'
 require 'bud'
-require 'delivery/unreliable_delivery'
+require 'delivery/demonic_delivery'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
 class URD
   include Bud
-  import UnreliableDelivery => :urd
+  import DemonicDelivery => :dd
 
   state do
-    table :pipe_chan_perm, urd.pipe_chan.schema
-    table :pipe_sent_perm, urd.pipe_sent.schema
-    scratch :got_pipe, urd.pipe_chan.schema
+    table :pipe_chan_perm, dd.pipe_chan.schema
+    table :pipe_sent_perm, dd.pipe_sent.schema
+    scratch :got_pipe, dd.pipe_chan.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
-    scratch :send_msg, urd.pipe_in.schema
+    scratch :send_msg, dd.pipe_in.schema
 
-    scratch :set_drop_pct_wrap, urd.drop_pct.schema
+    scratch :set_drop_pct_wrap, dd.drop_pct.schema
   end
 
   bloom do
-    urd.set_drop_pct <= set_drop_pct_wrap
-    pipe_sent_perm <= urd.pipe_sent
-    pipe_chan_perm <= urd.pipe_chan
-    got_pipe <= urd.pipe_chan
-    urd.pipe_in <= send_msg
+    dd.set_drop_pct <= set_drop_pct_wrap
+    pipe_sent_perm <= dd.pipe_sent
+    pipe_chan_perm <= dd.pipe_chan
+    got_pipe <= dd.pipe_chan
+    dd.pipe_in <= send_msg
   end
 end
 
 class TestURDelivery < Test::Unit::TestCase
-  def test_urd_delivery_reliable
+  def test_dd_delivery_reliable
     snd = URD.new
     rcv = URD.new
     snd.run_bg
