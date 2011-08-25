@@ -23,7 +23,6 @@ module UnreliableDelivery
   end
 
   bloom :control do
-    #this is a hack and should be replaced with <+- once supported
     drop_pct <- (drop_pct * set_drop_pct).pairs { |o, n| o }
     drop_pct <+ set_drop_pct
   end
