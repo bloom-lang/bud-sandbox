@@ -5,7 +5,7 @@ require 'delivery/demonic_delivery'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
-class URD
+class DD
   include Bud
   import DemonicDelivery => :dd
 
@@ -29,10 +29,10 @@ class URD
   end
 end
 
-class TestURDelivery < Test::Unit::TestCase
+class TestDDelivery < Test::Unit::TestCase
   def test_dd_delivery_reliable
-    snd = URD.new
-    rcv = URD.new
+    snd = DD.new
+    rcv = DD.new
     snd.run_bg
     rcv.run_bg
 
@@ -67,8 +67,8 @@ class TestURDelivery < Test::Unit::TestCase
   
   def test_dd_delivery_demonic
   	srand(0)
-    snd = URD.new
-    rcv = URD.new
+    snd = DD.new
+    rcv = DD.new
     snd.run_bg
     rcv.run_bg
 
