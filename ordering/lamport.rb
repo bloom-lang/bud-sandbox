@@ -1,4 +1,3 @@
-
 require 'rubygems'
 require 'bud'
 
@@ -62,7 +61,7 @@ module LamportClockManager
 
     msg_return <= retrieve_msg { |r| [r.lamportmsg, r.lamportmsg.msg] }
 
-    localclock <-+ localclock { |c|
+    localclock <+- localclock { |c|
       if retrieve_msg.length > 0
         [c.clock+
           [to_stamp.length+retrieve_msg.length,
@@ -73,5 +72,3 @@ module LamportClockManager
     }
   end
 end
-
-
