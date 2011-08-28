@@ -66,7 +66,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
   end
   
   def test_dd_delivery_demonic
-  	srand(0)
+    srand(0)
     snd = DemonD.new
     rcv = DemonD.new
     snd.run_bg
@@ -91,7 +91,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
       }
     end
 
-	# Under this seed, expect only messages 3-5
+    # Under this seed, expect only messages 3-5
     # Wait for messages to be delivered to rcv
 	    (3.times { q.pop })
 
