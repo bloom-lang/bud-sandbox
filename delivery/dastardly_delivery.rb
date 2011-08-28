@@ -7,7 +7,6 @@ require 'delivery/delivery'
 
 module DastardlyDeliveryControl
   state do
-    #percentage chance of message loss, 0 to 100
     interface input, :set_max_delay, [] => [:delay]
   end
 end
