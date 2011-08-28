@@ -50,6 +50,5 @@ module DastardlyDelivery
 
     buf <- do_send
     pipe_chan <~ do_send { |s| s.msg }
-    #temp :foo <= do_send { |s| puts s.msg.inspect, @budtime }
   end
 end
