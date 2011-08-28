@@ -5,7 +5,7 @@ require 'delivery/demonic_delivery'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
-class DD
+class DemonD
   include Bud
   import DemonicDelivery => :dd
 
@@ -29,10 +29,10 @@ class DD
   end
 end
 
-class TestDDelivery < Test::Unit::TestCase
+class TestDemonicDelivery < Test::Unit::TestCase
   def test_dd_delivery_reliable
-    snd = DD.new
-    rcv = DD.new
+    snd = DemonD.new
+    rcv = DemonD.new
     snd.run_bg
     rcv.run_bg
 
@@ -67,8 +67,8 @@ class TestDDelivery < Test::Unit::TestCase
   
   def test_dd_delivery_demonic
   	srand(0)
-    snd = DD.new
-    rcv = DD.new
+    snd = DemonD.new
+    rcv = DemonD.new
     snd.run_bg
     rcv.run_bg
 
@@ -105,6 +105,4 @@ class TestDDelivery < Test::Unit::TestCase
     rcv.stop_bg
   end
   
-  #testing the absence of messages is harder; to think about and do later
-
 end
