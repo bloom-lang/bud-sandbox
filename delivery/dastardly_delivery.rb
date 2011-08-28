@@ -18,10 +18,10 @@ module DastardlyDelivery
   state do
     table :max_delay, [] => [:delay]
     table :buf, [:msg, :whenbuf]
-    channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
-    periodic :clock, 1
 
-    scratch :send_cand, buf.schema
+    channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
+
+    periodic :clock, 1
   end
 
   bootstrap do
