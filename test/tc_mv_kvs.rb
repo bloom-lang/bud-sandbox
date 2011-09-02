@@ -14,6 +14,11 @@ class SingleSiteVCMVKVS
   include VC_MVKVS
 end
 
+class SingleSiteCausalMVKVS
+  include Bud
+  include VC_MVKVS
+end
+
 class TestMVKVS < Test::Unit::TestCase
   def test_simple
     v = SingleSiteMVKVS.new
@@ -22,7 +27,7 @@ class TestMVKVS < Test::Unit::TestCase
     v.sync_do { v.kvput <+ [["testclient", "fookey", "v0", "req0", "foo"]] }
     v.sync_do { v.kvput <+ [["testclient", "fookey", "v1", "req1", "bar"]] }
 
-    v.sync_do { v.kvget <+ [["req3", "fookey"]] }
+    v.sync_do { v.kvget <+ [["req3", "fookey", 2]] }
     v.sync_do {
       assert_equal(2, v.kvget_response.length)
       assert_equal([["req3", "fookey", "v0", "foo"], 
@@ -40,7 +45,7 @@ class TestMVKVS < Test::Unit::TestCase
 
     v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req0", "foo"]] }
     v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req1", "bar"]] }
-    v.sync_do { v.kvget <+ [["req3", "fookey"]] }
+    v.sync_do { v.kvget <+ [["req3", "fookey", vc]] }
     v.sync_do {
       assert_equal(2, v.kvget_response.length)
       resp = v.kvget_response.to_a.sort 
@@ -48,6 +53,46 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal(["bar", "foo"], resp.map { |r| r[3] }.sort)
       #check that vector clock values for testclient are set appropriately
       assert_equal([1,2], resp.map { |r| r[2]["testclient"] }.sort)
+    }
+
+    v.stop_bg
+  end
+
+  def test_causal_mvkvs
+    v = SingleSiteCausalMVKVS.new
+    vc = VectorClock.new
+    v.run_bg
+
+    v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req0", "foo"]] }
+    v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req1", "bar"]] }
+    v.sync_do { v.kvget <+ [["req3", "fookey", vc]] }
+    v.sync_do {
+      assert_equal(2, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      #check that both values exist
+      assert_equal(["bar", "foo"], resp.map { |r| r[3] }.sort)
+      #check that vector clock values for testclient are set appropriately
+      assert_equal([1,2], resp.map { |r| r[2]["testclient"] }.sort)
+    }
+
+    vc1 = VectorClock.new
+
+    #an empty vector clock means every event is ahead of it!
+    v.sync_do { v.kvget <+ [["req3", "fookey", vc1]] }
+    v.sync_do {
+      assert_equal(2, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      #check that both values exist
+      assert_equal(["bar", "foo"], resp.map { |r| r[3] }.sort)
+      #check that vector clock values for testclient are set appropriately
+      assert_equal([1,2], resp.map { |r| r[2]["testclient"] }.sort)
+    }
+
+    5.times{ vc1.increment("testclient") }
+
+    v.sync_do { v.kvget <+ [["req3", "fookey", vc1]] }
+    v.sync_do {
+      assert_equal(2, v.kvget_response.length)
     }
 
     v.stop_bg
