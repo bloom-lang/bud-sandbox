@@ -40,7 +40,6 @@ class TestMVKVS < Test::Unit::TestCase
 
     v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req0", "foo"]] }
     v.sync_do { v.kvput <+ [["testclient", "fookey", vc, "req1", "bar"]] }
-
     v.sync_do { v.kvget <+ [["req3", "fookey"]] }
     v.sync_do {
       assert_equal(2, v.kvget_response.length)

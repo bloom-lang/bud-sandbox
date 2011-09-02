@@ -10,30 +10,23 @@ module MVKVSProtocol
   end
 end
 
-module MVKVS_state
+module BasicMVKVS
+  include MVKVSProtocol
+
   state do
     table :kvstate, [:key, :version] => [:value]
   end
-end
-
-module MVKVS_get
-  include MVKVSProtocol
+  
+  bloom :put do
+    kvstate <= kvput {|s|  [s.key, s.version, s.value]}
+  end
 
   bloom :get do
     temp :getj <= (kvget * kvstate).pairs(:key => :key)
+
     kvget_response <= getj do |g, t|
       [g.reqid, t.key, t.version, t.value]
     end
-  end
-end
-
-module BasicMVKVS
-  include MVKVSProtocol
-  include MVKVS_get
-  include MVKVS_state
-  
-  bloom :put do
-    kvstate <+ kvput {|s|  [s.key, s.version, s.value]}
   end
 end
 
@@ -42,13 +35,17 @@ end
 #vector merging, etc. needs to be handled by client/frontend module
 module VC_MVKVS
   include MVKVSProtocol
-  include MVKVS_get
-  include MVKVS_state
+  import BasicMVKVS => :mvkvs
   
   bloom :put do
-    kvstate <+ kvput do |s|
+    mvkvs.kvput <+ kvput do |s|
       s.version.increment(s.client)
-      [s.key, s.version.clone, s.value]
+      [s.client, s.key, s.version.clone, s.reqid, s.value]
     end
+  end
+
+  bloom :pass_thru do
+    mvkvs.kvget <= kvget
+    kvget_response <= mvkvs.kvget_response
   end
 end
