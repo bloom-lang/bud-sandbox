@@ -10,6 +10,17 @@ class VectorClock
     return @vector[client]
   end
 
+  def initialize_copy(source)
+    super
+    @vector = @vector.dup
+  end
+
+  #define ordering based on maximum clock value in vector
+  #this is somewhat arbitrary, but we need a tiebreaker and this seems reasonable
+  def <=>(ov)
+    return @vector.values.max <=> ov.get_max_clock
+  end
+
   def increment(client)
     check_client(client)
     @vector[client] += 1
@@ -33,6 +44,11 @@ class VectorClock
   protected
   def get_clients
     return @vector.keys
+  end
+
+  protected
+  def get_max_clock
+    return @vector.values.max
   end
 
 end
