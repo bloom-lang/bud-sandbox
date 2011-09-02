@@ -38,6 +38,8 @@ module BasicMVKVS
 end
 
 #auto-increments vector clock on insert
+#returns all matching vectors in DB on return
+#vector merging, etc. needs to be handled by client/frontend module
 module VC_MVKVS
   include MVKVSProtocol
   include MVKVS_get
