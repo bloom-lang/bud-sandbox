@@ -21,6 +21,22 @@ class VectorClock
     return @vector.values.max <=> ov.get_max_clock
   end
 
+  #does this vector "happen before" vector v?
+  def happens_before(v)
+    #need to ensure there is at least one element that is strictly less-than
+    strictly_less = false
+
+    for client in (v.get_clients+self.get_clients).uniq
+      if (!@vector.has_key?(client) || @vector[client] < v[client])
+        strictly_less = true
+      elsif @vector[client] > v[client]
+        return false
+      end
+    end
+    
+    return strictly_less
+  end
+
   def increment(client)
     check_client(client)
     @vector[client] += 1
@@ -28,7 +44,7 @@ class VectorClock
 
   def merge(v2)
     for client in v2.get_clients
-      if !@vector.has_key?(client) or @vector[client] < v2[client]
+      if !@vector.has_key?(client) || @vector[client] < v2[client]
         @vector[client] = v2[client]
       end
     end
