@@ -5,7 +5,7 @@ require 'ordering/vector_clock'
 module MVKVSProtocol
   state do
     interface input, :kvput, [:client, :key, :version] => [:reqid, :value]
-    interface input, :kvget, [:reqid] => [:key, :version]
+    interface input, :kvget, [:reqid] => [:client, :key, :version]
     interface output, :kvget_response, [:reqid, :key, :version] => [:value]
   end
 end
@@ -62,13 +62,34 @@ module Causal_MVKVS
   import VC_MVKVS => :vckvs
 
   bloom :pass_thru do
-    mvkvs.kvput <= kvput
-    mvkvs.kvget <= kvget
+    vckvs.kvput <= kvput
+    vckvs.kvget <= kvget
   end
   
   bloom :get do
-    kvget_response <= (mvkvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
+    kvget_response <= (vckvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
       if c.version.happens_before(r.version)
+        r
+      end
+    end
+  end
+end
+
+#implements monotonic reads
+#expected access pattern: client maintains a write vector clock (passed in on puts)
+#and a read vector clock (passed in on gets, updated when client chooses a value to read)
+module MR_MVKVS
+  include MVKVSProtocol
+  import VC_MVKVS => :vckvs
+
+  bloom :pass_thru do
+    vckvs.kvput <= kvput
+    vckvs.kvget <= kvget
+  end
+
+  bloom :get do
+    kvget_response <= (vckvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
+      if c.version.happens_before_non_strict(r.version)
         r
       end
     end

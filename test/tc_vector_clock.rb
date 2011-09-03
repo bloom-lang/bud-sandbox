@@ -60,4 +60,26 @@ class TestVectorClock < Test::Unit::TestCase
 
     assert(!v4.happens_before(v5))
   end
+
+  def test_vector_happens_before_non_strict
+    v1 = VectorClock.new
+    v2 = VectorClock.new
+
+    assert(v1.happens_before_non_strict(v2))
+    assert(v2.happens_before_non_strict(v1))
+
+    1.times { v2.increment("C1") }
+
+    assert(v1.happens_before_non_strict(v2))
+
+    1.times { v1.increment("C1") }
+
+    assert(v1.happens_before_non_strict(v2))
+    assert(v2.happens_before_non_strict(v1))
+
+    1.times { v1.increment("C1") }
+
+    assert(!v1.happens_before_non_strict(v2))
+    assert(v2.happens_before_non_strict(v1))
+  end
 end

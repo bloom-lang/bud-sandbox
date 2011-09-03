@@ -27,7 +27,7 @@ class VectorClock
     strictly_less = false
 
     for client in (v.get_clients+self.get_clients).uniq
-      if (!@vector.has_key?(client) || @vector[client] < v[client])
+      if (!@vector.has_key?(client) && v[client] != 0) || @vector[client] < v[client]
         strictly_less = true
       elsif @vector[client] > v[client]
         return false
@@ -35,6 +35,18 @@ class VectorClock
     end
     
     return strictly_less
+  end
+
+  #used for (non-strict) monotonic comparisons
+  def happens_before_non_strict(v)
+    #need to ensure there is at least one element that is strictly less-than
+    for client in (v.get_clients+self.get_clients).uniq
+      if @vector.has_key?(client) && @vector[client] > v[client]
+        return false
+      end
+    end
+
+    return true
   end
 
   def increment(client)
@@ -50,16 +62,17 @@ class VectorClock
     end
   end
 
+  #it'd be nice to make this protected, but we need to use it for
+  #alternate consistency models like monotonic writes
+  def get_clients
+    return @vector.keys
+  end
+
   private
   def check_client(client)
     if !@vector.has_key?(client):
         @vector[client] = 0
     end
-  end
-
-  protected
-  def get_clients
-    return @vector.keys
   end
 
   protected
