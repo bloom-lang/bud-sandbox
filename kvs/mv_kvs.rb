@@ -20,7 +20,7 @@ module BasicMVKVS
   end
   
   bloom :put do
-    kvstate <= kvput {|s|  [s.key, s.version, s.value]}
+    kvstate <= kvput {|s| [s.key, s.version, s.value]}
   end
 
   bloom :get do
@@ -40,7 +40,7 @@ module VC_MVKVS
   import BasicMVKVS => :mvkvs
   
   bloom :put do
-    mvkvs.kvput <+ kvput do |s|
+    mvkvs.kvput <= kvput do |s|
       s.version.increment(s.client)
       [s.client, s.key, s.version.clone, s.reqid, s.value]
     end
@@ -90,6 +90,61 @@ module MR_MVKVS
   bloom :get do
     kvget_response <= (vckvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
       if c.version.happens_before_non_strict(r.version)
+        r
+      end
+    end
+  end
+end
+
+#implements read-your-writes consistency
+module RYW_MVKVS
+  include MVKVSProtocol
+  import VC_MVKVS => :vckvs
+
+  bloom :pass_thru do
+    vckvs.kvput <= kvput
+    vckvs.kvget <= kvget
+  end
+  
+  bloom :get do
+    kvget_response <= (vckvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
+      if c.version[c.client] <= r.version[c.client]
+        r
+      end
+    end
+  end
+end
+
+#implements monotonic writes consistency
+module MW_MVKVS
+  include MVKVSProtocol
+  import BasicMVKVS => :mvkvs
+
+  bloom :pass_thru do
+    mvkvs.kvget <= kvget
+  end
+
+  bloom :put do
+    mvkvs.kvput <= kvput do |s|
+      s.version.increment(s.client)
+      nv = VectorClock.new
+      nv.set_client(s.client, s.version[s.client])
+      [s.client, s.key, nv, s.reqid, s.value]
+    end
+  end
+
+  bloom :get do
+    kvget_response <= (mvkvs.kvget_response*kvget).pairs(:reqid => :reqid) do |r, c|
+      mw = true
+
+      for client in c.version.get_clients
+        if c.version[client] > r.version[client] && r.version[client] != -1
+          mw = false
+          break
+        end
+      end
+
+      if mw
         r
       end
     end

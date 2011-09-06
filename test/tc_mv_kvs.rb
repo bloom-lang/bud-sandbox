@@ -24,6 +24,16 @@ class SingleSiteMR_MVKVS
   include MR_MVKVS
 end
 
+class SingleSiteRYW_MVKVS
+  include Bud
+  include RYW_MVKVS
+end
+
+class SingleSiteMW_MVKVS
+  include Bud
+  include MW_MVKVS
+end
+
 class TestMVKVS < Test::Unit::TestCase
   def test_simple
     v = SingleSiteMVKVS.new
@@ -139,6 +149,76 @@ class TestMVKVS < Test::Unit::TestCase
     v.sync_do {
       assert_equal(1, v.kvget_response.length)
       assert_equal("bar", v.kvget_response.first.to_a[3])
+    }
+
+    v.stop_bg
+  end
+
+  def test_ryw_mvkvs
+    v = SingleSiteRYW_MVKVS.new
+    wc = VectorClock.new
+    v.run_bg
+
+    v.sync_do { v.kvput <+ [["testclient", "fookey", wc, "req0", "foo"]] }
+    v.sync_do { v.kvput <+ [["testclient", "fookey", wc, "req1", "bar"]] }
+    v.sync_do { v.kvget <+ [["req3", "testclient", "fookey", wc]] }
+    v.sync_do {
+      assert_equal(1, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      #check that both values exist
+      assert_equal(["bar"], resp.map { |r| r[3] }.sort)
+      #check that vector clock values for testclient are set appropriately
+      assert_equal([2], resp.map { |r| r[2]["testclient"] }.sort)
+    }
+
+    v.stop_bg
+  end
+
+  def test_mw_mvkvs
+    v = SingleSiteMW_MVKVS.new
+    wc = VectorClock.new
+    wc2 = VectorClock.new
+    rc = VectorClock.new
+    v.run_bg
+
+    v.sync_do { v.kvput <+ [["testclient", "fookey", wc, "req0", "foo"]] }
+    v.sync_do { v.kvput <+ [["testclient", "fookey", wc, "req1", "bar"]] }
+
+    v.sync_do { v.kvget <+ [["req3", "testclient", "fookey", rc]] }
+    v.sync_do {
+      assert_equal(2, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      #check that both values exist
+      assert_equal(["bar", "foo"], resp.map { |r| r[3] }.sort)
+      #check that vector clock values for testclient are set appropriately
+      assert_equal([1, 2], resp.map { |r| r[2]["testclient"] }.sort)
+    }
+
+    v.sync_do { v.kvput <+ [["testclient2", "fookey", wc2, "req1", "baz"]] }
+    v.sync_do { v.kvput <+ [["testclient2", "fookey", wc2, "req1", "qux"]] }
+    
+    2.times { rc.increment("testclient") }
+
+    v.sync_do { v.kvget <+ [["req4", "testclient", "fookey", rc]] }
+
+    v.sync_do {
+      assert_equal(3, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      assert_equal(["bar", "baz", "qux"], resp.map { |r| r[3] }.sort)
+      assert_equal([-1, -1, 2], resp.map { |r| r[2]["testclient"] }.sort)
+      assert_equal([-1, 1, 2], resp.map { |r| r[2]["testclient2"] }.sort)
+    }
+
+    2.times { rc.increment("testclient2") }
+
+    v.sync_do { v.kvget <+ [["req5", "testclient", "fookey", rc]] }
+
+    v.sync_do {
+      assert_equal(2, v.kvget_response.length)
+      resp = v.kvget_response.to_a.sort 
+      assert_equal(["bar", "qux"], resp.map { |r| r[3] }.sort)
+      assert_equal([-1, 2], resp.map { |r| r[2]["testclient"] }.sort)
+      assert_equal([-1, 2], resp.map { |r| r[2]["testclient2"] }.sort)
     }
 
     v.stop_bg

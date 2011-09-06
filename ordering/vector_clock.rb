@@ -6,8 +6,11 @@ class VectorClock
   end
 
   def [](client)
-    check_client(client)
-    return @vector[client]
+    if @vector.has_key?(client)
+      return @vector[client]
+    else
+      return -1
+    end
   end
 
   def initialize_copy(source)
@@ -52,6 +55,11 @@ class VectorClock
   def increment(client)
     check_client(client)
     @vector[client] += 1
+  end
+
+  #use with caution!
+  def set_client(client, val)
+    @vector[client] = val
   end
 
   def merge(v2)
