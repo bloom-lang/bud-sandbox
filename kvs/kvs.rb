@@ -2,7 +2,6 @@ require 'rubygems'
 require 'bud'
 require 'delivery/reliable_delivery'
 require 'delivery/multicast'
-require 'lckmgr/lckmgr'
 require 'ordering/nonce'
 require 'ordering/serializer'
 
