@@ -1,43 +1,47 @@
 require 'rubygems'
 require 'test/unit'
 require 'bud'
-require 'delivery/demonic_delivery'
+require 'delivery/dastardly_delivery'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
-class DemonD
+class DastardlyD
   include Bud
-  import DemonicDelivery => :dd
+  import DastardlyDelivery => :dd
 
   state do
-    table :pipe_chan_perm, dd.pipe_chan.schema
+    #store the time at which the messages come in to make sure we're reordering them
+    table :pipe_chan_perm, [:msg, :t] => []
     table :pipe_sent_perm, dd.pipe_sent.schema
     scratch :got_pipe, dd.pipe_chan.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, dd.pipe_in.schema
 
-    scratch :set_drop_pct_wrap, dd.drop_pct.schema
+    scratch :set_max_delay_wrap, dd.max_delay.schema
   end
 
   bloom do
-    dd.set_drop_pct <= set_drop_pct_wrap
+    dd.set_max_delay <= set_max_delay_wrap
     pipe_sent_perm <= dd.pipe_sent
-    pipe_chan_perm <= dd.pipe_chan
+    pipe_chan_perm <= dd.pipe_chan { |m| [m, @budtime] }
     got_pipe <= dd.pipe_chan
     dd.pipe_in <= send_msg
   end
 end
 
-class TestDemonicDelivery < Test::Unit::TestCase
-  def test_dd_delivery_reliable
-    snd = DemonD.new
-    rcv = DemonD.new
+class TestDastardlyDelivery < Test::Unit::TestCase
+  def test_dd_delivery_reorder
+    snd = DastardlyD.new
+    rcv = DastardlyD.new
+    
+    srand(0)
+
     snd.run_bg
     rcv.run_bg
 
     snd.sync_do {
-      snd.set_drop_pct_wrap <+ [[0]]
+      snd.set_max_delay_wrap <+ [[2]]
     }
     snd.sync_do
 
@@ -46,7 +50,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
       q.push(true)
     end
 
-    values = [[1, 'foo'], [2, 'bar']]
+    values = [[1, 'foo'], [2, 'bar'], [3, 'baz'], [4,'qux']]
     tuples = values.map {|v| [rcv.ip_port, snd.ip_port] + v}
 
     tuples.each do |t|
@@ -59,21 +63,25 @@ class TestDemonicDelivery < Test::Unit::TestCase
     tuples.length.times { q.pop }
 
     rcv.sync_do {
-      assert_equal(tuples.sort, rcv.pipe_chan_perm.to_a.sort)
+      #note that the message delivery order (due to the sockets?) changes
+      #from 2,3,4,1 to 2,1,3,4 (at least on my machine) so we just make
+      #sure the orders aren't equal instead of checking for any particular
+      #order--pdb
+      assert_not_equal(tuples,
+                       rcv.pipe_chan_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
     }
     snd.stop_bg
     rcv.stop_bg
   end
-  
-  def test_dd_delivery_demonic
-    srand(0)
-    snd = DemonD.new
-    rcv = DemonD.new
+
+  def test_dd_delivery_send_once
+    snd = DastardlyD.new
+    rcv = DastardlyD.new
     snd.run_bg
     rcv.run_bg
 
     snd.sync_do {
-      snd.set_drop_pct_wrap <+ [[50]]
+      snd.set_max_delay_wrap <+ [[1]]
     }
     snd.sync_do
 
@@ -82,7 +90,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
       q.push(true)
     end
 
-    values = [[1, 'foo'], [2, 'bar'], [3, 'baz'], [4, 'qux'], [5,'quux']]
+    values = [[1, 'foo']]
     tuples = values.map {|v| [rcv.ip_port, snd.ip_port] + v}
 
     tuples.each do |t|
@@ -91,18 +99,16 @@ class TestDemonicDelivery < Test::Unit::TestCase
       }
     end
 
-    # Under this seed, expect only messages 3-5
-    # Wait for messages to be delivered to rcv
-	    (3.times { q.pop })
-
-	rcv.sync_do
+    # Wait for message to be delivered to rcv
+    tuples.length.times  do
+      q.pop
+    end
 
     rcv.sync_do {
-      	assert_equal(tuples.sort.slice(2, tuples.length),
-      				rcv.pipe_chan_perm.to_a.sort)
+      assert_equal(tuples[0],
+                   rcv.pipe_chan_perm.to_a[0][0])
     }
     snd.stop_bg
     rcv.stop_bg
   end
-  
 end
