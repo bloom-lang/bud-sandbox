@@ -106,6 +106,7 @@ class TestKVS < Test::Unit::TestCase
     p2.stop_bg
   end   
 
+=begin
   class XK
     include Bud
     include TwoPLTransactionalKVS
@@ -139,6 +140,6 @@ class TestKVS < Test::Unit::TestCase
         assert_equal("big", row.value)
       end 
     end
-
   end
+=end
 end
