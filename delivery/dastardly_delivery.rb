@@ -29,8 +29,7 @@ module DastardlyDelivery
   end
 
   bloom :control do
-    max_delay <- (max_delay * set_max_delay).pairs { |o, n| o }
-    max_delay <+ set_max_delay
+    max_delay <+- set_max_delay
   end
 
   bloom :queue do

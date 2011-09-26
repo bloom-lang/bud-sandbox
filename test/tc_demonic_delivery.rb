@@ -64,7 +64,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
     snd.stop_bg
     rcv.stop_bg
   end
-  
+
   def test_dd_delivery_demonic
     srand(0)
     snd = DemonD.new
@@ -93,16 +93,15 @@ class TestDemonicDelivery < Test::Unit::TestCase
 
     # Under this seed, expect only messages 3-5
     # Wait for messages to be delivered to rcv
-	    (3.times { q.pop })
+    (3.times { q.pop })
 
-	rcv.sync_do
+    rcv.sync_do
 
     rcv.sync_do {
-      	assert_equal(tuples.sort.slice(2, tuples.length),
-      				rcv.pipe_chan_perm.to_a.sort)
+      assert_equal(tuples.sort.slice(2, tuples.length),
+                   rcv.pipe_chan_perm.to_a.sort)
     }
     snd.stop_bg
     rcv.stop_bg
   end
-  
 end
