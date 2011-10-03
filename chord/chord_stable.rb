@@ -121,7 +121,6 @@ module ChordStabilize
 
     # try to fix any nil fingers
     fix_finger <= (stable_timer * finger).pairs do |fix, fing|
-      puts "at #{ip_port}, initializing finger #{fing.start}" if fing.succ.nil?
       [fing.start] if fing.succ.nil?
     end
     
