@@ -100,9 +100,7 @@ class TestDastardlyDelivery < Test::Unit::TestCase
     end
 
     # Wait for message to be delivered to rcv
-    tuples.length.times  do
-      q.pop
-    end
+    tuples.length.times { q.pop }
 
     rcv.sync_do {
       assert_equal(tuples[0],

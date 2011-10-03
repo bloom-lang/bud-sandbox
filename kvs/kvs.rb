@@ -22,7 +22,7 @@ module BasicKVS
   end
 
   bloom :mutate do
-    kvstate <+ kvput {|s|  [s.key, s.value]}
+    kvstate <+ kvput {|s| [s.key, s.value]}
     kvstate <- (kvstate * kvput).lefts(:key => :key)
   end
 
@@ -38,13 +38,13 @@ module BasicKVS
   end
 end
 
+# XXX: broken
 module PersistentKVS
   include KVSProtocol
-  #import BasicKVS => :kvs
   include BasicKVS
 
   state do
-    sync :kvstate_backing, :bud, kvstate.schema
+    sync :kvstate_backing, :dbm, kvstate.schema
   end
 
   bootstrap do
@@ -53,7 +53,6 @@ module PersistentKVS
   end
 
   bloom do
-    #stdio <~ kvstate_backing.inspected
     kvstate <+ kvstate_backing do |b| 
       if kvstate.empty?
         puts "EMPTY"
@@ -66,7 +65,6 @@ module PersistentKVS
     kvstate_backing <= kvstate
   end
 end
-
 
 module ReplicatedKVS
   include KVSProtocol

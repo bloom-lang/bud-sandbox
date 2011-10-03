@@ -43,9 +43,9 @@ end
 module ChordSuccPred
   state do
     channel :sp_req, [:@to, :from, :hops]
-    channel :sp_resp, [:@to, :from, :hops] + me.schema
+    channel :sp_resp, [:@to, :from, :hops] + me.cols
     interface :input, :succ_pred_req, [:to, :from, :hops]
-    interface :output, :succ_pred_resp, sp_resp.schema[1..-1]
+    interface :output, :succ_pred_resp, sp_resp.cols[1..-1]
     interface :output, :succ_pred_timeout, sp_req.schema
     table :pending, [:to, :from, :hops, :save]
     periodic :sp_timeout, 5

@@ -30,8 +30,8 @@ module VotingMaster
 
   state do
     table :vote_status, [:ident, :content, :response, :resp_content]
-    #table :votes_rcvd, [:ident, :response, :peer, :content]
-    table :votes_rcvd, vote.schema
+    # XXX: should this be vote.schema?
+    table :votes_rcvd, vote.cols
     scratch :member_cnt, [:cnt]
     scratch :vote_cnt, [:ident, :response, :cnt, :content]
   end

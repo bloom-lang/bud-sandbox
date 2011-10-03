@@ -4,7 +4,6 @@ require 'test/unit'
 require 'test/cart_workloads'
 require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
-require 'tracing_extras'
 
 
 module Remember

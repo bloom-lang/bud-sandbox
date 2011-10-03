@@ -25,8 +25,8 @@ module DemonicDelivery
   end
 
   bloom :control do
-    drop_pct <- (drop_pct * set_drop_pct).pairs { |o, n| o }
-    drop_pct <+ set_drop_pct
+    drop_pct <+- set_drop_pct
+#    drop_pct <+ set_drop_pct
   end
 
   bloom :snd do
