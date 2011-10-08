@@ -13,7 +13,7 @@ module TestState
 
   bloom :mem do
     mcast_done_perm <= mcast_done
-    rcv_perm <= pipe_chan {|r| [r.ident, r.payload]}
+    rcv_perm <= pipe_out {|r| [r.ident, r.payload]}
   end
 end
 

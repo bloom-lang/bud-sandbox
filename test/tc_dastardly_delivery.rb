@@ -11,9 +11,9 @@ class DastardlyD
 
   state do
     #store the time at which the messages come in to make sure we're reordering them
-    table :pipe_chan_perm, [:msg, :t] => []
+    table :pipe_out_perm, [:msg, :t] => []
     table :pipe_sent_perm, dd.pipe_sent.schema
-    scratch :got_pipe, dd.pipe_chan.schema
+    scratch :got_pipe, dd.pipe_out.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, dd.pipe_in.schema
@@ -24,8 +24,8 @@ class DastardlyD
   bloom do
     dd.set_max_delay <= set_max_delay_wrap
     pipe_sent_perm <= dd.pipe_sent
-    pipe_chan_perm <= dd.pipe_chan { |m| [m, @budtime] }
-    got_pipe <= dd.pipe_chan
+    pipe_out_perm <= dd.pipe_out { |m| [m, @budtime] }
+    got_pipe <= dd.pipe_out
     dd.pipe_in <= send_msg
   end
 end
@@ -68,7 +68,7 @@ class TestDastardlyDelivery < Test::Unit::TestCase
       #sure the orders aren't equal instead of checking for any particular
       #order--pdb
       assert_not_equal(tuples,
-                       rcv.pipe_chan_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
+                       rcv.pipe_out_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
     }
     snd.stop_bg
     rcv.stop_bg
@@ -104,7 +104,7 @@ class TestDastardlyDelivery < Test::Unit::TestCase
 
     rcv.sync_do {
       assert_equal(tuples[0],
-                   rcv.pipe_chan_perm.to_a[0][0])
+                   rcv.pipe_out_perm.to_a[0][0])
     }
     snd.stop_bg
     rcv.stop_bg

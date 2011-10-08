@@ -8,9 +8,9 @@ class BED
   import BestEffortDelivery => :bed
 
   state do
-    table :pipe_chan_perm, bed.pipe_chan.schema
+    table :pipe_out_perm, bed.pipe_out.schema
     table :pipe_sent_perm, bed.pipe_sent.schema
-    scratch :got_pipe, bed.pipe_chan.schema
+    scratch :got_pipe, bed.pipe_out.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, bed.pipe_in.schema
@@ -18,8 +18,8 @@ class BED
 
   bloom do
     pipe_sent_perm <= bed.pipe_sent
-    pipe_chan_perm <= bed.pipe_chan
-    got_pipe <= bed.pipe_chan
+    pipe_out_perm <= bed.pipe_out
+    got_pipe <= bed.pipe_out
     bed.pipe_in <= send_msg
   end
 end
@@ -65,7 +65,7 @@ class TestBEDelivery < Test::Unit::TestCase
     tuples.length.times { q.pop }
 
     rcv.sync_do {
-      assert_equal(tuples.sort, rcv.pipe_chan_perm.to_a.sort)
+      assert_equal(tuples.sort, rcv.pipe_out_perm.to_a.sort)
     }
     snd.stop_bg
     rcv.stop_bg

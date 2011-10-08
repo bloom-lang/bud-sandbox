@@ -55,6 +55,6 @@ module ReplicatedDisorderlyCart
   bloom :replicate do
     send_mcast <= action_msg {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
     cart_action <= mcast_done {|m| m.payload}
-    cart_action <= pipe_chan {|c| c.payload}
+    cart_action <= pipe_out {|c| c.payload}
   end
 end

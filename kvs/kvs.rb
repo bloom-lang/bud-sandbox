@@ -86,7 +86,7 @@ module ReplicatedKVS
     kvs.kvput <= mcast_done {|m| m.payload }
 
     # if I am a replica, store the payload of the multicast
-    kvs.kvput <= pipe_chan do |d|
+    kvs.kvput <= pipe_out do |d|
       if d.payload.fetch(1) != @addy
         d.payload
       end

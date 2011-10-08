@@ -3,8 +3,16 @@ require 'bud'
 
 module DeliveryProtocol
   state do
+    # At the sender side, used to request that a new message be delivered. The
+    # recipient address is given by the "dst" field.
     interface input, :pipe_in, [:dst, :src, :ident] => [:payload]
+
+    # At the sender side, the transport protocol will insert a corresponding
+    # "pipe_sent" fact when a message has been delivered.
     interface output, :pipe_sent, [:dst, :src, :ident] => [:payload]
+
+    # At the recipient side, this indicates that a new message has been delivered.
+    interface output, :pipe_out, [:dst, :src, :ident] => [:payload]
   end
 end
 
@@ -17,6 +25,10 @@ module BestEffortDelivery
 
   bloom :snd do
     pipe_chan <~ pipe_in
+  end
+
+  bloom :rcv do
+    pipe_out <= pipe_chan
   end
 
   bloom :done do

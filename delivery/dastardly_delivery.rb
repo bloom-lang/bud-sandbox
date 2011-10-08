@@ -37,17 +37,22 @@ module DastardlyDelivery
   end
 
   bloom :done do
+    # Report success immediately
     pipe_sent <= pipe_in
   end
 
   bloom :snd do
     temp :do_send <= (buf.argagg(:choose_rand, [], :whenbuf)*max_delay).pairs do |b,d|
-      if (buf.length != 1) || (@budtime - b.whenbuf >= d.delay):
-          b
+      if (buf.length != 1) || (@budtime - b.whenbuf >= d.delay)
+        b
       end
     end
 
     buf <- do_send
     pipe_chan <~ do_send { |s| s.msg }
+  end
+
+  bloom :rcv do
+    pipe_out <= pipe_chan
   end
 end
