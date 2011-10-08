@@ -9,12 +9,12 @@ class RED
   import ReliableDelivery => :rd
 
   state do
-    table :pipe_log, rd.pipe_sent.schema
+    table :recv_log, rd.pipe_out.schema
     scratch :msg_sent, rd.pipe_sent.schema
   end
 
   bloom do
-    pipe_log <= rd.pipe_sent
+    recv_log <= rd.pipe_out
     msg_sent <= rd.pipe_sent
   end
 
@@ -52,7 +52,11 @@ class TestReliableDelivery < Test::Unit::TestCase
 
     rd.send_msg(tuples)
     tuples.length.times { q.pop }
-    rd.sync_do { assert_equal(tuples, rd.pipe_log.to_a.sort) }
+    rd2.sync_do { assert_equal(tuples, rd2.recv_log.to_a.sort) }
+
+    # Advance to the next tick so that the final delivered tuple is deleted from
+    # the sender's buffer
+    rd.sync_do
     assert(rd.buf_empty?)
 
     rd.stop_bg
@@ -68,7 +72,7 @@ class TestReliableDelivery < Test::Unit::TestCase
 
     # transmission not 'complete'
     assert_equal(false, rd.buf_empty?)
-    rd.sync_do { assert_equal([], rd.pipe_log.to_a.sort) }
+    rd.sync_do { assert_equal([], rd.recv_log.to_a.sort) }
     rd.stop_bg
   end
 end
