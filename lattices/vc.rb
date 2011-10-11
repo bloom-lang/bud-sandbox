@@ -25,10 +25,14 @@ class VcAgent
   end
 
   bloom do
-    stdio <~ chn {|c| ["Got message @ #{port} (# = #{$addr_map[ip_port]}): #{c.inspect}"]}
+    stdio <~ chn {|c| ["Got message @ #{port} (# = #{$addr_map[ip_port]}), ID = #{c.msg}"]}
 
+    # Setup a specific messaging scenario: node 3 will (usually) receive message
+    # 3 and then 1, violating causal order
     to_send <= kickoff { [$nodes[2].ip_port, 1, true]}
     to_send <= kickoff { [$nodes[1].ip_port, 2, false]}
+    to_send <= chn {|c| [$nodes[2].ip_port, 3, false] if $addr_map[ip_port] == 1}
+    done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 1)}
 
     send_buf <= to_send {|s| [s.addr, s.msg, s.slow ? (@budtime + 2) : @budtime]}
     buf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
@@ -38,10 +42,6 @@ class VcAgent
     # When we get a message, bump the local VC
     my_vc <+ chn {|c| [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
     my_vc <+ chn {|c| Marshal.load(c.clock)}
-
-    to_send <= chn {|c| [$nodes[2].ip_port, 3, false] if $addr_map[ip_port] == 1}
-    done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 1)}
-    stdio <~ my_vc.inspected(self)
   end
 end
 
@@ -50,8 +50,9 @@ end
   b.run_bg
   $addr_map[b.ip_port] = i
   $nodes << b
-  puts "Started: #{b.port}"
 end
+
+puts "Started: #{$nodes.map{|n| n.port}.inspect}"
 
 q = Queue.new
 $nodes.last.register_callback(:done) do |t|
@@ -66,5 +67,8 @@ n.sync_do {
 q.pop
 
 $nodes.each do |n|
+  n.sync_do {
+    puts n.my_vc.inspected(n).inspect
+  }
   n.stop
 end
