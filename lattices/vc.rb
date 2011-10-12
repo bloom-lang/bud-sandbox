@@ -18,6 +18,7 @@ class VcAgent
     periodic :tik, 1
 
     lat_map :my_vc
+    lat_map :next_vc
   end
 
   bootstrap do
@@ -25,7 +26,7 @@ class VcAgent
   end
 
   bloom do
-    stdio <~ chn {|c| ["Got message @ #{port} (# = #{$addr_map[ip_port]}), ID = #{c.msg}"]}
+    stdio <~ chn {|c| ["Got message @ #{port} (# = #{$addr_map[ip_port]}), ID = #{c.msg}, msg clock = #{c.clock.inspected(self)}"]}
 
     # Setup a specific messaging scenario: node 3 will (usually) receive message
     # 3 and then 1, violating causal order
@@ -37,12 +38,15 @@ class VcAgent
     send_buf <= to_send {|s| [s.addr, s.msg, s.slow ? (@budtime + 2) : @budtime]}
     buf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
     send_buf <- buf_chosen
-    chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], my_vc]}
+    chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], next_vc]}
 
     # When we send or receive a message, bump the local VC; merge local VC with
     # VCs of incoming messages
-    my_vc <+ chn {|c| [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
-    my_vc <+ chn {|c| c.clock}
+    next_vc <= my_vc
+    next_vc <= buf_chosen { [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
+    next_vc <= chn { [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
+    next_vc <= chn {|c| c.clock}
+    my_vc <+ next_vc
   end
 end
 
