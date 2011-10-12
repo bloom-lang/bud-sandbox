@@ -37,11 +37,12 @@ class VcAgent
     send_buf <= to_send {|s| [s.addr, s.msg, s.slow ? (@budtime + 2) : @budtime]}
     buf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
     send_buf <- buf_chosen
-    chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], Marshal.dump(my_vc)]}
+    chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], my_vc]}
 
-    # When we get a message, bump the local VC
+    # When we send or receive a message, bump the local VC; merge local VC with
+    # VCs of incoming messages
     my_vc <+ chn {|c| [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
-    my_vc <+ chn {|c| Marshal.load(c.clock)}
+    my_vc <+ chn {|c| c.clock}
   end
 end
 
