@@ -25,18 +25,18 @@ class VcAgent
   end
 
   bloom do
-    stdio <~ chn {|c| ["Got message @ #{port} (node # = #{$addr_map[ip_port]}), msg ID = #{c.msg}, msg clock = #{c.clock.inspected}, local VC = #{my_vc.inspected}"]}
+    stdio <~ chn {|c| ["#{@budtime} -- Got message @ #{port} (node # = #{$addr_map[ip_port]}), msg ID = #{c.msg}, msg clock = #{c.clock.inspected}, local VC = #{my_vc.inspected}"]}
 
     # Setup a specific messaging scenario: node 3 will (usually) receive message
     # 3 followed by message 1, violating causal order
-    send_buf <= kickoff { [$nodes[2].ip_port, 1, @budtime + 2]}
-    send_buf <= kickoff { [$nodes[1].ip_port, 2, @budtime]}
-    send_buf <= chn {|c| [$nodes[2].ip_port, 3, @budtime] if $addr_map[ip_port] == 1}
+    send_buf <= kickoff { [$nodes[2].ip_port, 100, @budtime + 2]}
+    send_buf <= kickoff { [$nodes[1].ip_port, 101, @budtime]}
+    send_buf <= chn {|c| [$nodes[2].ip_port, 102, @budtime] if $addr_map[ip_port] == 1}
 
     buf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
     send_buf <- buf_chosen
     chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], next_vc]}
-    done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 1)}
+    done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 100)}
 
     # When we send or receive a message, bump the local VC; merge local VC with
     # VCs of incoming messages
