@@ -70,8 +70,9 @@ n.sync_do {
 q.pop
 
 $nodes.each do |n|
+  n.sync_do     # Make sure that the final next_vc => my_vc merge occurs
   n.sync_do {
-    puts n.my_vc.inspected
+    puts "#{n.my_vc.inspected} @ #{n.ip_port}"
   }
   n.stop
 end
