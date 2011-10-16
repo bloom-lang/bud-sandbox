@@ -41,8 +41,8 @@ class VcAgent
     # When we send or receive a message, bump the local VC; merge local VC with
     # VCs of incoming messages
     next_vc <= my_vc
-    next_vc <= buf_chosen { [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
-    next_vc <= chn { [ip_port, MaxLattice.wrap(my_vc[ip_port].reveal + 1)]}
+    next_vc <= buf_chosen { [ip_port, my_vc[ip_port] + 1]}
+    next_vc <= chn { [ip_port, my_vc[ip_port] + 1]}
     next_vc <= chn {|c| c.clock}
     my_vc <+ next_vc
   end
