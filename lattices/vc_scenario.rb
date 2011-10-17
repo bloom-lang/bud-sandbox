@@ -11,9 +11,11 @@ class VcAgent
     scratch :kickoff, [] => [:v]
     scratch :done, [] => [:v]
 
-    channel :chn, [:@addr, :msg, :from, :clock]
-    table :send_buf, [:addr, :msg, :send_at_time]
-    scratch :buf_chosen, send_buf.schema
+    channel :chn, [:@addr, :msg, :delay, :clock]
+    table :recv_buf, [:msg, :clock, :deliver_at_time]
+    table :send_buf, [:addr, :msg, :delay, :send_at_time]
+    scratch :sbuf_chosen, send_buf.schema
+    scratch :rbuf_chosen, recv_buf.schema
     periodic :tik, 1
 
     lat_map :my_vc
@@ -25,25 +27,30 @@ class VcAgent
   end
 
   bloom do
-    stdio <~ chn {|c| ["#{@budtime} -- Got message @ #{port} (node # = #{$addr_map[ip_port]}), msg ID = #{c.msg}, msg clock = #{c.clock.inspected}, local VC = #{my_vc.inspected}"]}
+    stdio <~ rbuf_chosen {|r| ["#{@budtime} -- Delivering message @ #{port} (node # = #{$addr_map[ip_port]}), msg ID = #{r.msg}, msg clock = #{r.clock.inspected}, local VC = #{my_vc.inspected}"]}
 
     # Setup a specific messaging scenario: node 3 will (usually) receive message
     # 3 followed by message 1, violating causal order
-    send_buf <= kickoff { [$nodes[2].ip_port, 100, @budtime + 2]}
-    send_buf <= kickoff { [$nodes[1].ip_port, 101, @budtime]}
-    send_buf <= chn {|c| [$nodes[2].ip_port, 102, @budtime] if $addr_map[ip_port] == 1}
+    send_buf <= kickoff { [$nodes[2].ip_port, 100, 3, @budtime]}
+    send_buf <= kickoff { [$nodes[1].ip_port, 101, 0, @budtime + 1]}
+    send_buf <= chn {|c| [$nodes[2].ip_port, 102, 0, @budtime] if $addr_map[ip_port] == 1}
 
-    buf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
-    send_buf <- buf_chosen
-    chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], next_vc]}
-    done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 100)}
+    sbuf_chosen <= send_buf {|s| s if s.send_at_time == @budtime}
+    send_buf <- sbuf_chosen
+    chn <~ sbuf_chosen {|s| [s.addr, s.msg, s.delay, next_vc]}
+
+    # At the receiver, buffer messages and deliver w/ appropriate delay
+    recv_buf <= chn {|r| [r.msg, r.clock, @budtime + r.delay]}
+    rbuf_chosen <= recv_buf {|r| r if r.deliver_at_time == @budtime}
+    recv_buf <- rbuf_chosen
+    done <= rbuf_chosen {|r| [true] if ($addr_map[ip_port] == 2 and r.msg == 100)}
 
     # If there are any incoming or outgoing messages, bump the local VC; merge
     # local VC with VCs of incoming messages
     next_vc <= my_vc
-    next_vc <= buf_chosen { [ip_port, my_vc[ip_port] + 1]}
-    next_vc <= chn { [ip_port, my_vc[ip_port] + 1]}
-    next_vc <= chn {|c| c.clock}
+    next_vc <= sbuf_chosen { [ip_port, my_vc[ip_port] + 1]}
+    next_vc <= rbuf_chosen { [ip_port, my_vc[ip_port] + 1]}
+    next_vc <= rbuf_chosen {|c| c.clock}
     my_vc <+ next_vc
   end
 end
