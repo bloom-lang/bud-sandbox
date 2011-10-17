@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'delivery/reliable_delivery'
+require 'delivery/reliable'
 require 'delivery/multicast'
 require 'ordering/nonce'
 require 'ordering/serializer'

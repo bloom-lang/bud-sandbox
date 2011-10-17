@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'delivery/reliable_delivery'
+require 'delivery/reliable'
 require 'enumerator'
 
 class RED

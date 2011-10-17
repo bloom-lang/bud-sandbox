@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'test/unit'
 require 'bud'
-require 'delivery/dastardly_delivery'
+require 'delivery/dastardly'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
