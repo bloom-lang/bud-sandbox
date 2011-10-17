@@ -38,8 +38,8 @@ class VcAgent
     chn <~ buf_chosen {|s| [s.addr, s.msg, $addr_map[ip_port], next_vc]}
     done <= chn {|c| [true] if ($addr_map[ip_port] == 2 and c.msg == 100)}
 
-    # When we send or receive a message, bump the local VC; merge local VC with
-    # VCs of incoming messages
+    # If there are any incoming or outgoing messages, bump the local VC; merge
+    # local VC with VCs of incoming messages
     next_vc <= my_vc
     next_vc <= buf_chosen { [ip_port, my_vc[ip_port] + 1]}
     next_vc <= chn { [ip_port, my_vc[ip_port] + 1]}
