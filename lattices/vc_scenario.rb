@@ -39,7 +39,8 @@ class VcAgent
     send_buf <- sbuf_chosen
     chn <~ sbuf_chosen {|s| [s.addr, s.msg, s.delay, next_vc]}
 
-    # At the receiver, buffer messages and deliver w/ appropriate delay
+    # At the receiver, simulate network delay by buffering messages for the # of
+    # ticks (seconds) requested by the message sender.
     recv_buf <= chn {|r| [r.msg, r.clock, @budtime + r.delay]}
     rbuf_chosen <= recv_buf {|r| r if r.deliver_at_time == @budtime}
     recv_buf <- rbuf_chosen
@@ -52,6 +53,10 @@ class VcAgent
     next_vc <= rbuf_chosen { [ip_port, my_vc[ip_port] + 1]}
     next_vc <= rbuf_chosen {|c| c.clock}
     my_vc <+ next_vc
+
+    # A violation of causal order has occurred if we receive a message that
+    # strictly precedes our local clock
+    stdio <~ rbuf_chosen {|r| ["Message #{r.msg} violates causal order! Msg clock = #{r.clock.inspected}, local clock = #{my_vc.inspected}"] if r.clock.lt(my_vc)}
   end
 end
 
