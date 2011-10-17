@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 
-require 'delivery/reliable_delivery'
+require 'delivery/reliable'
 require 'voting/voting'
 require 'membership/membership.rb'
 
