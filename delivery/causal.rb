@@ -2,44 +2,57 @@ require "rubygems"
 require "bud"
 require "delivery/delivery"
 
+# This is an implementation of a protocol for point-to-point causal delivery,
+# based on "Schiper, A., Eggli, J., & Sandoz, A. (1989). A New Algorithm To
+# Implement Causal Ordering. International Workshop on Distributed Algorithms."
+#
 # XXX: compose with reliable delivery
 module CausalDelivery
   include DeliveryProtocol
 
   state do
-    channel :chn, [:@dst, :src, :ident] => [:payload, :clock]
-    table :recv_buf, chn.schema
-    scratch :buf_chosen, recv_buf.schema
+    channel :chn, [:@dst, :src, :ident] => [:payload, :clock, :ord_buf]
 
+    # Local vector clock
     lat_map :my_vc
     lat_map :next_vc
+
+    # Our knowledge of the VCs at other nodes
+    lat_map :ord_buf
+
+    # Received messages that haven't yet been delivered
+    table :recv_buf, chn.schema
+    scratch :buf_chosen, recv_buf.schema
   end
 
   bootstrap do
     my_vc <= [[ip_port, MaxLattice.wrap(0)]]
   end
 
-  bloom :vc_update do
-    # If there are any incoming or outgoing messages, bump the local VC; merge
-    # local VC with VCs of incoming messages
+  bloom :update_vc do
     next_vc <= my_vc
     next_vc <= pipe_in { [ip_port, my_vc[ip_port] + 1]}
-    next_vc <= chn { [ip_port, my_vc[ip_port] + 1]}
-    next_vc <= chn {|c| c.clock}
+    next_vc <= buf_chosen { [ip_port, my_vc[ip_port] + 1]}
+    next_vc <= buf_chosen {|m| m.clock}
     my_vc <+ next_vc
   end
 
-  bloom :msg_io do
-    chn <~ pipe_in {|m| [m.dst, m.src, m.ident, m.payload, next_vc]}
-    pipe_out <= pipe_in         # Report success immediately: unreliable delivery
-    recv_buf <= chn
+  bloom :outbound_msg do
+    chn <~ pipe_in {|p| [p.dst, p.src, p.ident, p.payload, next_vc, ord_buf]}
+    ord_buf <+ pipe_in {|p| [p.dst, next_vc]}
+    # Report success immediately
+    # XXX: unreliable delivery is problematic
+    pipe_out <= pipe_in
   end
 
-  bloom :causal_pred do
-    # Deliver all messages that causally precede ("happen before") our local
-    # vector clock
-    buf_chosen <= recv_buf {|b| b if b.clock < next_vc}
+  bloom :inbound_msg do
+    stdio <~ chn {|c| ["Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, VC = #{c.clock.inspected}, ord_buf = #{c.ord_buf.inspected}"]}
+
+    recv_buf <= chn
+    buf_chosen <= recv_buf {|m| m if m.ord_buf[ip_port].lt_eq(my_vc)}
     recv_buf <- buf_chosen
-    pipe_sent <= buf_chosen
+
+    pipe_sent <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
+    ord_buf <= buf_chosen {|m| m.ord_buf}
   end
 end
