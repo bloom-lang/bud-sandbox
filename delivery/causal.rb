@@ -40,20 +40,20 @@ module CausalDelivery
   bloom :outbound_msg do
     chn <~ pipe_in {|p| [p.dst, p.src, p.ident, p.payload, next_vc, ord_buf]}
     ord_buf <+ pipe_in {|p| [p.dst, next_vc]}
-    # Report success immediately
-    # XXX: unreliable delivery is problematic
-    pipe_out <= pipe_in
+    pipe_out <= pipe_in     # Unreliable delivery for now
   end
 
   bloom :inbound_msg do
-    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, msg ord_buf = #{c.ord_buf.inspected}, local VC: #{my_vc.inspected}, local ord_buf: #{ord_buf.inspected}"]}
-    stdio <~ pipe_sent {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
-
     recv_buf <= chn
     buf_chosen <= recv_buf {|m| m if m.ord_buf[ip_port].lt_eq(my_vc)}
     recv_buf <- buf_chosen
 
     pipe_sent <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
     ord_buf <+ buf_chosen {|m| m.ord_buf}
+  end
+
+  bloom :msg_log do
+    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, msg ord_buf = #{c.ord_buf.inspected}, local VC: #{my_vc.inspected}, local ord_buf: #{ord_buf.inspected}"]}
+    stdio <~ pipe_sent {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
   end
 end
