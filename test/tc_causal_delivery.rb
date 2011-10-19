@@ -15,10 +15,13 @@ class TestCausalDelivery < Test::Unit::TestCase
 
     a, b, c = agents
     a.sync_do {
-      a.pipe_in <+ [[b.ip_port, a.ip_port, 1, "foo"]]
+      a.pipe_in <+ [[b.ip_port, a.ip_port, 1, "foo1"]]
     }
     a.sync_do {
-      a.pipe_in <+ [[c.ip_port, a.ip_port, 2, "bar"]]
+      a.pipe_in <+ [[b.ip_port, a.ip_port, 2, "foo2"]]
+    }
+    a.sync_do {
+      a.pipe_in <+ [[c.ip_port, a.ip_port, 3, "bar"]]
     }
 
     sleep 3

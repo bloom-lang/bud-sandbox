@@ -2,9 +2,9 @@ require "rubygems"
 require "bud"
 require "delivery/delivery"
 
-# This is an implementation of a protocol for point-to-point causal delivery,
-# based on "Schiper, A., Eggli, J., & Sandoz, A. (1989). A New Algorithm To
-# Implement Causal Ordering. International Workshop on Distributed Algorithms."
+# A protocol for point-to-point causal delivery, based on "Schiper, A., Eggli,
+# J., & Sandoz, A. (1989). A New Algorithm To Implement Causal Ordering.
+# International Workshop on Distributed Algorithms."
 #
 # XXX: compose with reliable delivery
 module CausalDelivery
@@ -46,13 +46,14 @@ module CausalDelivery
   end
 
   bloom :inbound_msg do
-    stdio <~ chn {|c| ["Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, VC = #{c.clock.inspected}, ord_buf = #{c.ord_buf.inspected}"]}
+    stdio <~ chn {|c| ["Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, ord_buf = #{c.ord_buf.inspected}"]}
+    stdio <~ pipe_sent {|m| ["Delivering message @ #{port}: #{m.ident}"]}
 
     recv_buf <= chn
     buf_chosen <= recv_buf {|m| m if m.ord_buf[ip_port].lt_eq(my_vc)}
     recv_buf <- buf_chosen
 
     pipe_sent <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
-    ord_buf <= buf_chosen {|m| m.ord_buf}
+    ord_buf <+ buf_chosen {|m| m.ord_buf}
   end
 end
