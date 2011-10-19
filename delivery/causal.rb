@@ -46,8 +46,8 @@ module CausalDelivery
   end
 
   bloom :inbound_msg do
-    stdio <~ chn {|c| ["Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, ord_buf = #{c.ord_buf.inspected}"]}
-    stdio <~ pipe_sent {|m| ["Delivering message @ #{port}: #{m.ident}"]}
+    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, msg ord_buf = #{c.ord_buf.inspected}, local VC: #{my_vc.inspected}, local ord_buf: #{ord_buf.inspected}"]}
+    stdio <~ pipe_sent {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
 
     recv_buf <= chn
     buf_chosen <= recv_buf {|m| m if m.ord_buf[ip_port].lt_eq(my_vc)}
