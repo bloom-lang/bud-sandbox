@@ -6,6 +6,13 @@ require "delivery/delivery"
 # J., & Sandoz, A. (1989). A New Algorithm To Implement Causal Ordering.
 # International Workshop on Distributed Algorithms."
 #
+# The paper describes an optional scheme for deleting obselete ord_buf pairs: if
+# site s2 gets a message m from site s1, and s2.ord_buf[s1].lt_eq(m.clock) is
+# true, we can delete s2.ord_buf[s1]: we know that s1's clock is at least
+# m.clock, which means it has passed the time indicated by s2.ord_buf[s1]. This
+# isn't implemented, because (a) it would make ord_buf not a lattice (b) it
+# seems of limited value anyway.
+#
 # XXX: compose with reliable delivery
 module CausalDelivery
   include DeliveryProtocol
