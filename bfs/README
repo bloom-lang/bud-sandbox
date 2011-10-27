@@ -2,8 +2,8 @@ Bloom^ Filesystem
 ---------------------------------------------------------------------------
 
 BFS implements a chunked, distributed filesystem (mostly) in the Bloom
-language.  BFS is architecturally based on BOOMFS, which is itself based on
-the Google Filesystem (GFS).  As in GFS, a single master node manages
+language.  BFS is architecturally based on BOOMFS [1], which is itself based
+on the Google Filesystem (GFS) [2].  As in GFS, a single master node manages
 filesystem metadata, while data blocks are replicated and stored on a large
 number of storage nodes.  Writing or reading data involves a multi-step
 protocol in which clients interact with the master, retrieving metadata and
@@ -32,7 +32,7 @@ HBMaster collects heartbeat messages from storage nodes and maintains
 summary information about chunk distribution and node state.
 
 BFSDatanode represents the storage node logic.  It is currently fairly
-trivial: it polls the data directory for copies of chunks, and uses
+trivial: it polls the data directory for copies of chunks, and uses the
 HeartbeatProtocol to communicate its list of local chunks to the master.
 
 BFSDataProtocol implements the data transfer protocol run on clients and
@@ -47,6 +47,9 @@ BFSDataProtocol.
 
 BFSMaster glues together the ChunkedFSMaster API with the BFSClient API.
 
+[1] Alvaro, P., Condie, T., Conway, N., Elmeleegy, K., Hellerstein, J. M., &
+Sears, R. (2010). BOOM Analytics: exploring data-centric, declarative
+programming for the cloud. EuroSys.
 
----------------------------------------------------------------------------
-^ Coming soon: BUD, an alpha release of the Bloom language. (3/25/2011)
+[2] Ghemawat, S., Gobioff, H., & Leung, S.-T. (2003). The Google File
+System. SOSP.
