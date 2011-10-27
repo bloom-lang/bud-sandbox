@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 require 'delivery/reliable'
 require 'voting/voting'
 require 'membership/membership.rb'
@@ -50,8 +47,6 @@ module ReliableMulticast
   end
 
   bloom :done_mcast do
-    mcast_done <= vote_status do |v|
-      "VEE: " + v.inspect
-    end
+    mcast_done <= victor {|v| [v.ident, "VEE: #{v.inspect}"]}
   end
 end
