@@ -3,53 +3,41 @@ require 'bud'
 require 'delivery/delivery'
 
 module OrderedDelivery
-  include NewDeliveryProtocol
-  include DeliveryProtocol
-  import ReliableDelivery => :rd
-
-  state do
-    table :counter, [:val]
-    scratch :helper, [] => [:cnt]
-    channel :ack, [:@src, :dst, :ident, :count]
-    channel :pipe_chan, [@dst, :src, :ident, :count] => [:payload]
-    table :count_in [:dst, :src, :ident, :count] => [:payload]
-    table :to_be_del, [:dst, :src, :ident, :count] => [:payload]
-    table :last_del, [:value]
-    table :buffer, [:dst, :src, :ident, :count] => [:payload]   
-  end
-  
-  bootstrap do
-    counter <= [[0]]
-    last_del <= [[0]]
-  end
-
-
-  bloom :order do
-    count_in <= (pipe_in * counter).pairs do |p, c|
-      [p.dst, p.src, p.ident, c.val, p.payload]
-      end #Does this give different values if there is more than 1 message in pipe_in?
-    helper <= pipe_in.group(nil, count); #check this
-    counter <+- (counter*helper).pairs do |c, h|
-      [c.val + h.cnt]
-    end
-    buffer <= count_in
-    end
+    include DeliveryProtocol
     
-
-  bloom :snd do
-    to_be_del <= buffer.argmin([buffer.dst, buffer,src], buffer.count)
-    pipe_chan <~ to_be_del
-  end
-
-  bloom :rcv do
-    pipe_out <= pipe_chan {|p| [p.src, p.dst, p.ident, p.payload]}
-  end
-
-  bloom :done do
-    temp :acked <= (buffer*pipe_out).lefts(:ident => :ident)
-    pipe_sent <= pipe_out
-    last_delivered <= counter {|c| [c.val + 1]}
-  end
+    state do
+    table :seq, [:val]
+    channel :pipe_chan, [@dst, :src, :ident, :seq] => [:payload]
+    table :seq_in [:dst, :src, :ident, :seq] => [:payload]
+    table :to_be_del, [:dst, :src, :ident, :seq] => [:payload]
+    table :last_del, [:value] 
 end
 
+bootstrap do
+    seq <= [[0]]
+    last_del <= [[0]]
+end
 
+bloom :order do
+    #Check this line...  Goal is to set seq to index.
+    seq_in <= pipe_in.sort.each_with_index.map {|s, d, i, p, seq| [s, d, i, seq, p]}
+    seq_in <= (seq_in * seq).pairs do |p, s|
+        [p.dst, p.src, p.ident, s.val + p.seq, p.payload]
+    end 
+    seq <+- seq_in.argmax([seq_in.seq], seq_in.seq)
+end
+end
+
+bloom :snd do
+    pipe_chan <~ seq_in
+end
+
+bloom :rcv do
+    to_be_del <=  pipe_chan.argmin([pipe_chan.seq], pipe_chan.seq)
+end
+
+bloom :done do
+    pipe_sent <= to_be_del {|p| [p.src, p.dst, p.ident, p.payload]}
+    last_delivered <= to_be_del {|t| [t.seq]} 
+end
+end
