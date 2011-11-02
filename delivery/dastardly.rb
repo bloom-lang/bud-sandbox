@@ -1,5 +1,3 @@
-require 'rubygems'
-require 'bud'
 require 'delivery/delivery'
 
 #randomly reorders messages, but reports success upon first send

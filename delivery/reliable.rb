@@ -1,5 +1,3 @@
-require 'rubygems'
-require 'bud'
 require 'delivery/delivery'
 
 # Note that this provides at-least-once delivery. If you need exactly-once, the
