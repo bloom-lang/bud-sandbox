@@ -63,9 +63,8 @@ class TestMC < Test::Unit::TestCase
     mc.run_bg
 
     resps = mc.sync_callback(mc.send_mcast.tabname, [[1, 'foobar']], mc.mcast_done.tabname)
-    resps.each do |resp|
-      assert_equal(resp.ident, 1)
-    end
+    assert_equal([[1, 'foobar']], resps.to_a.sort)
+
     assert_equal(mc2.rcv_perm.length, 1)
     assert_equal(mc3.rcv_perm.length, 1)
     assert(mc2.rcv_perm.include? [1, 'foobar'])
@@ -75,5 +74,4 @@ class TestMC < Test::Unit::TestCase
     mc2.stop_bg
     mc3.stop_bg
   end
-
 end
