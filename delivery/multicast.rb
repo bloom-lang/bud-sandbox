@@ -47,6 +47,6 @@ module ReliableMulticast
   end
 
   bloom :done_mcast do
-    mcast_done <= victor {|v| [v.ident, "VEE: #{v.inspect}"]}
+    mcast_done <= victor {|v| v.content}
   end
 end
