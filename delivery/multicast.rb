@@ -5,6 +5,8 @@ require 'membership/membership.rb'
 module MulticastProtocol
   include MembershipProtocol
 
+  # XXX: This should provide an interface for the recipient-side to read the
+  # multicast w/o needing to peek at pipe_in.
   state do
     interface input, :send_mcast, [:ident] => [:payload]
     interface output, :mcast_done, [:ident] => [:payload]
