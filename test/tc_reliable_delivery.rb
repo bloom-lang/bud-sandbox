@@ -59,8 +59,8 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd.sync_do
     assert(rd.buf_empty?)
 
-    rd.stop_bg
-    rd2.stop_bg
+    rd.stop
+    rd2.stop
   end
 
   def test_not_delivered
@@ -73,6 +73,6 @@ class TestReliableDelivery < Test::Unit::TestCase
     # transmission not 'complete'
     assert_equal(false, rd.buf_empty?)
     rd.sync_do { assert_equal([], rd.recv_log.to_a.sort) }
-    rd.stop_bg
+    rd.stop
   end
 end

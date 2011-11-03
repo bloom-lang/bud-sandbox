@@ -75,7 +75,7 @@ class TU < Test::Unit::TestCase
     end
     
     assert(true)
-    xm.stop_bg
+    xm.stop
   end
   
   def test_two
@@ -88,7 +88,7 @@ class TU < Test::Unit::TestCase
     xm.lock(2, "fuq")
     xm.lock(2, "foo")
 
-    xm.stop_bg
+    xm.stop
 
     assert(true)
   end

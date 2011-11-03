@@ -61,8 +61,8 @@ class TestDemonicDelivery < Test::Unit::TestCase
     rcv.sync_do {
       assert_equal(tuples.sort, rcv.pipe_out_perm.to_a.sort)
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 
   def test_dd_delivery_demonic
@@ -101,7 +101,7 @@ class TestDemonicDelivery < Test::Unit::TestCase
       assert_equal(tuples.sort.slice(2, tuples.length),
                    rcv.pipe_out_perm.to_a.sort)
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 end

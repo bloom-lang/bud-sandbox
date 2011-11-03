@@ -28,7 +28,7 @@ class TestLamport < Test::Unit::TestCase
       lt.retrieve_msg <+ [[lt.get_stamped.first[1]]]
     }
     lt.sync_do{ assert_equal([LamportMsg.new(1, "bar"), "bar"], lt.msg_return.first) }
-    lt.stop_bg
+    lt.stop
   end
 
   def test_advance_clocks
@@ -39,6 +39,6 @@ class TestLamport < Test::Unit::TestCase
     lt.sync_do{ lt.retrieve_msg <+ [[LamportMsg.new(20, "long")]] }
     lt.sync_do{ lt.to_stamp <+ [["bar"]] }
     lt.sync_do{ assert_equal(["bar", LamportMsg.new(22, "bar")], lt.get_stamped.first) }
-    lt.stop_bg
+    lt.stop
   end
 end

@@ -33,7 +33,7 @@ class TestKVS < Test::Unit::TestCase
     v.run_bg
     #add_members(v, "localhost:12352")
     assert_raise(Bud::KeyConstraintError)  { workload2(v) }
-    v.stop_bg
+    v.stop
   end
 
   def test_wl1
@@ -52,8 +52,8 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do{ assert_equal("bak", v.kvs__kvstate.first[1]) }
     v2.sync_do{ assert_equal(1, v2.kvs__kvstate.length) }
     v2.sync_do{ assert_equal("bak", v2.kvs__kvstate.first[1]) }
-    v.stop_bg
-    v2.stop_bg
+    v.stop
+    v2.stop
   end
 
   def test_simple
@@ -69,7 +69,7 @@ class TestKVS < Test::Unit::TestCase
       assert_equal("bak", v.kvget_response.first[2])
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_del
@@ -82,7 +82,7 @@ class TestKVS < Test::Unit::TestCase
     v.sync_do { v.kvdel <+ [['foo', 23525]] }
     v.sync_do
     v.sync_do { assert_equal(0, v.kvstate.length) }
-    v.stop_bg
+    v.stop
   end
 
   def ntest_persistent_kvs
@@ -94,16 +94,16 @@ class TestKVS < Test::Unit::TestCase
     workload1(p)
     p.sync_do { assert_equal(1, p.kvstate.length) }
     p.sync_do { assert_equal("bak", p.kvstate.first[1]) }
-    p.stop_bg
+    p.stop
     
     p2 = SSPKVS.new(:dbm_dir => dir)
     p2.run_bg
-    p2.sync_do{}
-    p2.sync_do{}
-    p2.sync_do{}
+    p2.sync_do
+    p2.sync_do
+    p2.sync_do
     p2.sync_do { assert_equal(1, p2.kvstate.length) }
     p2.sync_do { assert_equal("bak", p2.kvstate.first[1]) }
-    p2.stop_bg
+    p2.stop
   end   
 
 =begin
