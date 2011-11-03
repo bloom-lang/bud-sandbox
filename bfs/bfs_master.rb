@@ -58,7 +58,7 @@ class BFSMasterServer
     end
   end
 
-  def stop_bg
+  def stop
     unregister_callback(@task)
     super
   end
@@ -67,4 +67,3 @@ class BFSMasterServer
     DataProtocolClient.send_replicate(c, r, o)
   end
 end
-

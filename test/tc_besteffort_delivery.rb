@@ -38,7 +38,7 @@ class TestBEDelivery < Test::Unit::TestCase
       assert_equal(1, rd.pipe_sent_perm.length)
       assert_equal(sendtup, rd.pipe_sent_perm.first)
     }
-    rd.stop_bg
+    rd.stop
   end
 
   def test_bed_delivery
@@ -67,7 +67,7 @@ class TestBEDelivery < Test::Unit::TestCase
     rcv.sync_do {
       assert_equal(tuples.sort, rcv.pipe_out_perm.to_a.sort)
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 end
