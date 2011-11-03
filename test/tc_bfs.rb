@@ -76,8 +76,8 @@ class TestBFS < Test::Unit::TestCase
     assert_equal(["3"], four)
 
     #dump_internal_state(b)
-    b.stop_bg
-    s.stop_bg
+    b.stop
+    s.stop
   end
 
   def dump_internal_state(rt)
@@ -94,7 +94,7 @@ class TestBFS < Test::Unit::TestCase
     b = FSC.new(@opts)
     b.run_bg
     do_basic_fs_tests(b)
-    b.stop_bg
+    b.stop
   end
 
   def test_rms
@@ -129,8 +129,8 @@ class TestBFS < Test::Unit::TestCase
     m.sync_do
     m.sync_do
 
-    m.stop_bg
-    b.stop_bg
+    m.stop
+    b.stop
   end
   
   def new_datanode(dp, master_port)
@@ -150,8 +150,8 @@ class TestBFS < Test::Unit::TestCase
     do_addchunks(b)
 
     dn.stop_datanode
-    #dn2.stop_bg
-    b.stop_bg
+    #dn2.stop
+    b.stop
   end
 
   def assert_resp(inst, reqid, data)

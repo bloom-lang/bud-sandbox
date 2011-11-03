@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 require 'delivery/reliable'
 require 'voting/voting'
 require 'membership/membership.rb'
@@ -8,6 +5,8 @@ require 'membership/membership.rb'
 module MulticastProtocol
   include MembershipProtocol
 
+  # XXX: This should provide an interface for the recipient-side to read the
+  # multicast w/o needing to peek at pipe_in.
   state do
     interface input, :send_mcast, [:ident] => [:payload]
     interface output, :mcast_done, [:ident] => [:payload]
@@ -50,8 +49,6 @@ module ReliableMulticast
   end
 
   bloom :done_mcast do
-    mcast_done <= vote_status do |v|
-      "VEE: " + v.inspect
-    end
+    mcast_done <= victor {|v| v.content}
   end
 end

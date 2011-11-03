@@ -70,8 +70,8 @@ class TestDastardlyDelivery < Test::Unit::TestCase
       assert_not_equal(tuples,
                        rcv.pipe_out_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 
   def test_dd_delivery_send_once
@@ -106,7 +106,7 @@ class TestDastardlyDelivery < Test::Unit::TestCase
       assert_equal(tuples[0],
                    rcv.pipe_out_perm.to_a[0][0])
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 end

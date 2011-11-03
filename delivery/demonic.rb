@@ -1,5 +1,3 @@
-require 'rubygems'
-require 'bud'
 require 'delivery/delivery'
 
 #intentionally drops messages, but reports success

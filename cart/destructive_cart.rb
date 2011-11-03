@@ -10,7 +10,7 @@ module DestructiveCart
   include KVSProtocol
   
   def delete_one(a, i)
-    a.delete_at(a.index(i))
+    a.delete_at(a.index(i)) unless a.index(i).nil?
     return a
   end
 

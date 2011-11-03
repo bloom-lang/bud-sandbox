@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 module DeliveryProtocol
   state do
     # At the sender side, used to request that a new message be delivered. The

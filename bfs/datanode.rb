@@ -64,6 +64,6 @@ module BFSDatanode
 
   def stop_datanode
     @dp_server.stop_server
-    stop_bg
+    stop
   end
 end

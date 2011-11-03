@@ -45,7 +45,7 @@ class TestSer < Test::Unit::TestCase
       gn.sync_do { rem = gn.nonce.first }
       assert_equal(t * 3 + 1, rem[0])
     end
-    gn.stop_bg
+    gn.stop
   end
 
   def test_simple_nonce
@@ -62,7 +62,7 @@ class TestSer < Test::Unit::TestCase
       # doesn't work.
       #sn.localtick <~ [['1234']]
     end
-    sn.stop_bg
+    sn.stop
   end
 
   def test_serialization
@@ -93,7 +93,7 @@ class TestSer < Test::Unit::TestCase
         end
       end
     }
-    st.stop_bg
+    st.stop
   end
 end
 
@@ -112,7 +112,7 @@ class TestAssign < Test::Unit::TestCase
       r = b.sync_callback(:dump, v.shuffle, :pickup)
       assert_equal(golden, r.to_a.sort)
     end
-    b.stop_bg
+    b.stop
   end
 
   class BasicSortAssignP
@@ -131,6 +131,6 @@ class TestAssign < Test::Unit::TestCase
       golden = (start..fin).to_a.zip(v)
       assert_equal(golden, r.to_a.sort)
     end
-    b.stop_bg
+    b.stop
   end
 end

@@ -45,12 +45,33 @@ class TestMC < Test::Unit::TestCase
     mc.sync_do{ assert_equal(1, mc.mcast_done_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc.mcast_done_perm.first.payload) }
     mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
-    return
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
 
-    mc.stop_bg
-    mc2.stop_bg
-    mc3.stop_bg
+    mc.stop
+    mc2.stop
+    mc3.stop
+  end
+
+  def test_reliable
+    mc = RMC.new
+    mc2 = RMC.new
+    mc3 = RMC.new
+
+    mc2.run_bg; mc3.run_bg
+    mc.add_member <+ [[mc2.ip_port], [mc3.ip_port]]
+    mc.run_bg
+
+    resps = mc.sync_callback(mc.send_mcast.tabname, [[1, 'foobar']], mc.mcast_done.tabname)
+    assert_equal([[1, 'foobar']], resps.to_a.sort)
+
+    assert_equal(mc2.rcv_perm.length, 1)
+    assert_equal(mc3.rcv_perm.length, 1)
+    assert(mc2.rcv_perm.include? [1, 'foobar'])
+    assert(mc3.rcv_perm.include? [1, 'foobar'])
+
+    mc.stop
+    mc2.stop
+    mc3.stop
   end
 end

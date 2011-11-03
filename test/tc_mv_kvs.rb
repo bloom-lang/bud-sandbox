@@ -50,7 +50,7 @@ class TestMVKVS < Test::Unit::TestCase
                    v.kvget_response.to_a.sort)
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_vector_mvkvs
@@ -70,7 +70,7 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal([1,2], resp.map { |r| r[2]["testclient"] }.sort)
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_causal_mvkvs
@@ -119,7 +119,7 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal(0, v.kvget_response.length)
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_mr_mvkvs
@@ -151,7 +151,7 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal("bar", v.kvget_response.first.to_a[3])
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_ryw_mvkvs
@@ -171,7 +171,7 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal([2], resp.map { |r| r[2]["testclient"] }.sort)
     }
 
-    v.stop_bg
+    v.stop
   end
 
   def test_mw_mvkvs
@@ -221,6 +221,6 @@ class TestMVKVS < Test::Unit::TestCase
       assert_equal([-1, 2], resp.map { |r| r[2]["testclient2"] }.sort)
     }
 
-    v.stop_bg
+    v.stop
   end
 end
