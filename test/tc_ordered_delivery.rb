@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 require 'test/unit'
-require 'delivery/new_ordered'
+require 'delivery/ordered'
 
 class OrdAgent
   include Bud
