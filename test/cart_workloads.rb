@@ -2,7 +2,7 @@ require 'rubygems'
 require 'bud'
 
 module CartWorkloads
-  def run_cart(program, client, actions)
+  def run_cart(program, client, actions=3)
     addy = "#{program.ip}:#{program.port}"
     contact = client.nil? ? program : client
     contact.async_do {
