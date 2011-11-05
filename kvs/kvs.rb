@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'delivery/reliable_delivery'
+require 'delivery/reliable'
 require 'delivery/multicast'
 require 'ordering/nonce'
 require 'ordering/serializer'
@@ -94,7 +94,7 @@ module ReplicatedKVS
     end
 
     # if I am a replica, store the payload of the multicast
-    kvs.kvput <= pipe_chan do |d|
+    kvs.kvput <= pipe_out do |d|
       if d.payload.fetch(1) != @addy and d.payload[0] == "put"
         puts "PL is #{d.payload[1]} class #{d.payload[1].class} siz #{d.payload.length} and PL izz #{d.payload[0]} class #{d.payload[0].class}"
         #puts "PL is #{d.payload} class #{d.payload.class} siz #{d.payload.length}"
@@ -117,7 +117,7 @@ module ReplicatedKVS
       end
     end
 
-    kvs.kvdel <= pipe_chan do |d|
+    kvs.kvdel <= pipe_out do |d|
       if d.payload.fetch(1) != @addy and d.payload[0] == "del"
         d.payload[1]
       end

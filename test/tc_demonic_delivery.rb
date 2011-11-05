@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'test/unit'
 require 'bud'
-require 'delivery/demonic_delivery'
+require 'delivery/demonic'
 
 #this is basically a copy of the reliable_delivery test class
 #this isn't pretty, but performs the correct test
@@ -10,9 +10,9 @@ class DemonD
   import DemonicDelivery => :dd
 
   state do
-    table :pipe_chan_perm, dd.pipe_chan.schema
+    table :pipe_out_perm, dd.pipe_out.schema
     table :pipe_sent_perm, dd.pipe_sent.schema
-    scratch :got_pipe, dd.pipe_chan.schema
+    scratch :got_pipe, dd.pipe_out.schema
 
     # XXX: only necessary because we don't rewrite sync_do blocks
     scratch :send_msg, dd.pipe_in.schema
@@ -23,8 +23,8 @@ class DemonD
   bloom do
     dd.set_drop_pct <= set_drop_pct_wrap
     pipe_sent_perm <= dd.pipe_sent
-    pipe_chan_perm <= dd.pipe_chan
-    got_pipe <= dd.pipe_chan
+    pipe_out_perm <= dd.pipe_out
+    got_pipe <= dd.pipe_out
     dd.pipe_in <= send_msg
   end
 end
@@ -59,10 +59,10 @@ class TestDemonicDelivery < Test::Unit::TestCase
     tuples.length.times { q.pop }
 
     rcv.sync_do {
-      assert_equal(tuples.sort, rcv.pipe_chan_perm.to_a.sort)
+      assert_equal(tuples.sort, rcv.pipe_out_perm.to_a.sort)
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 
   def test_dd_delivery_demonic
@@ -99,9 +99,9 @@ class TestDemonicDelivery < Test::Unit::TestCase
 
     rcv.sync_do {
       assert_equal(tuples.sort.slice(2, tuples.length),
-                   rcv.pipe_chan_perm.to_a.sort)
+                   rcv.pipe_out_perm.to_a.sort)
     }
-    snd.stop_bg
-    rcv.stop_bg
+    snd.stop
+    rcv.stop
   end
 end

@@ -11,7 +11,6 @@ module CartWorkloads
       contact.client_action <+ [[addy, 1234, 125, 'diapers', 'Add']]
       contact.client_action <+ [[addy, 1234, 126, 'meat', 'Del']]
 
-  
       (0..actions).each do |i|
         contact.client_action <+ [[addy, 1234, 127 + i, 'beer', 'Add']]
       end

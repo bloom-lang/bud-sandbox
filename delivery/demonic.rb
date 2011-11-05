@@ -1,5 +1,3 @@
-require 'rubygems'
-require 'bud'
 require 'delivery/delivery'
 
 #intentionally drops messages, but reports success
@@ -26,7 +24,6 @@ module DemonicDelivery
 
   bloom :control do
     drop_pct <+- set_drop_pct
-#    drop_pct <+ set_drop_pct
   end
 
   bloom :snd do
@@ -35,6 +32,10 @@ module DemonicDelivery
         i
       end
     end
+  end
+
+  bloom :rcv do
+    pipe_out <= pipe_chan
   end
 
   bloom :done do

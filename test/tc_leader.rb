@@ -6,7 +6,7 @@ require 'paxos/leader'
 class LE
   include Bud
   include LeaderElection
-end 
+end
 
 class TestLE < Test::Unit::TestCase
   def initialize(args)
@@ -20,12 +20,12 @@ class TestLE < Test::Unit::TestCase
     v.my_id <+ [[1]]
     v.seed <+ [[nil]]
     v.init_le <+ [[nil]]
-    v.current_state << ['election', "127.0.0.1:10001", 0, Time.new.to_f, 0.5] 
-  
+    v.current_state << ['election', "127.0.0.1:10001", 0, Time.new.to_f, 0.5]
+
     v.run_bg
     sleep 3
 
-    v.vote_status.each {|s| puts "VOTe StATUS: #{s.inspect}" } 
+    v.vote_status.each {|s| puts "VOTe StATUS: #{s.inspect}" }
 
     assert_equal(1, v.current_state.length)
     v.current_state.each do |c|
@@ -33,7 +33,7 @@ class TestLE < Test::Unit::TestCase
       assert_equal("leader", c.state)
     end
 
-    v.stop_bg
+    v.stop
   end
 
   def startup(ip, port, id)
@@ -44,18 +44,16 @@ class TestLE < Test::Unit::TestCase
     rt.my_id <+ [[id]]
     rt.seed <+ [[nil]]
     rt.init_le <+ [[nil]]
-    rt.current_state << ['election', "#{ip}:#{port}", id, Time.new.to_f, 0.5 ] 
+    rt.current_state << ['election', "#{ip}:#{port}", id, Time.new.to_f, 0.5 ]
     rt.run_bg
     sleep 1
     return rt
   end
 
   def test_le_dist
-
-    v = startup("localhost", 20001, 1)  
-    v2 = startup("localhost", 20002, 2)  
-    #v3 = startup("localhost", 20003, 3)  
-
+    v = startup("localhost", 20001, 1)
+    v2 = startup("localhost", 20002, 2)
+    #v3 = startup("localhost", 20003, 3)
 
     sleep 5
 
@@ -66,7 +64,7 @@ class TestLE < Test::Unit::TestCase
 
     assert_equal(cs1.leader, cs2.leader)
 
-    case cs1.state 
+    case cs1.state
       when "leader"
         assert_equal("follower", cs2.state)
         assert_equal("localhost:20001", cs2.leader)
@@ -77,9 +75,8 @@ class TestLE < Test::Unit::TestCase
         assert_equal("localhost:20002", cs1.leader)
     end
 
-    v.stop_bg
-    v2.stop_bg
+    v.stop
+    v2.stop
   end
-  
 end
 

@@ -1,8 +1,6 @@
-require 'rubygems'
-require 'bud'
 require 'delivery/delivery'
 
-# Note that this provides at-least-once semantics. If you need exactly-once, the
+# Note that this provides at-least-once delivery. If you need exactly-once, the
 # receiver-side can record the message IDs that have been received to avoid
 # processing duplicate messages.
 module ReliableDelivery
@@ -21,8 +19,9 @@ module ReliableDelivery
     bed.pipe_in <= (buf * clock).lefts
   end
 
-  bloom :send_ack do
-    ack <~ bed.pipe_chan {|p| [p.src, p.dst, p.ident]}
+  bloom :rcv do
+    pipe_out <= bed.pipe_out
+    ack <~ bed.pipe_out {|p| [p.src, p.dst, p.ident]}
   end
 
   bloom :done do
