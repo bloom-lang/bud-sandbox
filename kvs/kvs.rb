@@ -38,7 +38,6 @@ module BasicKVS
   end
 end
 
-# XXX: broken
 module PersistentKVS
   include KVSProtocol
   include BasicKVS
@@ -48,21 +47,23 @@ module PersistentKVS
   end
 
   bootstrap do
-    puts "BOOTZ:"
-    kvstate <= kvstate_backing {|b| puts "BACK: #{b.inspect}"; b}
+    kvstate <= kvstate_backing
   end
 
   bloom do
     kvstate <+ kvstate_backing do |b| 
       if kvstate.empty?
-        puts "EMPTY"
         b
-    #  else
-    #    puts "not empty"
       end
     end
-    # declaratively ok. 
-    kvstate_backing <= kvstate
+    kvstate_backing <+ kvstate
+    kvstate_backing <- kvstate_backing.notin(kvstate, :key => :key)
+    kvstate_backing <- (kvstate_backing * kvstate).pairs(:key => :key) do |b, s|
+      if b.value != s.value
+        b
+      end
+    end
+    
   end
 end
 
@@ -70,6 +71,7 @@ module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
   import BasicKVS => :kvs
+  #import LSKVS => :kvs
 
   bloom :local_indir do
     kvget_response <= kvs.kvget_response
