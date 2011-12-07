@@ -30,10 +30,10 @@ class TestBFS < Test::Unit::TestCase
   def md5_of(name)
     Digest::MD5.hexdigest(File.read(name))
   end
-  
+
   def files_in_dir(dir)
     Dir.new(dir).entries.length - 2
-  end 
+  end
 
   def ntest_concurrent_clients
     b = BFSMasterServer.new(@opts.merge(:port => 44444))
@@ -49,9 +49,9 @@ class TestBFS < Test::Unit::TestCase
     #res = s2.dispatch_command(["ls", "/"])
     s2.dispatch_command(["create", "/test2"])
 
-    
 
-    Thread.new do 
+
+    Thread.new do
       rd = File.open(TEST_FILE, "r")
       s1.dispatch_command(["append", "/test1"], rd)
       rd.close
@@ -75,14 +75,12 @@ class TestBFS < Test::Unit::TestCase
     s2.dispatch_command(["read", "/test2"], fp)
     fp.close
     assert_equal(md5_of(TEST_FILE), md5_of(file))
-    
-    
   end
-    
+
   def ntest_many_datanodes
     b = BFSMasterServer.new(@opts.merge(:port => "33333"))
     b.run_bg
-    
+
     dns = []
     ports = []
     (0..6).each do |i|
@@ -111,18 +109,18 @@ class TestBFS < Test::Unit::TestCase
           chunk[entry] = []
         end
         chunk[entry] << p
-  
+
         unless node[p]
           node[p] = []
-        end 
+        end
         node[p] << entry
       end
-    end     
-  
+    end
+
     assert_equal(25, chunk.keys.length)
     chunk.each_pair do |k, v|
       assert(v.length >= REP_FACTOR, "low replication: #{v.length} for #{k}")
-      if v.length > REP_FACTOR 
+      if v.length > REP_FACTOR
         puts "\texpeced #{REP_FACTOR}, got #{v.length} for #{k}"
       end
     end
@@ -133,17 +131,16 @@ class TestBFS < Test::Unit::TestCase
     end
 
     dns.each {|d| d.stop_datanode }
-    b.stop_bg
-    s.stop_bg
-
+    b.stop
+    s.stop
   end
-  
+
   def do_read(rt)
     file = "/tmp/bfstest_"  + (1 + rand(1000)).to_s
     fp = File.open(file, "w")
     rt.dispatch_command(["read", "/peter"], fp)
     fp.close
-    assert_equal(md5_of(TEST_FILE), md5_of(file)) 
+    assert_equal(md5_of(TEST_FILE), md5_of(file))
   end
 
   def test_client
@@ -165,7 +162,7 @@ class TestBFS < Test::Unit::TestCase
     s.sync_do
     rd = File.open(TEST_FILE, "r")
     s.dispatch_command(["append", "/peter"], rd)
-    rd.close  
+    rd.close
     s.sync_do
     do_read(s)
 
@@ -175,8 +172,6 @@ class TestBFS < Test::Unit::TestCase
 
     # failover
     do_read(s)
-
-    
 
     dn2.stop_datanode
     puts "DB: @#{b.budtime}, }all down"
@@ -201,10 +196,10 @@ class TestBFS < Test::Unit::TestCase
     b.delta(:bg_timer)
     do_read(s)
     dn4.stop_datanode
-    s.stop_bg
-    b.stop_bg
+    s.stop
+    b.stop
   end
-  
+
   # not the dryest
   def new_datanode(dp, master_port)
     dn = DN.new(dp, @opts.merge(:tag => "P#{dp}"))

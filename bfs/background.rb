@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bud'
 require 'bfs/data_protocol'
 require 'bfs/bfs_config'
+require 'bfs/hb_master'
 
 # Background processes for the BFS master.  Right now, this is just firing off
 # replication requests for chunks whose replication factor is too low.

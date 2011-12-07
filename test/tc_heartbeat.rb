@@ -46,6 +46,6 @@ class TestHB < Test::Unit::TestCase
       end
     end
 
-    hb_list.each {|h| h.stop_bg}
+    hb_list.each {|h| h.stop}
   end
 end

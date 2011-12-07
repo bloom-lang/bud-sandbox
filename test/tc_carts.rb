@@ -91,7 +91,7 @@ class TestCart < Test::Unit::TestCase
     rep.run_bg
     #rep2.run_bg
     cart_test_dist(prog, cli, rep, rep2)
-    rep.stop_bg
+    rep.stop
   end
 
   def test_replicated_disorderly_cart
@@ -104,7 +104,7 @@ class TestCart < Test::Unit::TestCase
     rep.run_bg
     #rep2.run_bg
     cart_test_dist(prog, cli, rep, rep2)
-    rep.stop_bg
+    rep.stop
   end
 
   def test_destructive_cart
@@ -142,7 +142,7 @@ class TestCart < Test::Unit::TestCase
       # temporarily disabled.
       #assert_equal(4, cli.memo.first.array.length, "crap, i got #{cli.memo.first.inspect}") if dotest
     }
-    program.stop_bg
+    program.stop
   end
 
   def add_members(b, *hosts)

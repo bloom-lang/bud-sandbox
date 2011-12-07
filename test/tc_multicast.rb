@@ -48,9 +48,9 @@ class TestMC < Test::Unit::TestCase
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }
     mc.sync_do{ assert_equal("foobar", mc2.rcv_perm.first.payload) }
 
-    mc.stop_bg
-    mc2.stop_bg
-    mc3.stop_bg
+    mc.stop
+    mc2.stop
+    mc3.stop
   end
 
   def test_reliable
@@ -70,8 +70,8 @@ class TestMC < Test::Unit::TestCase
     assert(mc2.rcv_perm.include? [1, 'foobar'])
     assert(mc3.rcv_perm.include? [1, 'foobar'])
 
-    mc.stop_bg
-    mc2.stop_bg
-    mc3.stop_bg
+    mc.stop
+    mc2.stop
+    mc3.stop
   end
 end

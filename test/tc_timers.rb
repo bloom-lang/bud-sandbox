@@ -16,6 +16,6 @@ class TestTimers < Test::Unit::TestCase
       tt.set_alarm <+ [['foo', 1]]
     }
     tt.delta(:alarm)
-    tt.stop_bg
+    tt.stop
   end
 end

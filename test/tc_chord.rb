@@ -211,11 +211,11 @@ class TestChord < Test::Unit::TestCase
     begin
       do_lookup_tests(my_nodes)
     rescue Test::Unit::AssertionFailedError
-      my_nodes.each{|n| n.stop_bg}
+      my_nodes.each{|n| n.stop}
       raise
     end
     puts "done"
-    my_nodes.each{|n| n.stop_bg}
+    my_nodes.each{|n| n.stop}
   end
     
   def no_test_join
@@ -292,11 +292,11 @@ class TestChord < Test::Unit::TestCase
       print "checking lookups"
       do_lookup_tests(@my_nodes)
     rescue Test::Unit::AssertionFailedError
-      @my_nodes.each{|n| n.stop_bg}
+      @my_nodes.each{|n| n.stop}
       raise
     end
     puts "done"
-    @my_nodes.each{|n| n.stop_bg}
+    @my_nodes.each{|n| n.stop}
   end
     
   def test_stabilize
@@ -358,7 +358,7 @@ class TestChord < Test::Unit::TestCase
       print "checking lookups"
       do_lookup_tests(@my_nodes)
     rescue Test::Unit::AssertionFailedError
-      @my_nodes.each{|n| n.stop_bg}
+      @my_nodes.each{|n| n.stop}
       raise
     end
     puts "done"
@@ -366,7 +366,7 @@ class TestChord < Test::Unit::TestCase
     # # now stop node 1 and check result of stabilization again
     # # clear xferq
     # (1..xferq.length).each { xferq.pop }
-    # @my_nodes[1].stop_bg
+    # @my_nodes[1].stop
     # # check localkeys
     # print "checking localkeys after 1 leaves"
     # x = xferq.pop
@@ -381,6 +381,6 @@ class TestChord < Test::Unit::TestCase
     # #              @my_nodes.map{|n| [n.ip_port, n.localkeys.to_a]})
     # puts "done"    
     
-    @my_nodes.each{|n| n.stop_bg}
+    @my_nodes.each{|n| n.stop}
   end
 end
