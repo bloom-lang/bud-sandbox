@@ -56,7 +56,8 @@ class VcAgent
 
     # A violation of causal order has occurred if we receive a message that
     # strictly precedes our local clock
-    stdio <~ rbuf_chosen {|r| ["Message #{r.msg} violates causal order! Msg clock = #{r.clock.inspect}, local clock = #{my_vc.inspect}"] if r.clock.lt_eq(my_vc)}
+    # XXX: Need for #reveal is ugly/error-prone
+    stdio <~ rbuf_chosen {|r| ["Message #{r.msg} violates causal order! Msg clock = #{r.clock.inspect}, local clock = #{my_vc.inspect}"] if r.clock.lt_eq(my_vc).reveal}
   end
 end
 
