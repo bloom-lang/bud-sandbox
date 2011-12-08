@@ -18,6 +18,9 @@ class VcAgent
     scratch :rbuf_chosen, recv_buf.schema
     periodic :tik, 1
 
+    # NB: we only need two maps because we want to detect violations of
+    # causality; that requires that we keep one version of the clock as it was
+    # at the start of the tick ("my_vc").
     lmap :my_vc
     lmap :next_vc
   end
