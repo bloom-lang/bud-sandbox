@@ -21,11 +21,11 @@ module CausalDelivery
     channel :chn, [:@dst, :src, :ident] => [:payload, :clock, :ord_buf]
 
     # Local vector clock
-    lat_map :my_vc
-    lat_map :next_vc
+    lmap :my_vc
+    lmap :next_vc
 
     # Our knowledge of the VCs at other nodes
-    lat_map :ord_buf
+    lmap :ord_buf
 
     # Received messages that haven't yet been delivered
     table :recv_buf, chn.schema
@@ -33,26 +33,26 @@ module CausalDelivery
   end
 
   bootstrap do
-    my_vc <= [[ip_port, MaxLattice.wrap(0)]]
+    my_vc <= [ {ip_port => Bud::MaxLattice.new(0)} ]
   end
 
   bloom :update_vc do
     next_vc <= my_vc
-    next_vc <= pipe_in { [ip_port, my_vc[ip_port] + 1]}
-    next_vc <= buf_chosen { [ip_port, my_vc[ip_port] + 1]}
+    next_vc <= pipe_in { {ip_port => my_vc.at(ip_port) + 1} }
+    next_vc <= buf_chosen { {ip_port => my_vc.at(ip_port) + 1} }
     next_vc <= buf_chosen {|m| m.clock}
     my_vc <+ next_vc
   end
 
   bloom :outbound_msg do
     chn <~ pipe_in {|p| [p.dst, p.src, p.ident, p.payload, next_vc, ord_buf]}
-    ord_buf <+ pipe_in {|p| [p.dst, next_vc]}
+    ord_buf <+ pipe_in {|p| {p.dst => next_vc} }
     pipe_out <= pipe_in     # Unreliable delivery for now
   end
 
   bloom :inbound_msg do
     recv_buf <= chn
-    buf_chosen <= recv_buf {|m| m if m.ord_buf[ip_port].lt_eq(my_vc)}
+    buf_chosen <= recv_buf {|m| m if m.ord_buf.at(ip_port).lt_eq(my_vc)}
     recv_buf <- buf_chosen
 
     pipe_sent <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
@@ -60,7 +60,7 @@ module CausalDelivery
   end
 
   bloom :msg_log do
-    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspected}, msg ord_buf = #{c.ord_buf.inspected}, local VC: #{my_vc.inspected}, local ord_buf: #{ord_buf.inspected}"]}
+    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspect}, msg ord_buf = #{c.ord_buf.inspect}, local VC: #{my_vc.inspect}, local ord_buf: #{ord_buf.inspect}"]}
     stdio <~ pipe_sent {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
   end
 end
