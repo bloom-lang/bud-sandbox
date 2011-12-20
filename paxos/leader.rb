@@ -22,10 +22,10 @@ module LeaderElection
   # * see a ballot for a higher view id.
 
   state do
-    table :current_state, [] => [:state, :leader, :view, :timeout]
-    scratch :packet, [:nonce, :host, :view, :timeout]
-    scratch :packet_in, [:host, :view, :timeout]
-    scratch :start_le, [:host, :view, :timeout]
+    table :current_state, [] => [:state, :leader, :view, :timeo]
+    scratch :packet, [:nonce, :host, :view, :timeo]
+    scratch :packet_in, [:host, :view, :timeo]
+    scratch :start_le, [:host, :view, :timeo]
     scratch :init_le, []
 
     channel :proof, [:@host, :src, :view]
@@ -35,7 +35,7 @@ module LeaderElection
     temp :proofj <= (proof * current_state)
     current_state <+ proofj do |p, s|
       if p.view > s.view 
-        ['follower', p.src, p.view, s.timeout]
+        ['follower', p.src, p.view, s.timeo]
       end
     end 
 
@@ -46,7 +46,7 @@ module LeaderElection
 
     start_le <= (alarm * nonce).pairs do |a, n|
       if a.name == "Progress"
-        puts "TIMER KICK" or [@ip_port, n.ident, a.timeout]
+        puts "TIMER KICK" or [@ip_port, n.ident, a.timeo]
       end
     end
     
@@ -56,7 +56,7 @@ module LeaderElection
     temp :pacstate <= (packet * current_state)
     start_le <= pacstate do |p, c|
       if p.view > c.view
-        puts ip_port + " JUMP views to " + p.inspect + " from " + c.inspect or [p.host, p.view, c.timeout]
+        puts ip_port + " JUMP views to " + p.inspect + " from " + c.inspect or [p.host, p.view, c.timeo]
       end
     end
 
@@ -75,19 +75,19 @@ module LeaderElection
 
     
 
-    set_alarm <= start_le { |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeout * 2] }
+    set_alarm <= start_le { |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeo * 2] }
 
 
     temp :csj <=  (current_state* start_le)
     current_state <- csj {|c, s| c } 
-    current_state <+ csj {|c, s| ['election', s.host, s.view, s.timeout * 2] } 
+    current_state <+ csj {|c, s| ['election', s.host, s.view, s.timeo * 2] } 
 
     packet_in <= victor { |v| puts ip_port + "@" + @budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
     current_state <+ packet_in  do |p|
       if p.host == ip_port
-        ['leader', ip_port, p.view, p.timeout]
+        ['leader', ip_port, p.view, p.timeo]
       else
-        ['follower', p.host, p.view, p.timeout]
+        ['follower', p.host, p.view, p.timeo]
       end
     end
   

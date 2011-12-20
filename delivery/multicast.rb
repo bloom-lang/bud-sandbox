@@ -8,7 +8,7 @@ module MulticastProtocol
   # XXX: This should provide an interface for the recipient-side to read the
   # multicast w/o needing to peek at pipe_in.
   state do
-    interface input, :send_mcast, [:ident] => [:payload]
+    interface input, :mcast_send, [:ident] => [:payload]
     interface output, :mcast_done, [:ident] => [:payload]
   end
 end
@@ -18,7 +18,7 @@ module Multicast
   include DeliveryProtocol
 
   bloom :snd_mcast do
-    pipe_in <= (send_mcast * member).pairs do |s, m|
+    pipe_in <= (mcast_send * member).pairs do |s, m|
       [m.host, ip_port, s.ident, s.payload] unless m.host == ip_port
     end
   end
@@ -41,7 +41,7 @@ module ReliableMulticast
   include Multicast
 
   bloom :start_mcast do
-    begin_vote <= send_mcast {|s| [s.ident, s] }
+    begin_vote <= mcast_send {|s| [s.ident, s] }
   end
 
   bloom :agency do
