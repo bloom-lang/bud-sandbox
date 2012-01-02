@@ -37,9 +37,10 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_wl1
+    trc = false
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => true))
-    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => true))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => trc))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => trc))
     add_members(v, v.ip_port, v2.ip_port)
     add_members(v2, v.ip_port, v2.ip_port)
 

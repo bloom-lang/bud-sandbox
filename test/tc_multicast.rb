@@ -38,7 +38,7 @@ class TestMC < Test::Unit::TestCase
     mc3 = MC.new
 
     mc2.run_bg; mc3.run_bg
-    mc.add_member <+ [[mc2.ip_port], [mc3.ip_port]]
+    mc.add_member <+ [[1, mc2.ip_port], [2, mc3.ip_port]]
     mc.run_bg
 
     mc.sync_do{ mc.mcast_send <+ [[1, 'foobar']] }
@@ -63,7 +63,7 @@ class TestMC < Test::Unit::TestCase
     mc3 = RMC.new
 
     mc2.run_bg; mc3.run_bg
-    mc.add_member <+ [[mc2.ip_port], [mc3.ip_port]]
+    mc.add_member <+ [[1, mc2.ip_port], [2, mc3.ip_port]]
     mc.run_bg
 
     resps = mc.sync_callback(mc.mcast_send.tabname, [[1, 'foobar']], mc.mcast_done.tabname)

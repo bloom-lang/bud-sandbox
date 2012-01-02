@@ -98,12 +98,9 @@ module ReplicatedKVS
     # if I am a replica, store the payload of the multicast
     kvs.kvput <= pipe_out do |d|
       if d.payload.fetch(1) != @addy and d.payload[0] == "put"
-        puts "PL is #{d.payload[1]} class #{d.payload[1].class} siz #{d.payload.length} and PL izz #{d.payload[0]} class #{d.payload[0].class}"
-        #puts "PL is #{d.payload} class #{d.payload.class} siz #{d.payload.length}"
         d.payload[1]
-        #d.payload
       end
-    end
+   end
   end
 
   bloom :dels do
