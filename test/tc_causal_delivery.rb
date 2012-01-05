@@ -10,8 +10,9 @@ end
 
 class TestCausalDelivery < Test::Unit::TestCase
   def register_sent_cb(bud, q)
-    bud.register_callback(:pipe_sent) do
-      q.push(true)
+    bud.register_callback(:pipe_sent) do |t|
+      raise unless t.length == 1
+      q.push(t.first.ident)
     end
   end
 
@@ -28,17 +29,20 @@ class TestCausalDelivery < Test::Unit::TestCase
     a.sync_do {
       a.pipe_in <+ [[b.ip_port, a.ip_port, 1, "foo1"]]
     }
-    q_b.pop
+    ident = q_b.pop
+    assert_equal(1, ident)
 
     a.sync_do {
       a.pipe_in <+ [[b.ip_port, a.ip_port, 2, "foo2"]]
     }
-    q_b.pop
+    ident = q_b.pop
+    assert_equal(2, ident)
 
     a.sync_do {
       a.pipe_in <+ [[c.ip_port, a.ip_port, 3, "bar"]]
     }
-    q_c.pop
+    ident = q_c.pop
+    assert_equal(3, ident)
 
     agents.each {|a| a.stop}
   end

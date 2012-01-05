@@ -13,7 +13,7 @@ require "delivery/delivery"
 # isn't implemented, because (a) it would make ord_buf not a lattice (b) it
 # seems of limited value anyway.
 #
-# XXX: compose with reliable delivery
+# XXX: compose with reliable delivery; otherwise causal delivery is not live.
 module CausalDelivery
   include DeliveryProtocol
 
@@ -38,7 +38,9 @@ module CausalDelivery
 
   bloom :update_vc do
     next_vc <= my_vc
+    # On outgoing messages:
     next_vc <= pipe_in { {ip_port => my_vc.at(ip_port) + 1} }
+    # On incoming messages:
     next_vc <= buf_chosen { {ip_port => my_vc.at(ip_port) + 1} }
     next_vc <= buf_chosen {|m| m.clock}
     my_vc <+ next_vc
