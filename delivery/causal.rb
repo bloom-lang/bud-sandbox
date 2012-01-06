@@ -54,7 +54,7 @@ module CausalDelivery
 
   bloom :inbound_msg do
     recv_buf <= chn
-    buf_chosen <= recv_buf {|m| m if m.ord_buf.at(ip_port, Bud::MapLattice).lt_eq(my_vc).reveal}
+    buf_chosen <= recv_buf {|m| m.ord_buf.at(ip_port, Bud::MapLattice).lt_eq(my_vc).when_true { m } }
     recv_buf <- buf_chosen
 
     pipe_out <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
