@@ -49,20 +49,20 @@ module CausalDelivery
   bloom :outbound_msg do
     chn <~ pipe_in {|p| [p.dst, p.src, p.ident, p.payload, next_vc, ord_buf]}
     ord_buf <+ pipe_in {|p| {p.dst => next_vc} }
-    pipe_out <= pipe_in     # Unreliable delivery for now
+    pipe_sent <= pipe_in     # Unreliable delivery for now
   end
 
   bloom :inbound_msg do
     recv_buf <= chn
-    buf_chosen <= recv_buf {|m| m if m.ord_buf.at(ip_port).lt_eq(my_vc)}
+    buf_chosen <= recv_buf {|m| m if m.ord_buf.at(ip_port, Bud::MapLattice).lt_eq(my_vc).reveal}
     recv_buf <- buf_chosen
 
-    pipe_sent <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
+    pipe_out <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
     ord_buf <+ buf_chosen {|m| m.ord_buf}
   end
 
   bloom :msg_log do
     stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspect}, msg ord_buf = #{c.ord_buf.inspect}, local VC: #{my_vc.inspect}, local ord_buf: #{ord_buf.inspect}"]}
-    stdio <~ pipe_sent {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
+    stdio <~ pipe_out {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
   end
 end

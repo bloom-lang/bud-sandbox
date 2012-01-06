@@ -9,8 +9,8 @@ class CausalAgent
 end
 
 class TestCausalDelivery < Test::Unit::TestCase
-  def register_sent_cb(bud, q)
-    bud.register_callback(:pipe_sent) do |t|
+  def register_recv_cb(bud, q)
+    bud.register_callback(:pipe_out) do |t|
       raise unless t.length == 1
       q.push(t.first.ident)
     end
@@ -23,8 +23,8 @@ class TestCausalDelivery < Test::Unit::TestCase
     a, b, c = agents
     q_b = Queue.new
     q_c = Queue.new
-    register_sent_cb(b, q_b)
-    register_sent_cb(c, q_c)
+    register_recv_cb(b, q_b)
+    register_recv_cb(c, q_c)
 
     a.sync_do {
       a.pipe_in <+ [[b.ip_port, a.ip_port, 1, "foo1"]]
@@ -48,13 +48,13 @@ class TestCausalDelivery < Test::Unit::TestCase
   end
 
   def test_reorder_simple
-    # Drop messages with payload "c", and delay all other messages until we've
-    # seen a message with payload "d".
+    # Drop outright messages in "chn" with payload "c" and delay all other
+    # messages until we've seen a message with payload "d".
     seen_d = false
-    buf = []
     f = lambda do |tbl_name, tups|
       return [tups, []] unless tbl_name == :chn
 
+      # Accept all non-"c" messages if we've already seen "d"
       tups = tups.reject {|t| t[3] == "c"}
       return [tups, []] if seen_d
 
@@ -79,11 +79,16 @@ class TestCausalDelivery < Test::Unit::TestCase
     agents.each {|a| a.run_bg}
 
     chn_q = Queue.new
+    # Stash the payloads associated with all received messages at the recipient
+    # node into chn_q; this is ALL received messages, not just causal ones. Note
+    # that this does _not_ include messages that are filtered or delayed by the
+    # channel filter.
     dst.register_callback(:chn) do |t|
       t.each {|v| chn_q.push(v[3]) }
     end
     pipe_q = Queue.new
-    dst.register_callback(:pipe_sent) do |t|
+    # pipe_q contains the payloads of causally-delivered messages
+    dst.register_callback(:pipe_out) do |t|
       t.each {|v| pipe_q.push(v[3]) }
     end
 
@@ -109,10 +114,17 @@ class TestCausalDelivery < Test::Unit::TestCase
     src.sync_do {
       src.pipe_in <+ [[dst.ip_port, src.ip_port, 5, "e"]]
     }
+
+    rest_chn = [chn_q.pop, chn_q.pop, chn_q.pop]
+    assert_equal(["a", "b", "e"], rest_chn.sort)
+
     assert_equal("a", pipe_q.pop)
     dst.sync_do
     assert_equal("b", pipe_q.pop)
+    dst.sync_do
     assert(pipe_q.empty?)
+    assert(chn_q.empty?)
+    # "d" or "e" should never appear in pipe_q, because message "c" was dropped
 
     agents.each {|a| a.stop}
   end
