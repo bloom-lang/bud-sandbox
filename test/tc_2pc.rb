@@ -17,8 +17,8 @@ class Test2PC < Test::Unit::TestCase
     t = TPCM.new(:port => 32345, :tag => "master", :trace => false)
     t2 = TPCA.new(:port => 32346, :tag => "a1", :trace => false)
     t3 = TPCA.new(:port => 32347, :tag => "a2", :trace => false)
-    t.add_member <+ [['localhost:32346']]
-    t.add_member <+ [['localhost:32347']]
+    t.add_member <= [[1, 'localhost:32346']]
+    t.add_member <= [[2, 'localhost:32347']]
     t.run_bg
     t2.run_bg
     t3.run_bg

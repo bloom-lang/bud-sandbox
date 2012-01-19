@@ -27,7 +27,7 @@ class TestHB < Test::Unit::TestCase
 
     # wait for the heartbeats to start appearing
     hb_list.first.delta(:last_heartbeat)
-
+    sleep 0.5
     hb_list.each do |h|
       h.sync_do {
 #        assert_equal(3, h.last_heartbeat.length)

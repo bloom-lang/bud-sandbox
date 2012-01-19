@@ -34,16 +34,16 @@ module DisorderlyCart
       end
     end
 
-    temp :out <= (status.reduce({}) do |memo, i|
-      memo[[i[0],i[1],i[2]]] ||= []
-      i[4].times do
-        memo[[i[0],i[1],i[2]]] << i[3]
+    temp :out <= status.reduce(Hash.new) do |memo, i|
+      memo[[i.server,i.client,i.session]] ||= []
+      i.cnt.times do
+        memo[[i.server,i.client,i.session]] << i.item
       end
       memo
-    end).to_a
+    end
 
     response_msg <~ out do |k, v|
-      k << v
+      k + [v]
     end
   end
 end

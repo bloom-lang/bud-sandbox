@@ -70,19 +70,19 @@ module LeaderElection
     end
 
     begin_vote <= (start_le * nonce).pairs do |s, n|
-      puts ip_port + "@" + @budtime.to_s +  " BEGIN VOT FOR " + s.inspect + " with nonce " + n.inspect or [n.ident, s]
+      puts ip_port + "@" + budtime.to_s +  " BEGIN VOT FOR " + s.inspect + " with nonce " + n.inspect or [n.ident, s]
     end
 
     
 
-    set_alarm <= start_le { |s| puts ip_port + "@" + @budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeo * 2] }
+    set_alarm <= start_le { |s| puts ip_port + "@" + budtime.to_s + " start_le : " + s.inspect or ['Progress', s.timeo * 2] }
 
 
     temp :csj <=  (current_state* start_le)
     current_state <- csj {|c, s| c } 
     current_state <+ csj {|c, s| ['election', s.host, s.view, s.timeo * 2] } 
 
-    packet_in <= victor { |v| puts ip_port + "@" + @budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
+    packet_in <= victor { |v| puts ip_port + "@" + budtime.to_s + " VIC " + v.inspect or v.content if v.response == "yes" }
     current_state <+ packet_in  do |p|
       if p.host == ip_port
         ['leader', ip_port, p.view, p.timeo]

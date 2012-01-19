@@ -46,7 +46,7 @@ class TestReliableDelivery < Test::Unit::TestCase
     end
 
     vals = ("aa".."dd").to_a
-    tuples = vals.enum_with_index.map do |v, i|
+    tuples = vals.each_with_index.map do |v, i|
       [rd2.ip_port, rd.ip_port, i, v]
     end
 

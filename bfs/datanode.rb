@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bud'
-require 'backports'
+#require 'backports'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
 require 'ordering/nonce'

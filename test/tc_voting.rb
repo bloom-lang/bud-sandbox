@@ -76,10 +76,14 @@ class TestVoting < Test::Unit::TestCase
     t3.sync_do{ t3.cast_vote <+ [[1, "hell yes", "madam"]] }
     t.sync_do
 
-    t.sync_do{ assert_equal([1, 'hell yes', 2, ["madam", "sir"]], t.vote_cnt.first) }
-    t.sync_do{ assert_equal([1, 'me for king', 'hell yes', ["madam", "sir"]], t.vote_status.first) }
+    t.sync_do{ assert_equal([1, 'hell yes', 2, ["madam", "sir"]], sort_contents(t.vote_cnt.first))}
+    t.sync_do{ assert_equal([1, 'me for king', 'hell yes', ["madam", "sir"]], sort_contents(t.vote_status.first)) }
     t.stop
     t2.stop
     t3.stop
+  end
+  def sort_contents(tuple)
+    tuple[-1].sort! # In both cote_cnt and vote_status, "contents" is the last field.
+    tuple
   end
 end
