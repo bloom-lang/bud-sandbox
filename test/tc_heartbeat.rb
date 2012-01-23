@@ -12,9 +12,9 @@ class HB
     payload <= [['foo']]
     payload <= [['foo']]
     payload <= [['foo']]
-    add_member <= [[ "localhost:46362" ]]
-    add_member <= [[ "localhost:46363" ]]
-    add_member <= [[ "localhost:46364" ]]
+    add_member <= [[ 1, "localhost:46362" ]]
+    add_member <= [[ 2, "localhost:46363" ]]
+    add_member <= [[ 3, "localhost:46364" ]]
   end
 end
 

@@ -203,7 +203,7 @@ class TestBFS < Test::Unit::TestCase
   # not the dryest
   def new_datanode(dp, master_port)
     dn = DN.new(dp, @opts.merge(:tag => "P#{dp}"))
-    dn.add_member <+ [["localhost:#{master_port}", 1]]
+    dn.add_member <+ [[1, "localhost:#{master_port}"]]
     dn.run_bg
     return dn
   end

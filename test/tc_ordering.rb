@@ -30,12 +30,12 @@ class GN
 end
 
 class TestSer < Test::Unit::TestCase
-  def test_group_nonce
+  def Ntest_group_nonce
     gn = GN.new
     gn.my_id <+ [[1]]
-    gn.add_member <+ [['foo', 1]]
-    gn.add_member <+ [['bar', 2]]
-    gn.add_member <+ [['baz', 3]]
+    gn.add_member <+ [[1, 'foo']]
+    gn.add_member <+ [[2, 'bar']]
+    gn.add_member <+ [[3, 'baz']]
     gn.seed <+ [[nil]]
 
     gn.run_bg

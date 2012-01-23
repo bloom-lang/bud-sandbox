@@ -37,9 +37,10 @@ class TestKVS < Test::Unit::TestCase
   end
 
   def test_wl1
+    trc = false
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => true))
-    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => true))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => trc))
+    v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => trc))
     add_members(v, v.ip_port, v2.ip_port)
     add_members(v2, v.ip_port, v2.ip_port)
 
@@ -85,18 +86,18 @@ class TestKVS < Test::Unit::TestCase
     v.stop
   end
 
-  def ntest_persistent_kvs
+  def test_persistent_kvs
     dir = "/tmp/tpk"
     `rm -r #{dir}`
     `mkdir #{dir}`
-    p  = SSPKVS.new(:dbm_dir => dir)
+    p  = SSPKVS.new(:dbm_dir => dir, :port => 12345)
     p.run_bg
     workload1(p)
     p.sync_do { assert_equal(1, p.kvstate.length) }
     p.sync_do { assert_equal("bak", p.kvstate.first[1]) }
     p.stop
     
-    p2 = SSPKVS.new(:dbm_dir => dir)
+    p2 = SSPKVS.new(:dbm_dir => dir, :port => 12345)
     p2.run_bg
     p2.sync_do
     p2.sync_do

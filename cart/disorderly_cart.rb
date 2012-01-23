@@ -53,7 +53,7 @@ module ReplicatedDisorderlyCart
   include Multicast
 
   bloom :replicate do
-    send_mcast <= action_msg {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
+    mcast_send <= action_msg {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
     cart_action <= mcast_done {|m| m.payload}
     cart_action <= pipe_out {|c| c.payload}
   end

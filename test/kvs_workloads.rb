@@ -3,9 +3,9 @@ require 'bud'
 
 module KVSWorkloads
   def add_members(b, *hosts)
-    hosts.each do |h|
+    hosts.each_with_index do |h, i|
       #print "ADD MEMBER: #{h.inspect}\n"
-      b.add_member <+ [[h]]
+      b.add_member <+ [[i, h]]
     end
   end
 
@@ -16,6 +16,7 @@ module KVSWorkloads
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 2, "baz"]] }
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 3, "bam"]] }
     v.sync_do { v.kvput <+ [["localhost:54321", "foo", 4, "bak"]] }
+    v.tick; v.tick
   end
 
   def workload2(v)
