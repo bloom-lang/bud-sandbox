@@ -8,16 +8,16 @@ module DisorderlyCart
   include CartProtocol
 
   state do
-    table :cart_action, [:session, :reqid] => [:item, :action]
+    table :action_log, [:session, :reqid] => [:item, :action]
     scratch :action_cnt, [:session, :item, :action] => [:cnt]
     scratch :status, [:server, :client, :session, :item] => [:cnt]
   end
 
   bloom :saved do
     # store actions against the "cart;" that is, the session.
-    cart_action <= action_msg { |c| [c.session, c.reqid, c.item, c.action] }
-    temp :checkout_actions <= (checkout_msg * cart_action).rights
-    action_cnt <= checkout_actions.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid))
+    action_log <= action_msg { |c| [c.session, c.reqid, c.item, c.action] }
+    temp :checkout_actions <= (checkout_msg * action_log).rights
+    action_cnt <= checkout_actions.group([action_log.session, action_log.item, action_log.action], count(action_log.reqid))
   end
 
   bloom :consider do
@@ -54,7 +54,7 @@ module ReplicatedDisorderlyCart
 
   bloom :replicate do
     mcast_send <= action_msg {|a| [a.reqid, [a.session, a.reqid, a.item, a.action]]}
-    cart_action <= mcast_done {|m| m.payload}
-    cart_action <= pipe_out {|c| c.payload}
+    action_log <= mcast_done {|m| m.payload}
+    action_log <= pipe_out {|c| c.payload}
   end
 end
