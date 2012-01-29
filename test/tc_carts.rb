@@ -83,14 +83,15 @@ class TestCart < Test::Unit::TestCase
 
   def test_replicated_destructive_cart
     trc = false
-    cli = CCli.new(:tag => "DESclient", :trace => trc)
+    cli = CCli.new(:port => 53524, :tag => "DESclient", :trace => trc)
     cli.run_bg
     prog = DCR.new(:port => 53525, :tag => "DESmaster", :trace => trc, :dump_rewrite => true)
     rep = DCR.new(:port => 53526, :tag => "DESbackup", :trace => trc)
     rep2 = DCR.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
     rep.run_bg
+    # undo comment
     #rep2.run_bg
-    cart_test_dist(prog, cli, rep, rep2)
+    cart_test_dist(prog, cli, rep) #, rep2)
     rep.stop
   end
 
@@ -113,8 +114,8 @@ class TestCart < Test::Unit::TestCase
   end
 
   def test_disorderly_cart
-    program = LclDis.new(:port => 23765, :tag => "dis")
-    cart_test(program)
+    prog = LclDis.new(:port => 23765, :tag => "dis")
+    cart_test(prog)
   end
 
   def cart_test_dist(prog, cli, *others)
@@ -126,13 +127,10 @@ class TestCart < Test::Unit::TestCase
   end
 
   def cart_test_internal(program, dotest, client=nil, *others)
-    addy = "#{program.ip}:#{program.port}"
-    add_members(program, addy)
-    others.each do |o|
-      addy = "#{program.ip}:#{o.port}"
-      #puts "add #{addy} to members"
-      add_members(program, addy)
-    end
+    ads = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
+    puts "ADS is #{ads.inspect} #{ads.class}"
+    add_members(program, ads)
+    
     program.run_bg
     run_cart(program, client)
    
@@ -145,9 +143,10 @@ class TestCart < Test::Unit::TestCase
     program.stop
   end
 
-  def add_members(b, *hosts)
-    hosts.each do |h|
-      b.add_member <+ [[h]]
+  def add_members(b, hosts)
+    hosts.each_with_index do |h, i|
+      puts "ADD: #{i}, #{h}"
+      b.add_member <+ [[i, h]]
     end
   end
 end

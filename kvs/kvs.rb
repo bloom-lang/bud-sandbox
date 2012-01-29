@@ -38,7 +38,6 @@ module BasicKVS
   end
 end
 
-# XXX: broken
 module PersistentKVS
   include KVSProtocol
   include BasicKVS
@@ -48,21 +47,23 @@ module PersistentKVS
   end
 
   bootstrap do
-    puts "BOOTZ:"
-    kvstate <= kvstate_backing {|b| puts "BACK: #{b.inspect}"; b}
+    kvstate <= kvstate_backing
   end
 
   bloom do
     kvstate <+ kvstate_backing do |b| 
       if kvstate.empty?
-        puts "EMPTY"
         b
-    #  else
-    #    puts "not empty"
       end
     end
-    # declaratively ok. 
-    kvstate_backing <= kvstate
+    kvstate_backing <+ kvstate
+    kvstate_backing <- kvstate_backing.notin(kvstate, :key => :key)
+    kvstate_backing <- (kvstate_backing * kvstate).pairs(:key => :key) do |b, s|
+      if b.value != s.value
+        b
+      end
+    end
+    
   end
 end
 
@@ -70,6 +71,7 @@ module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
   import BasicKVS => :kvs
+  #import LSKVS => :kvs
 
   bloom :local_indir do
     kvget_response <= kvs.kvget_response
@@ -81,7 +83,7 @@ module ReplicatedKVS
   bloom :puts do
 
     # if I am the master, multicast store requests
-    send_mcast <= kvput do |k|
+    mcast_send <= kvput do |k|
       unless member.include? [k.client]
         [k.reqid, [:put, [@addy, k.key, k.reqid, k.value]]]
       end
@@ -96,16 +98,13 @@ module ReplicatedKVS
     # if I am a replica, store the payload of the multicast
     kvs.kvput <= pipe_out do |d|
       if d.payload.fetch(1) != @addy and d.payload[0] == "put"
-        puts "PL is #{d.payload[1]} class #{d.payload[1].class} siz #{d.payload.length} and PL izz #{d.payload[0]} class #{d.payload[0].class}"
-        #puts "PL is #{d.payload} class #{d.payload.class} siz #{d.payload.length}"
         d.payload[1]
-        #d.payload
       end
-    end
+   end
   end
 
   bloom :dels do
-    send_mcast <= kvdel do |k|
+    mcast_send <= kvdel do |k|
       unless member.include? [k.client]
         [k.reqid, [:del, [@addy, k.key, k.reqid]]]
       end

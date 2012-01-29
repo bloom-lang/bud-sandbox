@@ -17,6 +17,7 @@ module CartClientProtocol
   state do
     interface input, :client_checkout, [:server, :session, :reqid]
     interface input, :client_action, [:server, :session, :reqid] => [:item, :action]
+    # XXX: why does this have "client" as a field?
     interface output, :client_response, [:client, :server, :session] => [:item, :cnt]
   end
 end

@@ -36,8 +36,8 @@ class TestVoting < Test::Unit::TestCase
     t2 = start_kind(kind, two)
     t3 = start_kind(kind, three)
 
-    t.add_member <+ [["localhost:#{two.to_s}"]]
-    t.add_member <+ [["localhost:#{three.to_s}"]]
+    t.add_member <+ [[1, "localhost:#{two.to_s}"]]
+    t.add_member <+ [[2, "localhost:#{three.to_s}"]]
 
     t.run_bg
     t2.run_bg
