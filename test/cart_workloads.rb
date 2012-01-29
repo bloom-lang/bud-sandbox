@@ -15,6 +15,7 @@ module CartWorkloads
         contact.client_action <+ [[addy, 1234, 127 + i, 'beer', 'Add']]
       end
     }
+    # XXX: why do we need 3 waits for each Bud instance?
     contact.sync_do
     contact.sync_do
     contact.sync_do
