@@ -53,23 +53,6 @@ class LocalDestructive
   include StaticMembership
   include BasicKVS
   include Remember
-
-  state do
-    table :members, [:peer]
-  end
-end
-
-class BCSC
-  include Bud
-  include CartClient
-
-  state do
-    table :cli_resp_mem, [:@client, :server, :session, :item, :cnt]
-  end
-
-  bloom :memmy do
-    cli_resp_mem <= response_msg
-  end
 end
 
 class TestCart < Test::Unit::TestCase
