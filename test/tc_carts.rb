@@ -70,6 +70,7 @@ class TestCart < Test::Unit::TestCase
     #rep2.run_bg
     cart_test_dist(prog, cli, rep) #, rep2)
     rep.stop
+    cli.stop
   end
 
   def test_replicated_disorderly_cart
@@ -80,9 +81,11 @@ class TestCart < Test::Unit::TestCase
     rep = BestEffortDisorderly.new(:port => 53526, :tag => "DISbackup", :trace => trc)
     rep2 = BestEffortDisorderly.new(:port => 53527, :tag => "DISbackup2", :trace => trc)
     rep.run_bg
-    #rep2.run_bg
+    rep2.run_bg
     cart_test_dist(prog, cli, rep, rep2)
     rep.stop
+    rep2.stop
+    cli.stop
   end
 
   def test_destructive_cart
@@ -104,14 +107,14 @@ class TestCart < Test::Unit::TestCase
   end
 
   def cart_test_internal(program, dotest, client=nil, *others)
-    ads = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
-    add_members(program, ads)
+    addr_list = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
+    add_members(program, addr_list)
 
     program.run_bg
     run_cart(program, client)
 
     cli = client.nil? ? program : client
-    program.sync_do {
+    cli.sync_do {
       assert_equal(1, cli.memo.length)
       # temporarily disabled.
       #assert_equal(4, cli.memo.first.array.length, "crap, i got #{cli.memo.first.inspect}") if dotest
