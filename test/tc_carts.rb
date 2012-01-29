@@ -114,8 +114,8 @@ class TestCart < Test::Unit::TestCase
   end
 
   def test_disorderly_cart
-    program = LclDis.new(:port => 23765, :tag => "dis")
-    cart_test(program)
+    prog = LclDis.new(:port => 23765, :tag => "dis")
+    cart_test(prog)
   end
 
   def cart_test_dist(prog, cli, *others)
@@ -129,7 +129,7 @@ class TestCart < Test::Unit::TestCase
   def cart_test_internal(program, dotest, client=nil, *others)
     ads = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
     puts "ADS is #{ads.inspect} #{ads.class}"
-    add_members(program, *ads)
+    add_members(program, ads)
     
     program.run_bg
     run_cart(program, client)
@@ -143,7 +143,7 @@ class TestCart < Test::Unit::TestCase
     program.stop
   end
 
-  def add_members(b, *hosts)
+  def add_members(b, hosts)
     hosts.each_with_index do |h, i|
       puts "ADD: #{i}, #{h}"
       b.add_member <+ [[i, h]]
