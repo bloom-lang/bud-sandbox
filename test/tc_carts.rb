@@ -130,11 +130,11 @@ class TestCart < Test::Unit::TestCase
     ads = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
     puts "ADS is #{ads.inspect} #{ads.class}"
     add_members(program, ads)
-    
+
     program.run_bg
     run_cart(program, client)
-   
-    cli = client.nil? ? program : client 
+
+    cli = client.nil? ? program : client
     program.sync_do {
       assert_equal(1, cli.memo.length)
       # temporarily disabled.

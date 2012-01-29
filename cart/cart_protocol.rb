@@ -4,11 +4,11 @@ require 'bud'
 module CartProtocol
   state do
     # PAA -- took the '@'s off all occurrences of :server below
-    channel :action_msg, 
+    channel :action_msg,
       [:@server, :client, :session, :reqid] => [:item, :action]
-    channel :checkout_msg, 
+    channel :checkout_msg,
       [:@server, :client, :session, :reqid]
-    channel :response_msg, 
+    channel :response_msg,
       [:@client, :server, :session, :item] => [:cnt]
   end
 end

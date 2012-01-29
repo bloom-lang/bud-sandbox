@@ -8,7 +8,7 @@ require 'cart/cart_protocol'
 module DestructiveCart
   include CartProtocol
   include KVSProtocol
-  
+
   def delete_one(a, i)
     a.delete_at(a.index(i)) unless a.index(i).nil?
     return a
@@ -16,14 +16,14 @@ module DestructiveCart
 
   bloom :queueing do
     kvget <= action_msg {|a| [a.reqid, a.session] }
-    kvput <= action_msg do |a| 
+    kvput <= action_msg do |a|
       if a.action == "Add" and not kvget_response.map{|b| b.key}.include? a.session
         [a.client, a.session, a.reqid, Array.new.push(a.item)]
       end
     end
 
     temp :old_state <= (kvget_response * action_msg).pairs(:key => :session)
-    kvput <= old_state do |b, a| 
+    kvput <= old_state do |b, a|
       if a.action == "Add"
         [a.client, a.session, a.reqid, (b.value.clone.push(a.item))]
       elsif a.action == "Del"
