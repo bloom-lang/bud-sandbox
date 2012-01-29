@@ -16,21 +16,20 @@ module Remember
   end
 end
 
-class CCli
+class TestCartClient
   include Bud
   include CartClient
   include Remember
 end
 
-
-class BCS
+class BestEffortDisorderly
   include Bud
   include BestEffortMulticast
   include ReplicatedDisorderlyCart
   include StaticMembership
 end
 
-class LclDis
+class LocalDisorderly
   include Bud
   include DisorderlyCart
   include CartClient
@@ -38,23 +37,18 @@ class LclDis
   include StaticMembership
 end
 
-
-class DCR
+class ReplDestructive
   include Bud
-  #include TracingExtras
   include CartProtocol
   include DestructiveCart
   include ReplicatedKVS
   include BestEffortMulticast
   include StaticMembership
-  #include Remember
 end
 
-class DummyDC
+class LocalDestructive
   include Bud
-  include CartClientProtocol
   include CartClient
-  include CartProtocol
   include DestructiveCart
   include StaticMembership
   include BasicKVS
@@ -83,11 +77,11 @@ class TestCart < Test::Unit::TestCase
 
   def test_replicated_destructive_cart
     trc = false
-    cli = CCli.new(:port => 53524, :tag => "DESclient", :trace => trc)
+    cli = TestCartClient.new(:port => 53524, :tag => "DESclient", :trace => trc)
     cli.run_bg
-    prog = DCR.new(:port => 53525, :tag => "DESmaster", :trace => trc, :dump_rewrite => true)
-    rep = DCR.new(:port => 53526, :tag => "DESbackup", :trace => trc)
-    rep2 = DCR.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
+    prog = ReplDestructive.new(:port => 53525, :tag => "DESmaster", :trace => trc)
+    rep = ReplDestructive.new(:port => 53526, :tag => "DESbackup", :trace => trc)
+    rep2 = ReplDestructive.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
     rep.run_bg
     # undo comment
     #rep2.run_bg
@@ -97,11 +91,11 @@ class TestCart < Test::Unit::TestCase
 
   def test_replicated_disorderly_cart
     trc = false
-    cli = CCli.new(:tag => "DISclient", :trace => trc)
+    cli = TestCartClient.new(:tag => "DISclient", :trace => trc)
     cli.run_bg
-    prog = BCS.new(:port => 53525, :tag => "DISmaster", :trace => trc)
-    rep = BCS.new(:port => 53526, :tag => "DISbackup", :trace => trc)
-    rep2 = BCS.new(:port => 53527, :tag => "DISbackup2", :trace => trc)
+    prog = BestEffortDisorderly.new(:port => 53525, :tag => "DISmaster", :trace => trc)
+    rep = BestEffortDisorderly.new(:port => 53526, :tag => "DISbackup", :trace => trc)
+    rep2 = BestEffortDisorderly.new(:port => 53527, :tag => "DISbackup2", :trace => trc)
     rep.run_bg
     #rep2.run_bg
     cart_test_dist(prog, cli, rep, rep2)
@@ -109,12 +103,12 @@ class TestCart < Test::Unit::TestCase
   end
 
   def test_destructive_cart
-    prog = DummyDC.new(:port => 32575, :tag => "dest")
+    prog = LocalDestructive.new(:port => 32575, :tag => "dest")
     cart_test(prog)
   end
 
   def test_disorderly_cart
-    prog = LclDis.new(:port => 23765, :tag => "dis")
+    prog = LocalDisorderly.new(:port => 23765, :tag => "dis")
     cart_test(prog)
   end
 
@@ -128,7 +122,6 @@ class TestCart < Test::Unit::TestCase
 
   def cart_test_internal(program, dotest, client=nil, *others)
     ads = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
-    puts "ADS is #{ads.inspect} #{ads.class}"
     add_members(program, ads)
 
     program.run_bg
@@ -145,7 +138,6 @@ class TestCart < Test::Unit::TestCase
 
   def add_members(b, hosts)
     hosts.each_with_index do |h, i|
-      puts "ADD: #{i}, #{h}"
       b.add_member <+ [[i, h]]
     end
   end
