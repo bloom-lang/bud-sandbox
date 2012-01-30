@@ -59,12 +59,9 @@ class TestCart < Test::Unit::TestCase
     prog = ReplDestructive.new(:port => 53525, :tag => "DESmaster", :trace => trc)
     rep = ReplDestructive.new(:port => 53526, :tag => "DESbackup", :trace => trc)
     rep2 = ReplDestructive.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
-    rep.run_bg
     # undo comment
     #rep2.run_bg
     cart_test(prog, cli, rep) #, rep2)
-    rep.stop
-    cli.stop
   end
 
   def test_replicated_disorderly_cart
@@ -74,12 +71,7 @@ class TestCart < Test::Unit::TestCase
     prog = BestEffortDisorderly.new(:port => 53525, :tag => "DISmaster", :trace => trc)
     rep = BestEffortDisorderly.new(:port => 53526, :tag => "DISbackup", :trace => trc)
     rep2 = BestEffortDisorderly.new(:port => 53527, :tag => "DISbackup2", :trace => trc)
-    rep.run_bg
-    rep2.run_bg
     cart_test(prog, cli, rep, rep2)
-    rep.stop
-    rep2.stop
-    cli.stop
   end
 
   def test_destructive_cart
@@ -93,10 +85,11 @@ class TestCart < Test::Unit::TestCase
   end
 
   def cart_test(program, client, *others)
-    addr_list = ([program] + others).map{|o| "#{program.ip}:#{o.port}"}
+    nodes = [program] + others
+    addr_list = nodes.map {|n| "#{program.ip}:#{n.port}"}
     add_members(program, addr_list)
+    nodes.each {|n| n.run_bg}
 
-    program.run_bg
     run_cart(program, client)
 
     client.sync_do {
@@ -104,7 +97,9 @@ class TestCart < Test::Unit::TestCase
       assert_equal([[client.ip_port, program.ip_port, 1234,
                      [["beer", 13], ["diapers", 1]]]], client.memo.to_a)
     }
-    program.stop
+
+    nodes.each {|n| n.stop}
+    client.stop
   end
 
   def add_members(b, hosts)
