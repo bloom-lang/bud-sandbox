@@ -70,7 +70,6 @@ module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
   import BasicKVS => :kvs
-  #import LSKVS => :kvs
 
   bloom :local_indir do
     kvget_response <= kvs.kvget_response
