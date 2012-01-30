@@ -8,7 +8,7 @@ require 'cart/destructive_cart'
 
 module Remember
   state do
-    table :memo, [:client, :server, :session, :array]
+    table :memo, response_msg.schema
   end
 
   bloom do
@@ -29,30 +29,23 @@ class BestEffortDisorderly
   include StaticMembership
 end
 
-class LocalDisorderly
-  include Bud
+class LocalDisorderly < TestCartClient
   include DisorderlyCart
-  include CartClient
-  include Remember
   include StaticMembership
 end
 
 class ReplDestructive
   include Bud
-  include CartProtocol
   include DestructiveCart
   include ReplicatedKVS
   include BestEffortMulticast
   include StaticMembership
 end
 
-class LocalDestructive
-  include Bud
-  include CartClient
+class LocalDestructive < TestCartClient
   include DestructiveCart
   include StaticMembership
   include BasicKVS
-  include Remember
 end
 
 class TestCart < Test::Unit::TestCase
