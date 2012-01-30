@@ -54,13 +54,11 @@ class TestCart < Test::Unit::TestCase
   # XXX: currently broken
   def ntest_replicated_destructive_cart
     trc = false
-    cli = TestCartClient.new(:port => 53524, :tag => "DESclient", :trace => trc)
+    cli = TestCartClient.new(:tag => "DESclient", :trace => trc)
     cli.run_bg
     prog = ReplDestructive.new(:port => 53525, :tag => "DESmaster", :trace => trc)
     rep = ReplDestructive.new(:port => 53526, :tag => "DESbackup", :trace => trc)
     rep2 = ReplDestructive.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
-    # undo comment
-    #rep2.run_bg
     cart_test(prog, cli, rep) #, rep2)
   end
 
