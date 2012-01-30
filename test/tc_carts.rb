@@ -90,13 +90,8 @@ class TestCart < Test::Unit::TestCase
     add_members(program, addr_list)
     nodes.each {|n| n.run_bg}
 
-    run_cart(program, client)
-
-    client.sync_do {
-      puts "RESPONSE: #{client.memo.to_a.inspect}"
-      assert_equal([[client.ip_port, program.ip_port, 1234,
-                     [["beer", 13], ["diapers", 1]]]], client.memo.to_a)
-    }
+    simple_workload(program, client)
+    multi_session_workload(program, client)
 
     nodes.each {|n| n.stop}
     client.stop
