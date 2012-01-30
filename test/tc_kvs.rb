@@ -23,6 +23,7 @@ class TestKVS < Test::Unit::TestCase
       workload1(v)
       assert_equal(0, v.kvstate.length)
     end
+    v.stop
   end
 
   def ntest_wl5
