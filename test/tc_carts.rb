@@ -102,7 +102,7 @@ class TestCart < Test::Unit::TestCase
     client.sync_do {
       puts "RESPONSE: #{client.memo.to_a.inspect}"
       assert_equal([[client.ip_port, program.ip_port, 1234,
-                     [["beer", 5], ["diapers", 1]]]], client.memo.to_a)
+                     [["beer", 13], ["diapers", 1]]]], client.memo.to_a)
     }
     program.stop
   end

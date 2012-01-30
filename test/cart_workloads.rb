@@ -2,22 +2,30 @@ require 'rubygems'
 require 'bud'
 
 module CartWorkloads
-  def run_cart(program, client, actions=3)
-    addy = "#{program.ip}:#{program.port}"
-    contact = client.nil? ? program : client
-    contact.sync_do {
-      contact.client_action <+ [[addy, 1234, 123, 'meat', 1],
-                                [addy, 1234, 124, 'books', -1],
-                                [addy, 1234, 125, 'beer', 1],
-                                [addy, 1234, 126, 'diapers', 1],
-                                [addy, 1234, 127, 'meat', -1]]
+  def run_cart(program, client, actions=12)
+    workload = [['meat', 1],
+                ['books', -1],
+                ['beer', 1],
+                ['diapers', 1],
+                ['meat', -1]]
+    actions.times do |i|
+      workload << ['beer', 1]
+    end
 
-      (0..actions).each do |i|
-        contact.client_action <+ [[addy, 1234, 128 + i, 'beer', 1]]
+    addy = program.ip_port
+    client.sync_do {
+      workload.each_with_index do |w, i|
+        client.client_action <+ [[addy, 1234, gen_seq] + w]
       end
     }
 
     # block until we see the checkout message come in
-    contact.sync_callback(:client_checkout, [[addy, 1234, 132]], :response_msg)
+    client.sync_callback(:client_checkout, [[addy, 1234, gen_seq]],
+                         :response_msg)
+  end
+
+  def gen_seq
+    @seq ||= 0
+    @seq += 1
   end
 end
