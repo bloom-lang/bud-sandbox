@@ -4,12 +4,14 @@ require 'bud'
 module CartProtocol
   state do
     # PAA -- took the '@'s off all occurrences of :server below
-    channel :action_msg, 
+    channel :action_msg,
       [:@server, :client, :session, :reqid] => [:item, :action]
-    channel :checkout_msg, 
+    channel :checkout_msg,
       [:@server, :client, :session, :reqid]
-    channel :response_msg, 
-      [:@client, :server, :session, :item] => [:cnt]
+    # Upon receiving a checkout_msg, the server responds with a single
+    # response_msg; the nested "items" array contains pairs of [item_id, count].
+    channel :response_msg,
+      [:@client, :server, :session] => [:items]
   end
 end
 
@@ -18,7 +20,7 @@ module CartClientProtocol
     interface input, :client_checkout, [:server, :session, :reqid]
     interface input, :client_action, [:server, :session, :reqid] => [:item, :action]
     # XXX: why does this have "client" as a field?
-    interface output, :client_response, [:client, :server, :session] => [:item, :cnt]
+    interface output, :client_response, [:client, :server, :session] => [:items]
   end
 end
 

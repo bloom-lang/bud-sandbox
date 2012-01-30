@@ -10,11 +10,6 @@ class HB
 
   bootstrap do
     payload <= [['foo']]
-    payload <= [['foo']]
-    payload <= [['foo']]
-    add_member <= [[ 1, "localhost:46362" ]]
-    add_member <= [[ 2, "localhost:46363" ]]
-    add_member <= [[ 3, "localhost:46364" ]]
   end
 end
 
@@ -23,7 +18,12 @@ class TestHB < Test::Unit::TestCase
   def test_heartbeat_group
     port_list = [46362, 46363, 46364]
     hb_list = port_list.map {|p| HB.new(:port => p)}
-    hb_list.each {|h| h.run_bg}
+    hb_list.each do |h,i|
+      port_list.each_with_index do |p, i|
+        h.add_member <+ [[i, "localhost:#{p}"]]
+      end
+      h.run_bg
+    end
 
     # wait for the heartbeats to start appearing
     hb_list.first.delta(:last_heartbeat)

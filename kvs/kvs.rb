@@ -51,7 +51,7 @@ module PersistentKVS
   end
 
   bloom do
-    kvstate <+ kvstate_backing do |b| 
+    kvstate <+ kvstate_backing do |b|
       if kvstate.empty?
         b
       end
@@ -63,7 +63,6 @@ module PersistentKVS
         b
       end
     end
-    
   end
 end
 
@@ -71,17 +70,14 @@ module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
   import BasicKVS => :kvs
-  #import LSKVS => :kvs
 
   bloom :local_indir do
     kvget_response <= kvs.kvget_response
     kvs.kvdel <= kvdel
     kvs.kvget <= kvget
-
   end
 
   bloom :puts do
-
     # if I am the master, multicast store requests
     mcast_send <= kvput do |k|
       unless member.include? [k.client]
@@ -89,7 +85,7 @@ module ReplicatedKVS
       end
     end
 
-    kvs.kvput <= mcast_done do |m| 
+    kvs.kvput <= mcast_done do |m|
       if m.payload[0] == :put
         m.payload[1]
       end
@@ -110,7 +106,7 @@ module ReplicatedKVS
       end
     end
 
-    kvs.kvdel <= mcast_done do |m| 
+    kvs.kvdel <= mcast_done do |m|
       if m.payload[0] == :del
         m.payload[1]
       end
