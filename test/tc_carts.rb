@@ -116,6 +116,7 @@ class TestCart < Test::Unit::TestCase
     cli = client.nil? ? program : client
     cli.sync_do {
       assert_equal(1, cli.memo.length)
+      puts "RESPONSE: #{cli.memo.to_a.inspect}"
       # temporarily disabled.
       #assert_equal(4, cli.memo.first.array.length, "crap, i got #{cli.memo.first.inspect}") if dotest
     }

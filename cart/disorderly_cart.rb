@@ -9,41 +9,25 @@ module DisorderlyCart
 
   state do
     table :action_log, [:session, :reqid] => [:item, :action]
-    scratch :action_cnt, [:session, :item, :action] => [:cnt]
-    scratch :status, [:server, :client, :session, :item] => [:cnt]
+    scratch :item_sum, [:session, :item] => [:num]
+    scratch :session_final, [:session] => [:items, :counts]
   end
 
-  bloom :saved do
-    # store actions against the "cart;" that is, the session.
+  bloom :on_action do
     action_log <= action_msg { |c| [c.session, c.reqid, c.item, c.action] }
-    temp :checkout_actions <= (checkout_msg * action_log).rights
-    action_cnt <= checkout_actions.group([action_log.session, action_log.item, action_log.action], count(action_log.reqid))
   end
 
-  bloom :consider do
-    status <= (action_cnt * action_cnt * checkout_msg).combos do |a1, a2, c|
-      if a1.session == a2.session and a1.item == a2.item and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
-        if (a1.cnt - a2.cnt) > 0
-          [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
-        end
-      end
+  bloom :on_checkout do
+    temp :checkout_log <= (checkout_msg * action_log).rights(:session => :session)
+    item_sum <= checkout_log.group([action_log.session, action_log.item],
+                                   sum(action_log.action)) do |s|
+      # Don't return items with non-positive counts. XXX: "s" has no schema
+      # information, so we can't reference the sum by column name.
+      s if s.last > 0
     end
-    status <= (action_cnt * checkout_msg).pairs do |a, c|
-      if a.action == "Add" and not action_cnt.map{|d| d.item if d.action == "Del"}.include? a.item
-        [c.client, c.server, a.session, a.item, a.cnt]
-      end
-    end
-
-    temp :out <= (status.reduce({}) do |memo, i|
-      memo[[i[0],i[1],i[2]]] ||= []
-      i[4].times do
-        memo[[i[0],i[1],i[2]]] << i[3]
-      end
-      memo
-    end).to_a
-
-    response_msg <~ out do |k, v|
-      k << v
+    session_final <= item_sum.group([:session], accum(:item), accum(:num))
+    response_msg <~ (session_final * checkout_msg).pairs(:session => :session) do |c,m|
+      [m.client, m.server, m.session, c.items.zip(c.counts).sort]
     end
   end
 end

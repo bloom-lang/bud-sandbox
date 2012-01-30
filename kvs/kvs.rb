@@ -76,11 +76,9 @@ module ReplicatedKVS
     kvget_response <= kvs.kvget_response
     kvs.kvdel <= kvdel
     kvs.kvget <= kvget
-
   end
 
   bloom :puts do
-
     # if I am the master, multicast store requests
     mcast_send <= kvput do |k|
       unless member.include? [k.client]
