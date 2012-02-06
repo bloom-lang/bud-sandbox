@@ -63,20 +63,43 @@ class CartLattice < Bud::Lattice
 
   morph :cart_done
   def cart_done
-    c_list = get_checkouts(@v)
-    return Bud::BoolLattice.new(false) if c_list.empty?
+    @done = compute_done if @done.nil?
+    Bud::BoolLattice.new(@done)
+  end
 
-    ubound, op_val = c_list.first
-    lbound = op_val.last
-    (lbound..ubound).each do |n|
-      return Bud::BoolLattice.new(false) unless @v.has_key? n
+  morph :contents
+  def contents
+    @done = compute_done if @done.nil?
+    return Bud::SetLattice.new unless @done
+
+    actions = @v.values.select {|v| v.first == ACTION_OP}
+    item_cnt = {}
+    actions.each do |a|
+      op_type, op_val = a
+      item_id, mult = op_val
+      item_cnt[item_id] ||= 0
+      item_cnt[item_id] += mult
     end
 
-    return Bud::BoolLattice.new(true)
+    item_ary = item_cnt.select {|_,v| v > 0}.to_a
+    Bud::SetLattice.new(item_ary)
   end
 
   private
   def get_checkouts(i)
     i.select {|_, v| v.first == CHECKOUT_OP}
+  end
+
+  def compute_done
+    c_list = get_checkouts(@v)
+    return false if c_list.empty?
+
+    ubound, op_val = c_list.first
+    lbound = op_val.last
+    (lbound..ubound).each do |n|
+      return false unless @v.has_key? n
+    end
+
+    return true
   end
 end

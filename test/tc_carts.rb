@@ -109,6 +109,7 @@ class SimpleCheckout
   state do
     lcart :c
     lbool :done
+    lset :contents
     scratch :add_t, [:req] => [:item, :cnt]
     scratch :del_t, [:req] => [:item, :cnt]
     scratch :do_checkout, [:req] => [:lbound]
@@ -119,6 +120,7 @@ class SimpleCheckout
     c <= del_t {|t| { t.req => [ACTION_OP, [t.item, -t.cnt]] } }
     c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound] } }
     done <= c.cart_done
+    contents <= c.contents
   end
 end
 
@@ -149,5 +151,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.del_t <+ [[102, 10, 1]]
     i.tick
     assert_equal(true, i.done.current_value.reveal)
+
+    puts i.contents.current_value.reveal.inspect
   end
 end
