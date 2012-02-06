@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bud'
 require 'test/unit'
 require 'test/cart_workloads'
+require 'cart/cart_lattice'
 require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
 
@@ -99,5 +100,54 @@ class TestCart < Test::Unit::TestCase
     hosts.each_with_index do |h, i|
       b.add_member <+ [[i, h]]
     end
+  end
+end
+
+class SimpleCheckout
+  include Bud
+
+  state do
+    lcart :c
+    lbool :done
+    scratch :add_t, [:req] => [:item, :cnt]
+    scratch :del_t, [:req] => [:item, :cnt]
+    scratch :do_checkout, [:req] => [:lbound]
+  end
+
+  bloom do
+    c <= add_t {|t| { t.req => [ACTION_OP, [t.item, t.cnt]] } }
+    c <= del_t {|t| { t.req => [ACTION_OP, [t.item, -t.cnt]] } }
+    c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound] } }
+    done <= c.cart_done
+  end
+end
+
+class TestCheckoutLattice < Test::Unit::TestCase
+  def test_simple
+    i = SimpleCheckout.new
+    assert_equal(2, i.strata.length)
+    strat_zero = i.stratum_collection_map[0]
+    [:c, :done, :del_t, :add_t, :do_checkout].each do |r|
+      assert(strat_zero.include? r)
+    end
+
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.add_t <+ [[100, 5, 1], [101, 10, 4]]
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.do_checkout <+ [[103, 99]]
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.del_t <+ [[99, 3, 1]]
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.del_t <+ [[102, 10, 1]]
+    i.tick
+    assert_equal(true, i.done.current_value.reveal)
   end
 end
