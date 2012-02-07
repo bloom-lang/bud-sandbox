@@ -154,4 +154,47 @@ class TestCheckoutLattice < Test::Unit::TestCase
 
     puts i.contents.current_value.reveal.inspect
   end
+
+  # Current behavior is to raise an error if we see actions that follow the
+  # checkout (in the ID sequence); such actions could instead be ignored.
+  def test_action_follows_checkout
+    i = SimpleCheckout.new
+    i.add_t <+ [[200, 1, 1], [201, 1, 1], [202, 8, 20]]
+    i.del_t <+ [[204, 8, 2]]
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.do_checkout <+ [[203, 200]]
+    assert_raise(Bud::TypeError) do
+      i.tick
+    end
+  end
+
+  # Similarly, raise an error if the lower bound would require dropping some
+  # messages; such messages could instead be ignored.
+  def test_action_before_lbound
+    i = SimpleCheckout.new
+    i.add_t <+ [[200, 1, 1], [201, 1, 1], [202, 8, 20]]
+    i.del_t <+ [[203, 8, 2]]
+    i.tick
+    assert_equal(false, i.done.current_value.reveal)
+
+    i.do_checkout <+ [[204, 201]]
+    assert_raise(Bud::TypeError) do
+      i.tick
+    end
+  end
+
+  def test_extra_checkout
+    i = SimpleCheckout.new
+    i.add_t <+ [[300, 1, 1], [301, 2, 5]]
+    i.do_checkout <+ [[303, 300]]
+    i.tick
+
+    assert_equal(false, i.done.current_value.reveal)
+    i.do_checkout <+ [[302, 300]]
+    assert_raise(Bud::TypeError) do
+      i.tick
+    end
+  end
 end

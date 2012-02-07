@@ -20,6 +20,12 @@ CHECKOUT_OP = 1
 # assume that carts are intended to be "dense" -- that is, that a complete cart
 # includes exactly the operations with IDs from lbound to the CHECKOUT_OP's
 # ID. Naturally, a given cart can only have a single CHECKOUT_OP.
+#
+# If a cart contains "illegal" messages (those with IDs before the lbound or
+# after the checkout message's ID), we raise an error. We could instead
+# ignore/drop such messages; this would still yield a convergent result. We also
+# raise an error if multiple checkout messages are merged into a single cart;
+# this is naturally a non-confluent situation, so we need to raise an error.
 class CartLattice < Bud::Lattice
   lattice_name :lcart
 
