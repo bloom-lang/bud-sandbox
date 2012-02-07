@@ -152,6 +152,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.tick
     assert_equal(true, i.done.current_value.reveal)
 
+    # XXX: assert on cart contents
     puts i.contents.current_value.reveal.inspect
   end
 
@@ -196,5 +197,20 @@ class TestCheckoutLattice < Test::Unit::TestCase
     assert_raise(Bud::TypeError) do
       i.tick
     end
+  end
+
+  def test_dup_checkout
+    i = SimpleCheckout.new
+    i.add_t <+ [[300, 1, 1], [301, 2, 5]]
+    i.do_checkout <+ [[303, 300]]
+    i.tick
+
+    assert_equal(false, i.done.current_value.reveal)
+    i.do_checkout <+ [[303, 300]]
+    i.del_t <+ [[302, 2, 2]]
+    i.tick
+
+    assert_equal(true, i.done.current_value.reveal)
+    # XXX: assert on cart contents
   end
 end
