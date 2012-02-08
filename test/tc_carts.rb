@@ -151,9 +151,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.del_t <+ [[102, 10, 1]]
     i.tick
     assert_equal(true, i.done.current_value.reveal)
-
-    # XXX: assert on cart contents
-    puts i.contents.current_value.reveal.inspect
+    assert_equal([[5 ,1], [10, 3]], i.contents.current_value.reveal.sort)
   end
 
   # Current behavior is to raise an error if we see actions that follow the
@@ -211,6 +209,6 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.tick
 
     assert_equal(true, i.done.current_value.reveal)
-    # XXX: assert on cart contents
+    assert_equal([[1, 1], [2, 3]], i.contents.current_value.reveal.sort)
   end
 end
