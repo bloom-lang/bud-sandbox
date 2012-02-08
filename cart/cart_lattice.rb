@@ -64,16 +64,16 @@ class CartLattice < Bud::Lattice
     return CartLattice.new(rv)
   end
 
-  morph :cart_done
-  def cart_done
-    @done = compute_done if @done.nil?
-    Bud::BoolLattice.new(@done)
+  morph :sealed
+  def sealed
+    @sealed = compute_sealed if @sealed.nil?
+    Bud::BoolLattice.new(@sealed)
   end
 
   morph :summary
   def summary
-    @done = compute_done if @done.nil?
-    return Bud::SetLattice.new unless @done
+    @sealed = compute_sealed if @sealed.nil?
+    return Bud::SetLattice.new unless @sealed
 
     actions = @v.values.select {|v| v.first == ACTION_OP}
     summary = {}
@@ -94,7 +94,7 @@ class CartLattice < Bud::Lattice
     lst.first   # Return checkout action or nil
   end
 
-  def compute_done
+  def compute_sealed
     checkout = get_checkout(@v)
     return false unless checkout
 
