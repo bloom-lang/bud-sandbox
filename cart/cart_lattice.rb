@@ -27,9 +27,9 @@ CHECKOUT_OP = 1
 # raise an error if multiple checkout messages are merged into a single cart;
 # this is naturally a non-confluent situation, so we need to raise an error.
 #
-# The point of the lattice is that checkout becomes a monotonic operation,
-# because each replica of the cart can decide when it is "sealed" independently
-# (and consistently!).
+# Why bother with a custom lattice to represent the cart state? The point is
+# that checkout becomes a monotonic operation, because each replica of the cart
+# can decide when it is "sealed" independently (and consistently!).
 class CartLattice < Bud::Lattice
   lattice_name :lcart
 
