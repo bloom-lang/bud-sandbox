@@ -109,18 +109,16 @@ class SimpleCheckout
   state do
     lcart :c
     lbool :done
-    lset :contents
     scratch :add_t, [:req] => [:item, :cnt]
     scratch :del_t, [:req] => [:item, :cnt]
     scratch :do_checkout, [:req] => [:lbound]
   end
 
   bloom do
-    c <= add_t {|t| { t.req => [ACTION_OP, [t.item, t.cnt]] } }
-    c <= del_t {|t| { t.req => [ACTION_OP, [t.item, -t.cnt]] } }
-    c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound] } }
+    c <= add_t {|t| { t.req => [ACTION_OP, t.item,  t.cnt] } }
+    c <= del_t {|t| { t.req => [ACTION_OP, t.item, -t.cnt] } }
+    c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound, ip_port] } }
     done <= c.sealed
-    contents <= c.summary
   end
 end
 
@@ -151,7 +149,8 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.del_t <+ [[102, 10, 1]]
     i.tick
     assert_equal(true, i.done.current_value.reveal)
-    assert_equal([[5 ,1], [10, 3]], i.contents.current_value.reveal.sort)
+    assert_equal([[5 ,1], [10, 3]], i.c.current_value.summary)
+    assert_equal(i.ip_port, i.c.current_value.checkout_addr)
   end
 
   # Current behavior is to raise an error if we see actions that follow the
@@ -209,6 +208,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
     i.tick
 
     assert_equal(true, i.done.current_value.reveal)
-    assert_equal([[1, 1], [2, 3]], i.contents.current_value.reveal.sort)
+    assert_equal([[1, 1], [2, 3]], i.c.current_value.summary)
+    assert_equal(i.ip_port, i.c.current_value.checkout_addr)
   end
 end

@@ -8,18 +8,20 @@ CHECKOUT_OP = 1
 # cart. The cart can hold two kinds of items: add/remove operations, and
 # checkout operations. Both kinds of operations are identified with a unique ID;
 # internally, the set of items is represented as a map from ID to value. Each
-# value in the map is a pair: [op_type, op_val]. op_type is either ACTION_OP or
+# value in the map is an array, where the first element is either ACTION_OP or
 # CHECKOUT_OP.
 #
-# For ACTION_OPs, the value is a nested pair: [item_id, mult], where mult is the
-# incremental change to the number of item_id's in the cart (positive or
+# For ACTION_OPs, the rest of the array contains: item_id and mult, where mult
+# is the incremental change to the number of item_id's in the cart (positive or
 # negative).
 #
-# For CHECKOUT_OPs, the value is a single number, lbound. This identifies the
-# smallest ID number that must be in the cart for it to be complete; we also
-# assume that carts are intended to be "dense" -- that is, that a complete cart
-# includes exactly the operations with IDs from lbound to the CHECKOUT_OP's
-# ID. Naturally, a given cart can only have a single CHECKOUT_OP.
+# For CHECKOUT_OPs, the rest of the array contains lbound and # checkout_addr.
+# lbound identifies the smallest ID number that must be in the cart for it to be
+# complete; we also assume that carts are intended to be "dense" -- that is,
+# that a complete cart includes exactly the operations with IDs from lbound to
+# the CHECKOUT_OP's ID. checkout_addr is the address we want to contact with the
+# completed cart state (we stash it here for convenience). Naturally, a given
+# cart can only have a single CHECKOUT_OP.
 #
 # If a cart contains "illegal" messages (those with IDs before the lbound or
 # after the checkout message's ID), we raise an error. We could instead
@@ -36,17 +38,13 @@ class CartLattice < Bud::Lattice
   def initialize(i={})
     # Sanity check the set of operations in the cart
     i.each do |k,v|
-      op_type, op_val = v
-
-      reject_input(i) unless [ACTION_OP, CHECKOUT_OP].include? op_type
-      if op_type == ACTION_OP
-        reject_input(i) unless (op_val.class <= Enumerable && op_val.size == 2)
-      end
+      reject_input(i) unless (v.class <= Enumerable && v.size == 3)
+      reject_input(i) unless [ACTION_OP, CHECKOUT_OP].include? v.first
     end
 
     checkout = get_checkout(i)
     if checkout
-      ubound, _, lbound = checkout.flatten
+      ubound, _, lbound, _ = checkout.flatten
 
       # All the IDs in the cart should be between the lbound ID and the ID of
       # the checkout message (inclusive).
@@ -73,18 +71,25 @@ class CartLattice < Bud::Lattice
   morph :summary
   def summary
     @sealed = compute_sealed if @sealed.nil?
-    return Bud::SetLattice.new unless @sealed
+    raise Bud::Error unless @sealed
 
     actions = @v.values.select {|v| v.first == ACTION_OP}
     summary = {}
     actions.each do |a|
-      _, item_id, mult = a.flatten
+      _, item_id, mult = a
       summary[item_id] ||= 0
       summary[item_id] += mult
     end
 
-    # Drop deleted cart items and convert to array of pairs
-    Bud::SetLattice.new(summary.select {|_,v| v > 0}.to_a)
+    # Drop deleted cart items and return an array of pairs
+    summary.select {|_,v| v > 0}.to_a.sort
+  end
+
+  morph :checkout_addr
+  def checkout_addr
+    checkout = get_checkout(@v)
+    raise Bud::Error unless checkout
+    checkout.flatten.last
   end
 
   private
@@ -98,7 +103,7 @@ class CartLattice < Bud::Lattice
     checkout = get_checkout(@v)
     return false unless checkout
 
-    ubound, _, lbound = checkout.flatten
+    ubound, _, lbound, _ = checkout.flatten
     (lbound..ubound).each do |n|
       return false unless @v.has_key? n
     end
