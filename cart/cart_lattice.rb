@@ -38,26 +38,19 @@ class CartLattice < Bud::Lattice
     i.each do |k,v|
       op_type, op_val = v
 
-      case op_type
-      when ACTION_OP
+      reject_input(i) unless [ACTION_OP, CHECKOUT_OP].include? op_type
+      if op_type == ACTION_OP
         reject_input(i) unless (op_val.class <= Enumerable && op_val.size == 2)
-      when CHECKOUT_OP
-      else
-        reject_input(i)
       end
     end
 
-    checkout_ops = get_checkouts(i)
-    reject_input(i) unless checkout_ops.size <= 1
-    unless checkout_ops.empty?
-      ubound, op_val = checkout_ops.first
-      lbound = op_val.last
+    checkout = get_checkout(i)
+    if checkout
+      ubound, _, lbound = checkout.flatten
 
       # All the IDs in the cart should be between the lbound ID and the ID of
       # the checkout message (inclusive).
-      i.each do |k,_|
-        reject_input(i) unless (k >= lbound && k <= ubound)
-      end
+      i.each {|k,_| reject_input(i) unless (k >= lbound && k <= ubound) }
     end
 
     @v = i
@@ -77,35 +70,35 @@ class CartLattice < Bud::Lattice
     Bud::BoolLattice.new(@done)
   end
 
-  morph :contents
-  def contents
+  morph :summary
+  def summary
     @done = compute_done if @done.nil?
     return Bud::SetLattice.new unless @done
 
     actions = @v.values.select {|v| v.first == ACTION_OP}
-    item_cnt = {}
+    summary = {}
     actions.each do |a|
-      op_type, op_val = a
-      item_id, mult = op_val
-      item_cnt[item_id] ||= 0
-      item_cnt[item_id] += mult
+      _, item_id, mult = a.flatten
+      summary[item_id] ||= 0
+      summary[item_id] += mult
     end
 
-    item_ary = item_cnt.select {|_,v| v > 0}.to_a
-    Bud::SetLattice.new(item_ary)
+    # Drop deleted cart items and convert to array of pairs
+    Bud::SetLattice.new(summary.select {|_,v| v > 0}.to_a)
   end
 
   private
-  def get_checkouts(i)
-    i.select {|_, v| v.first == CHECKOUT_OP}
+  def get_checkout(i)
+    lst = i.select {|_, v| v.first == CHECKOUT_OP}
+    reject_input(i) unless lst.size <= 1
+    lst.first   # Return checkout action or nil
   end
 
   def compute_done
-    c_list = get_checkouts(@v)
-    return false if c_list.empty?
+    checkout = get_checkout(@v)
+    return false unless checkout
 
-    ubound, op_val = c_list.first
-    lbound = op_val.last
+    ubound, _, lbound = checkout.flatten
     (lbound..ubound).each do |n|
       return false unless @v.has_key? n
     end

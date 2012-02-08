@@ -120,7 +120,7 @@ class SimpleCheckout
     c <= del_t {|t| { t.req => [ACTION_OP, [t.item, -t.cnt]] } }
     c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound] } }
     done <= c.cart_done
-    contents <= c.contents
+    contents <= c.summary
   end
 end
 
