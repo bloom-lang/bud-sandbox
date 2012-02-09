@@ -14,7 +14,7 @@ module MonotoneCartProtocol
   end
 end
 
-module MonotoneCart
+module MonotoneReplica
   include MonotoneCartProtocol
 
   state do
@@ -36,13 +36,7 @@ module MonotoneCart
   end
 end
 
-class MonotoneReplica
-  include Bud
-  include MonotoneCart
-end
-
-class MonotoneClient
-  include Bud
+module MonotoneClient
   include MonotoneCartProtocol
 
   state do
@@ -62,9 +56,19 @@ class MonotoneClient
   end
 end
 
-s = MonotoneReplica.new
+class ReplicaProgram
+  include Bud
+  include MonotoneReplica
+end
+
+class ClientProgram
+  include Bud
+  include MonotoneClient
+end
+
+s = ReplicaProgram.new
 s.run_bg
-c = MonotoneClient.new
+c = ClientProgram.new
 c.run_bg
 
 c.sync_do {
