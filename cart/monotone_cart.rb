@@ -49,7 +49,6 @@ class MonotoneClient
     table :serv, [] => [:addr]
     scratch :do_action, [:session, :reqid] => [:item, :action]
     scratch :do_checkout, [:session, :reqid] => [:lbound]
-    table :response_log, response_msg.schema
   end
 
   bloom do
