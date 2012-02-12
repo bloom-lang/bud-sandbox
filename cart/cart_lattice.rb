@@ -62,14 +62,12 @@ class CartLattice < Bud::Lattice
     return CartLattice.new(rv)
   end
 
-  morph :sealed
-  def sealed
+  morph :sealed do
     @sealed = compute_sealed if @sealed.nil?
     Bud::BoolLattice.new(@sealed)
   end
 
-  morph :summary
-  def summary
+  morph :summary do
     @sealed = compute_sealed if @sealed.nil?
     raise Bud::Error unless @sealed
 
@@ -85,8 +83,7 @@ class CartLattice < Bud::Lattice
     summary.select {|_,v| v > 0}.to_a.sort
   end
 
-  morph :checkout_addr
-  def checkout_addr
+  morph :checkout_addr do
     checkout = get_checkout(@v)
     raise Bud::Error unless checkout
     checkout.flatten.last
