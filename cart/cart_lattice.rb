@@ -33,7 +33,7 @@ CHECKOUT_OP = 1
 # that checkout becomes a monotonic operation, because each replica of the cart
 # can decide when it is "sealed" independently (and consistently!).
 class CartLattice < Bud::Lattice
-  lattice_name :lcart
+  wrapper_name :lcart
 
   def initialize(i={})
     # Sanity check the set of operations in the cart
@@ -62,12 +62,12 @@ class CartLattice < Bud::Lattice
     return CartLattice.new(rv)
   end
 
-  morph :sealed do
+  ord_map :sealed do
     @sealed = compute_sealed if @sealed.nil?
     Bud::BoolLattice.new(@sealed)
   end
 
-  morph :summary do
+  ord_map :summary do
     @sealed = compute_sealed if @sealed.nil?
     raise Bud::Error unless @sealed
 
@@ -83,7 +83,7 @@ class CartLattice < Bud::Lattice
     summary.select {|_,v| v > 0}.to_a.sort
   end
 
-  morph :checkout_addr do
+  ord_map :checkout_addr do
     checkout = get_checkout(@v)
     raise Bud::Error unless checkout
     checkout.flatten.last
