@@ -26,7 +26,7 @@ class VcAgent
   end
 
   bootstrap do
-    my_vc <= [ {ip_port => Bud::MaxLattice.new(0)} ]
+    my_vc <= {ip_port => Bud::MaxLattice.new(0)}
   end
 
   bloom do
