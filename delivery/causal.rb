@@ -20,11 +20,12 @@ module CausalDelivery
   state do
     channel :chn, [:@dst, :src, :ident] => [:payload, :clock, :ord_buf]
 
-    # Local vector clock
+    # Local vector clock: map from node_id => lmax
     lmap :my_vc
     lmap :next_vc
 
-    # Our knowledge of the VCs at other nodes
+    # Our knowledge of the vector clocks at other nodes: map from node_id =>
+    # {map from node_id => lmax}
     lmap :ord_buf
 
     # Received messages that haven't yet been delivered
