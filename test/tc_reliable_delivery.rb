@@ -71,7 +71,7 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd.send_msg([sendtup])
 
     # transmission not 'complete'
-    assert_equal(false, rd.buf_empty?)
+    #assert_equal(false, rd.buf_empty?) # buf is emptied lazily, so this assertion will not work anymore
     rd.sync_do { assert_equal([], rd.recv_log.to_a.sort) }
     rd.stop
   end
