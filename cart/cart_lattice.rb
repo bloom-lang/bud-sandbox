@@ -62,12 +62,12 @@ class CartLattice < Bud::Lattice
     return CartLattice.new(rv)
   end
 
-  ord_map :sealed do
+  monotone :sealed do
     @sealed = compute_sealed if @sealed.nil?
     Bud::BoolLattice.new(@sealed)
   end
 
-  ord_map :summary do
+  monotone :summary do
     @sealed = compute_sealed if @sealed.nil?
     raise Bud::Error unless @sealed
 
@@ -83,7 +83,7 @@ class CartLattice < Bud::Lattice
     summary.select {|_,v| v > 0}.to_a.sort
   end
 
-  ord_map :checkout_addr do
+  monotone :checkout_addr do
     checkout = get_checkout(@v)
     raise Bud::Error unless checkout
     checkout.flatten.last
