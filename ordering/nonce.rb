@@ -26,13 +26,13 @@ module GroupNonce
   end
 
   bootstrap do
-    permo <= local_id
+    permo <= my_id
   end
 
   bloom do
     mcnt <= member.group(nil, count)
     nonce <= (permo * mcnt).pairs {|p, m| [p.ident + (budtime * m.cnt)]}
-    permo <= (seed * local_id).pairs {|s, l| l if budtime == 0}
+    permo <= (seed * my_id).pairs {|s, l| l if budtime == 0}
   end
 end
 

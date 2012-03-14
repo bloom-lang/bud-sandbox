@@ -55,7 +55,7 @@ class TestMC < Test::Unit::TestCase
     mc3.stop
   end
 
-  def ntest_reliable
+  def test_reliable
     mc = RMC.new
     mc2 = RMC.new
     mc3 = RMC.new

@@ -3,6 +3,7 @@ require 'bud'
 
 module MembershipProtocol
   state do
+    interface input, :my_id, [:ident]
     interface input, :add_member, [:ident] => [:host]
     interface input, :remove_member, [:ident]
     interface output, :member, [:ident] => [:host]

@@ -46,7 +46,7 @@ class DataProtocolClient
     raise "No datanodes.  #{fail} failed attempts"   
   end
 
-  def DataProtocolClient::send_stream(chunkid, prefs, chunk)
+  def DataProtocolClient::send_stream(chunkid, prefs, chnk)
     copy = prefs.clone
     first = copy.shift
     host, port = first.split(":")
@@ -54,11 +54,11 @@ class DataProtocolClient
     copy.unshift "pipeline"
     s = TCPSocket.open(host, port)
     s.puts(copy.join(","))
-    if chunk.nil?
+    if chnk.nil?
       s.close
       return false
     else
-      s.write(chunk)
+      s.write(chnk)
       s.close
       return true
     end
@@ -71,7 +71,7 @@ class DataProtocolServer
   # 1: pipeline.  chunkid, preflist, stream, to_go
   #   - the idea behind to_go is that |preflist| > necessary copies,
   #     but to_go decremements at each successful hop
-  # 2: read. chunkid.  send back chunk data from local FS.
+  # 2: read. chunkid.  send back chnk data from local FS.
   # 3: replicate.  chunkid, preflist. be a client, send local data to another datanode.
 
   def initialize(port)
@@ -139,9 +139,9 @@ class DataProtocolServer
   def do_read(chunkid, cli)
     begin
       fp = File.open("#{@dir}/#{chunkid.to_s}", "r")
-      chunk = fp.read(CHUNKSIZE)
+      chnk = fp.read(CHUNKSIZE)
       fp.close
-      cli.write(chunk)
+      cli.write(chnk)
       cli.close
     rescue
       puts "FILE NOT FOUND: *#{chunkid}* (error #{$!})"
@@ -150,11 +150,11 @@ class DataProtocolServer
     end
   end
 
-  def do_replicate(chunk, target, cli)
+  def do_replicate(chnk, target, cli)
     cli.close
     begin
-      fp = File.open("#{@dir}/#{chunk}", "r")
-      DataProtocolClient.send_stream(chunk, target, DataProtocolClient.chunk_from_fh(fp))
+      fp = File.open("#{@dir}/#{chnk}", "r")
+      DataProtocolClient.send_stream(chnk, target, DataProtocolClient.chunk_from_fh(fp))
       fp.close
     rescue
       puts "FAIL: #{$!}"

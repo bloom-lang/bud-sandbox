@@ -28,7 +28,7 @@ class TestMICache < Test::Unit::TestCase
   def test_cache1
     dir = DumbDir.new(:port => 12345, :trace => true)
     dir.run_bg
-    cx = MICacheServer.new(:trace => true)
+    cx = MICacheServer.new(:trace => true, :port => 64532)
     cx.directory << ['localhost:12345']
     cx.run_bg
     cx.sync_do {}

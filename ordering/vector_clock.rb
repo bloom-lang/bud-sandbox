@@ -78,7 +78,7 @@ class VectorClock
 
   private
   def check_client(client)
-    if !@vector.has_key?(client):
+    if !@vector.has_key?(client)
         @vector[client] = 0
     end
   end

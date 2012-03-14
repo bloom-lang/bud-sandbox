@@ -85,19 +85,21 @@ class TestKVS < Test::Unit::TestCase
     v.stop
   end
 
-  def test_persistent_kvs  
-    puts "FIX: test_persistent_kvs requires NOTIN, which has not been implemented yet"
+  def test_persistent_kvs
+    puts "test_persistent_kvs disabled temporarily"
     return
 
     dir = "/tmp/tpk"
-    `rm -r #{dir}`
-    `mkdir #{dir}`
+    #`rm -r #{dir}`
+    #`mkdir #{dir}`
     p  = SSPKVS.new(:dbm_dir => dir, :port => 12345)
     p.run_bg
     workload1(p)
     p.sync_do { assert_equal(1, p.kvstate.length) }
     p.sync_do { assert_equal("bak", p.kvstate.first[1]) }
     p.stop
+
+    sleep(0.5)
     
     p2 = SSPKVS.new(:dbm_dir => dir, :port => 12345)
     p2.run_bg

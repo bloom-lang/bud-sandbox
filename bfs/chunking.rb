@@ -23,7 +23,7 @@ module ChunkedKVSFS
 
   state do
     # master copy.  every chunk we ever tried to create metadata for.
-    table :chunk, [:chunkid, :file, :siz]
+    table :chnk, [:chunkid, :file, :siz]
     scratch :chunk_buffer, [:reqid, :chunkid]
     scratch :chunk_buffer2, [:reqid, :chunklist]
     scratch :host_buffer, [:reqid, :host]
@@ -44,7 +44,7 @@ module ChunkedKVSFS
   end
 
   bloom :getchunks do
-    chunk_buffer <= (fschunklist * kvget_response * chunk).combos([fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chunk.file]) { |l, r, c| [l.reqid, c.chunkid] }
+    chunk_buffer <= (fschunklist * kvget_response * chnk).combos([fschunklist.reqid, kvget_response.reqid], [fschunklist.file, chnk.file]) { |l, r, c| [l.reqid, c.chunkid] }
     chunk_buffer2 <= chunk_buffer.group([chunk_buffer.reqid], accum(chunk_buffer.chunkid))
     fsret <= chunk_buffer2 { |c| [c.reqid, true, c.chunklist] }
     # handle case of empty file / haven't heard about chunks yet
@@ -67,7 +67,7 @@ module ChunkedKVSFS
   bloom :addchunks do
     #stdio <~ "Warning: no available datanodes" if available.empty?
     temp :minted_chunk <= (kvget_response * fsaddchunk * available * nonce).combos(kvget_response.reqid => fsaddchunk.reqid) {|r| r if last_heartbeat.length >= REP_FACTOR}
-    chunk <= minted_chunk { |r, a, v, n| [n.ident, a.file, 0]}
+    chnk <= minted_chunk { |r, a, v, n| [n.ident, a.file, 0]}
     fsret <= minted_chunk { |r, a, v, n| [r.reqid, true, [n.ident, v.pref_list.slice(0, (REP_FACTOR + 2))]]}
     fsret <= (kvget_response * fsaddchunk).pairs(:reqid => :reqid) do |r, a|
       if available.empty? or available.first.pref_list.length < REP_FACTOR
