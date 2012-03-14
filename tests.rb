@@ -1,7 +1,6 @@
 # that these unit test batches should succeed individually
 # but fail when run together as below is troublesome!
 
-require 'test/tc_2pc'
 require 'test/tc_assignment'
 require 'test/tc_besteffort_delivery'
 require 'test/tc_bfs'
