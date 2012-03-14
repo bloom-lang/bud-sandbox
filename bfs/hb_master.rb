@@ -1,8 +1,7 @@
 require 'rubygems'
-#require 'backports'
 require 'bud'
-require 'heartbeat/heartbeat'
 require 'bfs/bfs_client_proto'
+require 'heartbeat/heartbeat'
 
 module HBMaster
   include HeartbeatAgent

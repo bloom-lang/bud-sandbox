@@ -1,10 +1,8 @@
 require 'rubygems'
 require 'bud'
-#require 'backports'
-require 'timeout'
 require 'bfs/bfs_client_proto'
-require 'bfs/data_protocol'
 require 'bfs/bfs_config'
+require 'bfs/data_protocol'
 require 'timeout'
 
 # The BFS client and shell stand between ruby and BUD.  BFSShell provides
