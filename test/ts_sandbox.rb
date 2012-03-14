@@ -1,6 +1,5 @@
 require './test_common'
 
-require 'test/tc_2pc'
 require 'test/tc_assignment'
 require 'test/tc_besteffort_delivery'
 require 'test/tc_bfs'
