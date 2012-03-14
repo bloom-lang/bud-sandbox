@@ -129,16 +129,16 @@ class BFSShell
     synchronous_request(:rm, [file, path]) 
   end
 
-  def read_retry(chunk)
+  def read_retry(chnk)
     READ_RETRIES.times do
       begin
-        res = synchronous_request(:getchunklocations, chunk)
-        raise BFSClientError, "Read Failure: No copies of chunk #{chunk}" unless res[1]
-        chunk_data = DataProtocolClient.read_chunk(chunk, res[2])
+        res = synchronous_request(:getchunklocations, chnk)
+        raise BFSClientError, "Read Failure: No copies of chunk #{chnk}" unless res[1]
+        chunk_data = DataProtocolClient.read_chunk(chnk, res[2])
         return chunk_data
       rescue
         puts "ERROR IS #{$!}"
-        puts "retrying individual chunk read for #{chunk}"
+        puts "retrying individual chunk read for #{chnk}"
         sleep 1
       end
     end
@@ -148,8 +148,8 @@ class BFSShell
   def do_read(args, fh)
     res = synchronous_request(:getchunks, args[0])
     res[2].sort{|a, b| a <=> b}.each do |chk|
-      chunk = read_retry(chk)
-      fh.write chunk
+      chnk = read_retry(chk)
+      fh.write chnk
     end
   end
 

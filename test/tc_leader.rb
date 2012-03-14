@@ -40,7 +40,7 @@ class TestLE < Test::Unit::TestCase
     rt = LE.new(@opts.merge(:ip => ip, :port => port))
     rt.add_member <+ [['localhost:20001']]
     rt.add_member <+ [['localhost:20002']]
-    #rt.add_member <+ [['localhost:20003']]
+    rt.add_member <+ [['localhost:20003']]
     rt.my_id <+ [[id]]
     rt.seed <+ [[nil]]
     rt.init_le <+ [[nil]]
