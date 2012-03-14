@@ -1,6 +1,5 @@
+require './test_common'
 require '2pc/2pc'
-require 'test/unit'
-
 
 class TPCM
   include Bud

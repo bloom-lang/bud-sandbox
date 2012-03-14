@@ -1,10 +1,7 @@
-require 'rubygems'
-require 'bud'
-
 module KVSWorkloads
   def add_members(b, *hosts)
     hosts.each_with_index do |h, i|
-      #print "ADD MEMBER: #{h.inspect}\n"
+      #puts "ADD MEMBER: #{h.inspect}"
       b.add_member <+ [[i, h]]
     end
   end

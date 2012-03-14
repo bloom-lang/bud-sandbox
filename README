@@ -1,3 +1,6 @@
-This repository contains example code and libraries for the Bud
-runtime and Bloom language.
+This repository contains example code and libraries for the Bud runtime and
+Bloom language.
 
+To run the unit tests:
+
+  cd test; ruby ts_sandbox.rb

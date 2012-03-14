@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 module CartWorkloads
   def simple_workload(program, client, nbeers=12)
     workload = [['meat', 1],

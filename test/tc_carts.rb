@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'test/cart_workloads'
 require 'cart/disorderly_cart'
 require 'cart/destructive_cart'

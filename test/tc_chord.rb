@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
