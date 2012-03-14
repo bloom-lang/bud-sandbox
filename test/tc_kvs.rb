@@ -23,6 +23,7 @@ class TestKVS < Test::Unit::TestCase
       workload1(v)
       assert_equal(0, v.kvstate.length)
     end
+    v.stop
   end
 
   def ntest_wl5
@@ -39,7 +40,7 @@ class TestKVS < Test::Unit::TestCase
   def test_wl1
     trc = false
     # in a distributed, ordered workload, the right thing happens
-    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :dump_rewrite => true, :trace => trc))
+    v = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_primary', :port => 12345, :trace => trc))
     v2 = BestEffortReplicatedKVS.new(@opts.merge(:tag => 'dist_backup', :port => 12346, :trace => trc))
     add_members(v, v.ip_port, v2.ip_port)
     add_members(v2, v.ip_port, v2.ip_port)

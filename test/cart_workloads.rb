@@ -2,48 +2,55 @@ require 'rubygems'
 require 'bud'
 
 module CartWorkloads
-  def run_cart(program, client, actions=3)
-    addy = "#{program.ip}:#{program.port}"
-    contact = client.nil? ? program : client
-    contact.async_do {
-      contact.client_action <+ [[addy, 1234, 123, 'meat', 'Add']]
-      contact.client_action <+ [[addy, 1234, 124, 'beer', 'Add']]
-      contact.client_action <+ [[addy, 1234, 125, 'diapers', 'Add']]
-      contact.client_action <+ [[addy, 1234, 126, 'meat', 'Del']]
+  def simple_workload(program, client, nbeers=12)
+    workload = [['meat', 1],
+                ['books', -1],
+                ['beer', 1],
+                ['diapers', 1],
+                ['meat', -1]]
+    nbeers.times do |i|
+      workload << ['beer', 1]
+    end
 
-      (0..actions).each do |i|
-        contact.client_action <+ [[addy, 1234, 127 + i, 'beer', 'Add']]
-      end
+    addr = program.ip_port
+    workload.each do |w|
+      client.sync_do {
+        client.client_action <+ [[addr, 1234, gen_seq] + w]
+      }
+    end
 
-    }
-    contact.sync_do{}
-    contact.sync_do{}
-    contact.sync_do{}
-    program.sync_do{}
-    program.sync_do{}
-    program.sync_do{}
-    
-    # block until we see the checkout message come in
-    contact.sync_callback(:client_checkout, [[addy, 1234, 131]], :response_msg)
+    do_checkout(program, client, 1234, [["beer", nbeers + 1], ["diapers", 1]])
   end
 
-  def run_cart2(program)
-    addy = "#{program.ip}:#{program.port}"
-    add_members(program, addy)
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'meat', 'Add', 123])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'beer', 'Add', 124])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'diapers', 'Add', 125])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'meat', 'Del', 126])
+  def multi_session_workload(program, client)
+    cart1 = [['remedy', 1], ['sightglass', 2], ['cole', -1]]
+    cart2 = [['blue bottle', 1], ['cole', 1]]
 
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'beer', 'Add', 127])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'beer', 'Add', 128])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'beer', 'Add', 129])
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'beer', 'Del', 130])
+    addr = program.ip_port
+    cart1 = cart1.map {|c| [addr, 555, gen_seq] + c}
+    cart2 = cart2.map {|c| [addr, 666, gen_seq] + c}
+    (cart1 + cart2).each do |c|
+      client.sync_do {
+        client.client_action <+ [c]
+      }
+    end
 
+    do_checkout(program, client, 666, [["blue bottle", 1], ["cole", 1]])
+    do_checkout(program, client, 555, [["remedy", 1], ["sightglass", 2]])
+  end
 
-    send_channel(program.ip, program.port, "checkout_msg", [addy, addy,1234, 131])
-    advance(program)
-    send_channel(program.ip, program.port, "action_msg", [addy, addy, 1234, 'papers', 'Add', 132])
-    advance(program)    
+  def do_checkout(program, client, session_id, expected)
+    client.sync_callback(:client_checkout, [[program.ip_port, session_id, gen_seq]],
+                         :client_response)
+
+    client.sync_do {
+      assert_equal([[client.ip_port, program.ip_port, session_id, expected]],
+                   client.memo.reject {|m| m.session != session_id}.to_a)
+    }
+  end
+
+  def gen_seq
+    @seq ||= 0
+    @seq += 1
   end
 end
