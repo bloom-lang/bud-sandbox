@@ -19,8 +19,7 @@ module DisorderlyCart
 
   bloom :on_checkout do
     temp :checkout_log <= (checkout_msg * action_log).rights(:session => :session)
-    item_sum <= checkout_log.group([action_log.session, action_log.item],
-                                   sum(action_log.action)) do |s|
+    item_sum <= checkout_log.group([:session, :item], sum(:action)) do |s|
       # Don't return items with non-positive counts. XXX: "s" has no schema
       # information, so we can't reference the sum by column name.
       s if s.last > 0
