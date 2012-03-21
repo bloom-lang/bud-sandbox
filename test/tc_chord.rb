@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'chord/chord_node'
 require 'chord/chord_find'
 require 'chord/chord_join'
@@ -99,6 +97,8 @@ class TestChord < Test::Unit::TestCase
       end 
     end  
     
+    # now check that all nodes hear the same results for pred_resp and succ_resp.
+    # we check for agreement pairwise.
     (0..nodes.length - 2).each do |i|
       assert_equal(3, nodes[i].pred_cache.length)
       assert_equal(nodes[i].pred_cache.to_a.sort, nodes[i+1].pred_cache.to_a.sort)  

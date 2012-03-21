@@ -1,6 +1,7 @@
+require './test_common'
+
 require 'test/cart_workloads.rb'
 require 'test/kvs_workloads.rb'
-#require 'test/tc_2pc.rb'
 require 'test/tc_assignment.rb'
 require 'test/tc_besteffort_delivery.rb'
 require 'test/tc_bfs.rb'

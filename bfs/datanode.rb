@@ -1,12 +1,10 @@
 require 'rubygems'
 require 'bud'
-#require 'backports'
+require 'bfs/bfs_client_proto'
+require 'bfs/data_protocol'
 require 'heartbeat/heartbeat'
 require 'membership/membership'
 require 'ordering/nonce'
-require 'bfs/data_protocol'
-require 'bfs/bfs_client_proto'
-
 
 module BFSDatanode
   include HeartbeatAgent

@@ -1,4 +1,4 @@
-require 'test/unit'
+require './test_common'
 require 'ordering/vector_clock'
 
 class TestVectorClock < Test::Unit::TestCase

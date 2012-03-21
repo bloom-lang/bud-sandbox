@@ -1,10 +1,9 @@
 require 'rubygems'
 require 'bud'
-require 'backports'
 
-require 'membership/membership'
 require 'delivery/delivery'
 require 'delivery/multicast'
+require 'membership/membership'
 require 'ordering/sequences'
 require 'util/colour'
 

@@ -1,5 +1,5 @@
+require './test_common'
 require 'voting/voting'
-require 'test/unit'
 
 class VM
   include Bud

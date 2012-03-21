@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'test/unit'
-require 'bud'
+require './test_common'
 require 'ordering/assigner'
 
 class AS
