@@ -28,7 +28,7 @@ class GN
 end
 
 class TestSer < Test::Unit::TestCase
-  def Ntest_group_nonce
+  def test_group_nonce
     gn = GN.new
     gn.my_id <+ [[1]]
     gn.add_member <+ [[1, 'foo']]

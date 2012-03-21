@@ -23,8 +23,7 @@ class BED
 end
 
 class TestBEDelivery < Test::Unit::TestCase
-  # XXX: broken
-  def broken_test_besteffort_delivery
+  def test_besteffort_delivery
     rd = BED.new
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']
     rd.run_bg
