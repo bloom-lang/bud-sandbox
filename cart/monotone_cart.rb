@@ -66,19 +66,23 @@ class ClientProgram
   include MonotoneClient
 end
 
+# Simple test case
 s = ReplicaProgram.new
 s.run_bg
 c = ClientProgram.new
 c.run_bg
 
+# Session 10: req IDs 5,6,7,8
+# Session 11: req IDs 4,5,6
 c.sync_do {
   c.serv <+ [[s.ip_port]]
-  c.do_action <+ [[11, 5, 1, 2]]
-  c.do_checkout <+ [[10, 7, 5]]
+  c.do_action <+ [[11, 5, 'beer', 2]]
+  c.do_action <+ [[10, 7, 'vodka', -1]]
+  c.do_checkout <+ [[10, 8, 5]]
 }
 
 c.sync_do {
-  c.do_action <+ [[10, 5, 1, 1], [10, 6, 2, 7]]
+  c.do_action <+ [[10, 5, 'vodka', 2], [10, 6, 'coffee', 7]]
   c.do_checkout <+ [[11, 6, 5]]
 }
 
