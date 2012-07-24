@@ -107,7 +107,7 @@ class TestAssign < Test::Unit::TestCase
     v = (1..100).to_a.map {|a| [a]}
     golden = (0..99).to_a.zip(v)
     25.times do
-      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      r = b.sync_callback(:id_request, v.shuffle, :id_response)
       assert_equal(golden, r.to_a.sort)
     end
     b.stop
@@ -123,7 +123,7 @@ class TestAssign < Test::Unit::TestCase
     b.run_bg
     v = (1..100).to_a.map {|a| [a]}
     10.times do |i|
-      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      r = b.sync_callback(:id_request, v.shuffle, :id_response)
       start = i * 100
       fin = start + 99
       golden = (start..fin).to_a.zip(v)
