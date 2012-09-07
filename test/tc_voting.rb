@@ -53,8 +53,8 @@ class TestVoting < Test::Unit::TestCase
     t2.sync_do
     t2.sync_do{ assert([[1,'me for king', 'localhost:12346'], [1,'me for king', '127.0.0.1:12346']].include? t2.waiting_ballots.first) }
     t3.sync_do{ assert([[1,'me for king', 'localhost:12346'], [1,'me for king', '127.0.0.1:12346']].include? t3.waiting_ballots.first) }
-    t.sync_do{ assert_equal([1, 'yes', 2, [nil, nil]], t.vote_cnt.first) }
-    t.sync_do{ assert_equal([1, 'me for king', 'yes', [nil, nil]], t.vote_status.first) }
+    t.sync_do{ assert_equal([1, 'yes', 2, [nil].to_set], t.vote_cnt.first) }
+    t.sync_do{ assert_equal([1, 'me for king', 'yes', [nil].to_set], t.vote_status.first) }
 
     t.stop
     t2.stop
@@ -71,19 +71,15 @@ class TestVoting < Test::Unit::TestCase
     t2.sync_do{ t2.cast_vote <+ [[1, "hell yes", "sir"]] }
     t.sync_do{}
 
-    t.sync_do{ assert_equal([1, 'hell yes', 1, ["sir"]], t.vote_cnt.first) }
+    t.sync_do{ assert_equal([1, 'hell yes', 1, ["sir"].to_set], t.vote_cnt.first) }
     t.sync_do{ assert_equal([1, 'me for king', 'in flight', nil], t.vote_status.first) }
     t3.sync_do{ t3.cast_vote <+ [[1, "hell yes", "madam"]] }
     t.sync_do
 
-    t.sync_do{ assert_equal([1, 'hell yes', 2, ["madam", "sir"]], sort_contents(t.vote_cnt.first))}
-    t.sync_do{ assert_equal([1, 'me for king', 'hell yes', ["madam", "sir"]], sort_contents(t.vote_status.first)) }
+    t.sync_do{ assert_equal([1, 'hell yes', 2, ["madam", "sir"].to_set], t.vote_cnt.first)}
+    t.sync_do{ assert_equal([1, 'me for king', 'hell yes', ["madam", "sir"].to_set], t.vote_status.first) }
     t.stop
     t2.stop
     t3.stop
-  end
-  def sort_contents(tuple)
-    tuple[-1].sort! # In both cote_cnt and vote_status, "contents" is the last field.
-    tuple
   end
 end
