@@ -28,7 +28,7 @@ module GroupNonce
   bloom do
     mcnt <= member.group(nil, count)
     nonce <= (permo * mcnt).pairs {|p, m| [p.ident + (budtime * m.cnt)]}
-    permo <= (seed * my_id).pairs {|s, l| l if budtime == 0}
+    permo <= (seed * my_id).rights {|l| l if budtime == 0}
   end
 end
 
