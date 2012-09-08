@@ -25,10 +25,6 @@ module GroupNonce
     scratch :mcnt, [] => [:cnt]
   end
 
-  bootstrap do
-    permo <= my_id
-  end
-
   bloom do
     mcnt <= member.group(nil, count)
     nonce <= (permo * mcnt).pairs {|p, m| [p.ident + (budtime * m.cnt)]}
