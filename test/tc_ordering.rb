@@ -83,13 +83,7 @@ class TestSer < Test::Unit::TestCase
     st.sync_do { st.dequeue <+ [[2345]] }
     st.sync_do
     st.sync_do {
-      assert_equal(2, st.mems.length)
-      st.mems.each_with_index do |m, i|
-        case i
-          when 0 then assert_equal([1234, 1, 'foo'], m)
-          when 1 then assert_equal([2345, 2, 'bar'], m)
-        end
-      end
+      assert_equal([[1234, 1, 'foo'], [2345, 2, 'bar']], st.mems.to_a.sort)
     }
     st.stop
   end
