@@ -52,9 +52,7 @@ module LamportClockManager
   end
 
   bloom do
-
     temp :relativestamp <= to_stamp.each_with_index
-
     get_stamped <= (relativestamp * localclock).pairs do |m, c|
       [m[0][0], LamportMsg.new(m[1]+c.clock, m[0][0])]
     end

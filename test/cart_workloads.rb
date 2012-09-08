@@ -42,7 +42,7 @@ module CartWorkloads
 
     client.sync_do {
       assert_equal([[client.ip_port, program.ip_port, session_id, expected]],
-                   client.memo.reject {|m| m.session != session_id}.to_a)
+                   client.memo.select {|m| m.session == session_id}.to_a)
     }
   end
 
