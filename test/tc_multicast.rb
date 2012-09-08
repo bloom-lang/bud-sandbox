@@ -5,7 +5,7 @@ module TestState
   include StaticMembership
 
   state do
-    table :mcast_done_perm, [:ident]
+    table :mcast_done_perm, mcast_done.schema
     table :rcv_perm, [:ident] => [:payload]
   end
 
