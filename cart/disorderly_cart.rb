@@ -24,9 +24,9 @@ module DisorderlyCart
       # information, so we can't reference the sum by column name.
       s if s.last > 0
     end
-    session_final <= item_sum.group([:session], accum(:item), accum(:num))
+    session_final <= item_sum.group([:session], accum_pair(:item, :num))
     response_msg <~ (session_final * checkout_msg).pairs(:session => :session) do |c,m|
-      [m.client, m.server, m.session, c.items.zip(c.counts).sort]
+      [m.client, m.server, m.session, c.items.to_a.sort]
     end
   end
 end
