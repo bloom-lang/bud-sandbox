@@ -123,10 +123,8 @@ end
 class TestCheckoutLattice < Test::Unit::TestCase
   def test_simple
     i = SimpleCheckout.new
-    assert_equal(2, i.strata.length)
-    strat_zero = i.stratum_collection_map[0]
-    [:c, :done, :del_t, :add_t, :do_checkout].each do |r|
-      assert(strat_zero.include? r)
+    %w[c done del_t add_t do_checkout].each do |r|
+      assert_equal(0, i.collection_stratum(r))
     end
 
     i.tick
