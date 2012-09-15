@@ -29,10 +29,10 @@ module MonotoneReplica
     sessions <= checkout_msg {|c| { c.session => CartLattice.new({c.reqid => [CHECKOUT_OP, c.lbound, c.client]}) } }
 
     # XXX: Note that we will send an unbounded number of response messages for
-    # each sealed cart.
-    response_msg <~ sessions {|s_id, c|
-      c.sealed.when_true { [c.checkout_addr, ip_port, s_id, c.summary] }
-    }
+    # each complete cart.
+    response_msg <~ sessions.to_collection do |s_id, c|
+      c.is_complete.when_true { [c.checkout_addr, ip_port, s_id, c.summary] }
+    end
   end
 end
 
