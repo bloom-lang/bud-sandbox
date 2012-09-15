@@ -116,7 +116,7 @@ class SimpleCheckout
     c <= add_t {|t| { t.req => [ACTION_OP, t.item,  t.cnt] } }
     c <= del_t {|t| { t.req => [ACTION_OP, t.item, -t.cnt] } }
     c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound, ip_port] } }
-    done <= c.sealed
+    done <= c.is_complete
   end
 end
 

@@ -11,27 +11,28 @@ CHECKOUT_OP = 1
 # value in the map is an array, where the first element is either ACTION_OP or
 # CHECKOUT_OP.
 #
-# For ACTION_OPs, the rest of the array contains: item_id and mult, where mult
-# is the incremental change to the number of item_id's in the cart (positive or
-# negative).
+# For ACTION_OPs, the rest of the array contains "item_id" and "mult", where
+# mult is the incremental change to the number of item_id's in the cart
+# (positive or negative).
 #
-# For CHECKOUT_OPs, the rest of the array contains lbound and # checkout_addr.
+# For CHECKOUT_OPs, the rest of the array contains "lbound" and "checkout_addr".
 # lbound identifies the smallest ID number that must be in the cart for it to be
 # complete; we also assume that carts are intended to be "dense" -- that is,
 # that a complete cart includes exactly the operations with IDs from lbound to
 # the CHECKOUT_OP's ID. checkout_addr is the address we want to contact with the
-# completed cart state (we stash it here for convenience). Naturally, a given
-# cart can only have a single CHECKOUT_OP.
+# completed cart state (we stash it here for convenience). A given cart can have
+# at most one CHECKOUT_OP.
 #
-# If a cart contains "illegal" messages (those with IDs before the lbound or
-# after the checkout message's ID), we raise an error. We could instead
-# ignore/drop such messages; this would still yield a convergent result. We also
-# raise an error if multiple checkout messages are merged into a single cart;
-# this is naturally a non-confluent situation, so we need to raise an error.
+# Upon an attempt to construct a cart with illegal action messages (e.g.,
+# messages with IDs before the lbound or after the checkout message's ID), we
+# raise an error. We could instead ignore/drop such messages; this would still
+# yield a convergent result. We also raise an error if multiple checkout
+# messages are merged into a single cart; this is naturally a non-confluent
+# situation, so we need to raise an error.
 #
 # Why bother with a custom lattice to represent the cart state? The point is
 # that checkout becomes a monotonic operation, because each replica of the cart
-# can decide when it is "sealed" independently (and consistently!).
+# can decide when it is "complete" independently (and consistently!).
 class CartLattice < Bud::Lattice
   wrapper_name :lcart
 
@@ -52,6 +53,7 @@ class CartLattice < Bud::Lattice
     end
 
     @v = i
+    @is_complete = nil  # computed lazily below
   end
 
   def merge(i)
@@ -62,14 +64,14 @@ class CartLattice < Bud::Lattice
     return CartLattice.new(rv)
   end
 
-  monotone :sealed do
-    @sealed = compute_sealed if @sealed.nil?
-    Bud::BoolLattice.new(@sealed)
+  monotone :is_complete do
+    @is_complete = compute_is_complete if @is_complete.nil?
+    Bud::BoolLattice.new(@is_complete)
   end
 
   monotone :summary do
-    @sealed = compute_sealed if @sealed.nil?
-    raise Bud::Error unless @sealed
+    @is_complete = compute_is_complete if @is_complete.nil?
+    raise Bud::Error unless @is_complete
 
     actions = @v.values.select {|v| v.first == ACTION_OP}
     summary = {}
@@ -96,7 +98,7 @@ class CartLattice < Bud::Lattice
     lst.first   # Return checkout action or nil
   end
 
-  def compute_sealed
+  def compute_is_complete
     checkout = get_checkout(@v)
     return false unless checkout
 
