@@ -32,7 +32,7 @@ module MICache
   end
 
   bloom do
-    temp (:load_info) <= (cpu_load * state * cache * directory).combos(cpu_load.line => state.line, cpu_load.line => cache.line)
+    temp :load_info <= (cpu_load * state * cache * directory).combos(cpu_load.line => state.line, cpu_load.line => cache.line)
 
     temp :do_rex <= load_info do |l, s, c, d|
       if s.state == :csINV

@@ -25,14 +25,10 @@ module GroupNonce
     scratch :mcnt, [] => [:cnt]
   end
 
-  bootstrap do
-    permo <= local_id
-  end
-
   bloom do
     mcnt <= member.group(nil, count)
-    nonce <= (permo * mcnt).pairs {|p, m| [p.ident + (@budtime * m.cnt)]}
-    permo <= (seed * local_id).pairs {|s, l| l if @budtime == 0}
+    nonce <= (permo * mcnt).pairs {|p, m| [p.ident + (budtime * m.cnt)]}
+    permo <= (seed * my_id).rights {|l| l if budtime == 0}
   end
 end
 
@@ -53,13 +49,13 @@ module TimestepNonce
 
   bloom do
     # ignore IP for now
-    nonce <= permo {|p| [p.ident + @budtime] }
-    #nonce <= localtick {|l| [(@port << 16) + @budtime]  }
+    nonce <= permo {|p| [p.ident + budtime] }
+    #nonce <= localtick {|l| [(@port << 16) + budtime]  }
   end
 end
 
 
-# this works but is totally redundant with @budtime...!
+# this works but is totally redundant with budtime...!
 module NNonce
   include NonceProto
 

@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 module CartWorkloads
   def simple_workload(program, client, nbeers=12)
     workload = [['meat', 1],
@@ -45,7 +42,7 @@ module CartWorkloads
 
     client.sync_do {
       assert_equal([[client.ip_port, program.ip_port, session_id, expected]],
-                   client.memo.reject {|m| m.session != session_id}.to_a)
+                   client.memo.select {|m| m.session == session_id}.to_a)
     }
   end
 

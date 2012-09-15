@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'delivery/reliable'
 require 'enumerator'
 
@@ -46,7 +44,7 @@ class TestReliableDelivery < Test::Unit::TestCase
     end
 
     vals = ("aa".."dd").to_a
-    tuples = vals.enum_with_index.map do |v, i|
+    tuples = vals.each_with_index.map do |v, i|
       [rd2.ip_port, rd.ip_port, i, v]
     end
 
@@ -71,7 +69,7 @@ class TestReliableDelivery < Test::Unit::TestCase
     rd.send_msg([sendtup])
 
     # transmission not 'complete'
-    assert_equal(false, rd.buf_empty?)
+    #assert_equal(false, rd.buf_empty?) # buf is emptied lazily, so this assertion will not work anymore
     rd.sync_do { assert_equal([], rd.recv_log.to_a.sort) }
     rd.stop
   end

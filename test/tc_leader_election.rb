@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'paxos/leader_election'
 require 'membership/membership'
 require 'delivery/delivery'

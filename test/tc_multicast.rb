@@ -1,13 +1,11 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'delivery/multicast'
 
 module TestState
   include StaticMembership
 
   state do
-    table :mcast_done_perm, [:ident]
+    table :mcast_done_perm, mcast_done.schema
     table :rcv_perm, [:ident] => [:payload]
   end
 
@@ -57,7 +55,7 @@ class TestMC < Test::Unit::TestCase
     mc3.stop
   end
 
-  def ntest_reliable
+  def test_reliable
     mc = RMC.new
     mc2 = RMC.new
     mc3 = RMC.new

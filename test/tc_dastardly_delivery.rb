@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'test/unit'
-require 'bud'
+require './test_common'
 require 'delivery/dastardly'
 
 #this is basically a copy of the reliable_delivery test class
@@ -24,7 +22,7 @@ class DastardlyD
   bloom do
     dd.set_max_delay <= set_max_delay_wrap
     pipe_sent_perm <= dd.pipe_sent
-    pipe_out_perm <= dd.pipe_out { |m| [m, @budtime] }
+    pipe_out_perm <= dd.pipe_out { |m| [m, budtime] }
     got_pipe <= dd.pipe_out
     dd.pipe_in <= send_msg
   end
@@ -58,6 +56,7 @@ class TestDastardlyDelivery < Test::Unit::TestCase
         snd.send_msg <+ [t]
       }
     end
+    snd.sync_do
 
     # Wait for messages to be delivered to rcv
     tuples.length.times { q.pop }

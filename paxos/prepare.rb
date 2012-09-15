@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'bud'
-require 'backports'
 
 require 'voting/voting'
 

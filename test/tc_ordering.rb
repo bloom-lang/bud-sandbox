@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'test/unit'
-require 'bud'
+require './test_common'
 require 'ordering/serializer'
 require 'ordering/nonce'
 require 'ordering/assigner'
@@ -30,7 +28,7 @@ class GN
 end
 
 class TestSer < Test::Unit::TestCase
-  def Ntest_group_nonce
+  def test_group_nonce
     gn = GN.new
     gn.my_id <+ [[1]]
     gn.add_member <+ [[1, 'foo']]
@@ -85,13 +83,7 @@ class TestSer < Test::Unit::TestCase
     st.sync_do { st.dequeue <+ [[2345]] }
     st.sync_do
     st.sync_do {
-      assert_equal(2, st.mems.length)
-      st.mems.each_with_index do |m, i|
-        case i
-          when 0 then assert_equal([1234, 1, 'foo'], m)
-          when 1 then assert_equal([2345, 2, 'bar'], m)
-        end
-      end
+      assert_equal([[1234, 1, 'foo'], [2345, 2, 'bar']], st.mems.to_a.sort)
     }
     st.stop
   end
@@ -109,7 +101,7 @@ class TestAssign < Test::Unit::TestCase
     v = (1..100).to_a.map {|a| [a]}
     golden = (0..99).to_a.zip(v)
     25.times do
-      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      r = b.sync_callback(:id_request, v.shuffle, :id_response)
       assert_equal(golden, r.to_a.sort)
     end
     b.stop
@@ -125,7 +117,7 @@ class TestAssign < Test::Unit::TestCase
     b.run_bg
     v = (1..100).to_a.map {|a| [a]}
     10.times do |i|
-      r = b.sync_callback(:dump, v.shuffle, :pickup)
+      r = b.sync_callback(:id_request, v.shuffle, :id_response)
       start = i * 100
       fin = start + 99
       golden = (start..fin).to_a.zip(v)

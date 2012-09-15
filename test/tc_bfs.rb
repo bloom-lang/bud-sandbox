@@ -1,5 +1,4 @@
-require 'rubygems'
-require 'test/unit'
+require './test_common'
 require 'bfs/fs_master'
 require 'bfs/datanode'
 require 'bfs/hb_master'

@@ -19,6 +19,7 @@ module DastardlyDelivery
 
     channel :pipe_chan, [:@dst, :src, :ident] => [:payload]
 
+    scratch :do_send, buf.schema
     periodic :clock, 1
   end
 
@@ -31,7 +32,7 @@ module DastardlyDelivery
   end
 
   bloom :queue do
-    buf <+ pipe_in { |m| [m, @budtime] }
+    buf <+ pipe_in { |m| [m, budtime] }
   end
 
   bloom :done do
@@ -40,8 +41,8 @@ module DastardlyDelivery
   end
 
   bloom :snd do
-    temp :do_send <= (buf.argagg(:choose_rand, [], :whenbuf)*max_delay).pairs do |b,d|
-      if (buf.length != 1) || (@budtime - b.whenbuf >= d.delay)
+    do_send <= (buf.argagg(:choose_rand, [], :whenbuf)*max_delay).pairs do |b,d|
+      if (buf.length != 1) || (budtime - b.whenbuf >= d.delay)
         b
       end
     end

@@ -52,9 +52,7 @@ module LamportClockManager
   end
 
   bloom do
-
-    temp :relativestamp <= to_stamp.each_with_index.to_a
-
+    temp :relativestamp <= to_stamp.each_with_index
     get_stamped <= (relativestamp * localclock).pairs do |m, c|
       [m[0][0], LamportMsg.new(m[1]+c.clock, m[0][0])]
     end
@@ -65,7 +63,7 @@ module LamportClockManager
       if retrieve_msg.length > 0
         [c.clock+
           [to_stamp.length+retrieve_msg.length,
-            (retrieve_msg { |m| m.lamportmsg.clock }).max+1].max]
+            (retrieve_msg.map { |m| m.lamportmsg.clock }).max+1].max]
       else
         [c.clock+to_stamp.length+retrieve_msg.length]
       end

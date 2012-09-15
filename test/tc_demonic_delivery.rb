@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'test/unit'
-require 'bud'
+require './test_common'
 require 'delivery/demonic'
 
 #this is basically a copy of the reliable_delivery test class
