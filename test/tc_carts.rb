@@ -58,7 +58,7 @@ class TestCart < Test::Unit::TestCase
     prog = ReplDestructive.new(:tag => "DESmaster", :trace => trc)
     rep = ReplDestructive.new(:tag => "DESbackup", :trace => trc)
     rep2 = ReplDestructive.new(:tag => "DESbackup2", :trace => trc)
-    cart_test(prog, cli, rep) #, rep2)
+    cart_test(prog, cli, rep, rep2)
   end
 
   def test_replicated_disorderly_cart
@@ -81,14 +81,14 @@ class TestCart < Test::Unit::TestCase
     cart_test(prog, prog)
   end
 
-  def cart_test(program, client, *others)
-    nodes = [program] + others
+  def cart_test(primary, client, *others)
+    nodes = [primary] + others
     nodes.each {|n| n.run_bg}
-    addr_list = nodes.map {|n| "#{program.ip}:#{n.port}"}
-    add_members(program, addr_list)
+    addr_list = nodes.map {|n| "#{n.ip}:#{n.port}"}
+    add_members(primary, addr_list)
 
-    simple_workload(program, client)
-    multi_session_workload(program, client)
+    simple_workload(primary, client)
+    multi_session_workload(primary, client)
 
     nodes.each {|n| n.stop}
     client.stop
