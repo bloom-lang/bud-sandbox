@@ -3,7 +3,7 @@ require 'test/cart_workloads'
 require 'cart/cart_lattice'
 require 'cart/disorderly_cart'
 require 'cart/destructive_cart'
-
+require 'cart/monotone_cart'
 
 module Remember
   state do
@@ -208,5 +208,81 @@ class TestCartLattice < Test::Unit::TestCase
     assert_equal(true, i.done.current_value.reveal)
     assert_equal([[1, 1], [2, 3]], i.c.current_value.summary)
     assert_equal(i.ip_port, i.c.current_value.checkout_addr)
+  end
+end
+
+class MReplicaProgram
+  include Bud
+  include MonotoneReplica
+end
+
+class MClientProgram
+  include Bud
+  include MonotoneClient
+
+  state do
+    table :response_log, response_msg.schema
+  end
+
+  bloom do
+    response_log <= response_msg
+  end
+end
+
+class TestMonotoneCart < Test::Unit::TestCase
+  def test_monotone_simple
+    s = MReplicaProgram.new
+    c = MClientProgram.new
+    [c, s].each {|n| n.run_bg}
+
+    c.sync_do {
+      c.serv <+ [[s.ip_port]]
+      c.do_action <+ [[10, 1, 'beer', 1]]
+      c.do_action <+ [[10, 2, 'vodka', 4]]
+      c.do_checkout <+ [[10, 4, 1]]
+    }
+
+    sleep 0.1
+    c.sync_do {
+      assert(c.response_log.to_a.empty?)
+    }
+
+    c.sync_callback(:do_action, [[10, 3, 'beer', -1]], :response_msg)
+    c.sync_do {
+      assert_equal([[c.ip_port, s.ip_port, 10,
+                     [['vodka', 4]]]], c.response_log.to_a)
+    }
+
+    [c, s].each {|n| n.stop}
+  end
+
+  def test_monotone_multi_session
+    s = MReplicaProgram.new
+    c = MClientProgram.new
+    [c, s].each {|n| n.run_bg}
+
+    c.sync_do {
+      c.serv <+ [[s.ip_port]]
+      c.do_action <+ [[10, 1, 'beer', 1], [11, 8, 'coffee', 2]]
+      c.do_action <+ [[12, 2, 'gin', 3]]
+    }
+
+    c.sync_callback(:do_checkout, [[11, 9, 8]], :response_msg)
+    c.sync_do {
+      assert_equal([[c.ip_port, s.ip_port, 11,
+                     [['coffee', 2]]]], c.response_log.to_a)
+    }
+
+    c.sync_do {
+      c.do_checkout <+ [[12, 3, 1]]
+    }
+    c.sync_callback(:do_action, [[12, 1, 'rye', 1]], :response_msg)
+    c.sync_do {
+      assert_equal([[c.ip_port, s.ip_port, 11, [['coffee', 2]]],
+                    [c.ip_port, s.ip_port, 12, [['gin', 3], ['rye', 1]]]],
+                   c.response_log.to_a.sort)
+    }
+
+    [c, s].each {|n| n.stop}
   end
 end
