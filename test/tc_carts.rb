@@ -55,9 +55,9 @@ class TestCart < Test::Unit::TestCase
     trc = false
     cli = TestCartClient.new(:tag => "DESclient", :trace => trc)
     cli.run_bg
-    prog = ReplDestructive.new(:port => 53525, :tag => "DESmaster", :trace => trc)
-    rep = ReplDestructive.new(:port => 53526, :tag => "DESbackup", :trace => trc)
-    rep2 = ReplDestructive.new(:port => 53527, :tag => "DESbackup2", :trace => trc)
+    prog = ReplDestructive.new(:tag => "DESmaster", :trace => trc)
+    rep = ReplDestructive.new(:tag => "DESbackup", :trace => trc)
+    rep2 = ReplDestructive.new(:tag => "DESbackup2", :trace => trc)
     cart_test(prog, cli, rep) #, rep2)
   end
 
@@ -65,27 +65,27 @@ class TestCart < Test::Unit::TestCase
     trc = false
     cli = TestCartClient.new(:tag => "DISclient", :trace => trc)
     cli.run_bg
-    prog = BestEffortDisorderly.new(:port => 53525, :tag => "DISmaster", :trace => trc)
-    rep = BestEffortDisorderly.new(:port => 53526, :tag => "DISbackup", :trace => trc)
-    rep2 = BestEffortDisorderly.new(:port => 53527, :tag => "DISbackup2", :trace => trc)
+    prog = BestEffortDisorderly.new(:tag => "DISmaster", :trace => trc)
+    rep = BestEffortDisorderly.new(:tag => "DISbackup", :trace => trc)
+    rep2 = BestEffortDisorderly.new(:tag => "DISbackup2", :trace => trc)
     cart_test(prog, cli, rep, rep2)
   end
 
   def test_destructive_cart
-    prog = LocalDestructive.new(:port => 32575, :tag => "dest")
+    prog = LocalDestructive.new(:tag => "dest")
     cart_test(prog, prog)
   end
 
   def test_disorderly_cart
-    prog = LocalDisorderly.new(:port => 23765, :tag => "dis")
+    prog = LocalDisorderly.new(:tag => "dis")
     cart_test(prog, prog)
   end
 
   def cart_test(program, client, *others)
     nodes = [program] + others
+    nodes.each {|n| n.run_bg}
     addr_list = nodes.map {|n| "#{program.ip}:#{n.port}"}
     add_members(program, addr_list)
-    nodes.each {|n| n.run_bg}
 
     simple_workload(program, client)
     multi_session_workload(program, client)
@@ -96,7 +96,9 @@ class TestCart < Test::Unit::TestCase
 
   def add_members(b, hosts)
     hosts.each_with_index do |h, i|
-      b.add_member <+ [[i, h]]
+      b.sync_do {
+        b.add_member <+ [[i, h]]
+      }
     end
   end
 end
