@@ -82,19 +82,19 @@ module ReplicatedKVS
     # if I am the master, multicast store requests
     mcast_send <= kvput do |k|
       unless member.include? [k.client]
-        [k.reqid, [:put, [@addy, k.key, k.reqid, k.value]]]
+        [k.reqid, ["put", [@addy, k.key, k.reqid, k.value]]]
       end
     end
 
     kvs.kvput <= mcast_done do |m|
-      if m.payload[0] == :put
+      if m.payload[0] == "put"
         m.payload[1]
       end
     end
 
     # if I am a replica, store the payload of the multicast
     kvs.kvput <= pipe_out do |d|
-      if d.payload.fetch(1) != @addy and d.payload[0] == :put
+      if d.payload.fetch(1) != @addy and d.payload[0] == "put"
         d.payload[1]
       end
    end
@@ -103,18 +103,18 @@ module ReplicatedKVS
   bloom :dels do
     mcast_send <= kvdel do |k|
       unless member.include? [k.client]
-        [k.reqid, [:del, [@addy, k.key, k.reqid]]]
+        [k.reqid, ["del", [@addy, k.key, k.reqid]]]
       end
     end
 
     kvs.kvdel <= mcast_done do |m|
-      if m.payload[0] == :del
+      if m.payload[0] == "del"
         m.payload[1]
       end
     end
 
     kvs.kvdel <= pipe_out do |d|
-      if d.payload.fetch(1) != @addy and d.payload[0] == :del
+      if d.payload.fetch(1) != @addy and d.payload[0] == "del"
         d.payload[1]
       end
     end
