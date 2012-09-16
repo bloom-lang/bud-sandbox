@@ -63,8 +63,8 @@ module CausalDelivery
     ord_buf <+ buf_chosen {|m| m.ord_buf}
   end
 
-  bloom :msg_log do
-    stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspect}, msg ord_buf = #{c.ord_buf.inspect}, local VC: #{my_vc.inspect}, local ord_buf: #{ord_buf.inspect}"]}
-    stdio <~ pipe_out {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
-  end
+  # bloom :msg_log do
+  #   stdio <~ chn {|c| ["(#{@budtime}) Inbound message @ #{port}: #{[c.src, c.ident, c.payload].inspect}, msg VC = #{c.clock.inspect}, msg ord_buf = #{c.ord_buf.inspect}, local VC: #{my_vc.inspect}, local ord_buf: #{ord_buf.inspect}"]}
+  #   stdio <~ pipe_out {|m| ["(#{@budtime}) Delivering message @ #{port}: #{m.ident}"]}
+  # end
 end
