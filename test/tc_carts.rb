@@ -50,7 +50,7 @@ end
 class TestCart < Test::Unit::TestCase
   include CartWorkloads
 
-  # XXX: currently broken
+  # XXX: currently broken (issue #1 in sandbox)
   def ntest_replicated_destructive_cart
     trc = false
     cli = TestCartClient.new(:tag => "DESclient", :trace => trc)

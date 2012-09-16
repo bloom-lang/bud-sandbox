@@ -69,12 +69,13 @@ end
 module ReplicatedKVS
   include KVSProtocol
   include MulticastProtocol
+  include MembershipProtocol
   import BasicKVS => :kvs
 
   bloom :local_indir do
-    kvget_response <= kvs.kvget_response
     kvs.kvdel <= kvdel
     kvs.kvget <= kvget
+    kvget_response <= kvs.kvget_response
   end
 
   bloom :puts do
@@ -93,7 +94,7 @@ module ReplicatedKVS
 
     # if I am a replica, store the payload of the multicast
     kvs.kvput <= pipe_out do |d|
-      if d.payload.fetch(1) != @addy and d.payload[0] == "put"
+      if d.payload.fetch(1) != @addy and d.payload[0] == :put
         d.payload[1]
       end
    end
@@ -113,7 +114,7 @@ module ReplicatedKVS
     end
 
     kvs.kvdel <= pipe_out do |d|
-      if d.payload.fetch(1) != @addy and d.payload[0] == "del"
+      if d.payload.fetch(1) != @addy and d.payload[0] == :del
         d.payload[1]
       end
     end
