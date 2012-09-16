@@ -101,7 +101,7 @@ class TestCart < Test::Unit::TestCase
   end
 end
 
-class SimpleCheckout
+class LocalCartLattice
   include Bud
 
   state do
@@ -120,9 +120,9 @@ class SimpleCheckout
   end
 end
 
-class TestCheckoutLattice < Test::Unit::TestCase
+class TestCartLattice < Test::Unit::TestCase
   def test_simple
-    i = SimpleCheckout.new
+    i = LocalCartLattice.new
     %w[c done del_t add_t do_checkout].each do |r|
       assert_equal(0, i.collection_stratum(r))
     end
@@ -152,7 +152,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
   # Current behavior is to raise an error if we see actions that follow the
   # checkout (in the ID sequence); such actions could instead be ignored.
   def test_action_follows_checkout
-    i = SimpleCheckout.new
+    i = LocalCartLattice.new
     i.add_t <+ [[200, 1, 1], [201, 1, 1], [202, 8, 20]]
     i.del_t <+ [[204, 8, 2]]
     i.tick
@@ -167,7 +167,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
   # Similarly, raise an error if the lower bound would require dropping some
   # messages; such messages could instead be ignored.
   def test_action_before_lbound
-    i = SimpleCheckout.new
+    i = LocalCartLattice.new
     i.add_t <+ [[200, 1, 1], [201, 1, 1], [202, 8, 20]]
     i.del_t <+ [[203, 8, 2]]
     i.tick
@@ -180,7 +180,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
   end
 
   def test_extra_checkout
-    i = SimpleCheckout.new
+    i = LocalCartLattice.new
     i.add_t <+ [[300, 1, 1], [301, 2, 5]]
     i.do_checkout <+ [[303, 300]]
     i.tick
@@ -193,7 +193,7 @@ class TestCheckoutLattice < Test::Unit::TestCase
   end
 
   def test_dup_checkout
-    i = SimpleCheckout.new
+    i = LocalCartLattice.new
     i.add_t <+ [[300, 1, 1], [301, 2, 5]]
     i.do_checkout <+ [[303, 300]]
     i.tick

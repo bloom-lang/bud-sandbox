@@ -30,6 +30,7 @@ module CausalDelivery
 
     # Received messages that haven't yet been delivered
     table :recv_buf, chn.schema
+
     scratch :buf_chosen, recv_buf.schema
   end
 
