@@ -4,3 +4,6 @@ Bloom language.
 To run the unit tests:
 
   cd test; ruby ts_sandbox.rb
+
+Note that the "minitest" gem should be installed (unless you are using MRI 1.9,
+in which case it is already available).
