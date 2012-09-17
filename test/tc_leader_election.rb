@@ -14,11 +14,10 @@ class LM
   include Bud
 end
 
-class TestLM < Test::Unit::TestCase
+class TestLM < MiniTest::Unit::TestCase
   def make_LMs(ports)
     ports.map do |p|
-      lm = LM.new(:port => p)
-      lm
+      LM.new(:port => p)
     end
   end
 

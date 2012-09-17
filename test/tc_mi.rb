@@ -24,7 +24,7 @@ class MICacheServer
   end 
 end
 
-class TestMICache < Test::Unit::TestCase
+class TestMICache < MiniTest::Unit::TestCase
   def test_cache1
     dir = DumbDir.new(:port => 12345, :trace => true)
     dir.run_bg

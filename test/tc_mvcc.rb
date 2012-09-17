@@ -2,11 +2,10 @@ require "./test_common"
 require "kvs/kvs"
 require "kvs/mvcc"
 
-class TestMVCC < Test::Unit::TestCase
+class TestMVCC < MiniTest::Unit::TestCase
   class BasicMVCCTest
     include Bud
     include BasicMVCC
-    
   end
 
   def test_happy_path
@@ -160,5 +159,4 @@ class TestMVCC < Test::Unit::TestCase
     assert_equal "hare was here", resp[0][2]
     mvcc.stop
   end
-
 end

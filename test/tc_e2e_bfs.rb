@@ -15,7 +15,7 @@ class DN
   include BFSDatanode
 end
 
-class TestBFS < Test::Unit::TestCase
+class TestBFS < MiniTest::Unit::TestCase
   def initialize(args)
     @opts = {}
     clean

@@ -19,7 +19,6 @@ class MC
   include Bud
   include TestState
   include BestEffortMulticast
-
 end
 
 class RMC
@@ -29,7 +28,7 @@ class RMC
 end
 
 
-class TestMC < Test::Unit::TestCase
+class TestMC < MiniTest::Unit::TestCase
   def test_be
     mc = MC.new
     mc2 = MC.new
@@ -44,7 +43,6 @@ class TestMC < Test::Unit::TestCase
     mc.tick
 
     mc.sync_do{ assert_equal(1, mc.mcast_done_perm.length) }
-    
     mc.sync_do{ assert_equal(1, mc.mcast_done_perm.first.ident) }
     mc.sync_do{ assert_equal(1, mc2.rcv_perm.length) }
     mc.sync_do{ assert_equal(1, mc3.rcv_perm.length) }

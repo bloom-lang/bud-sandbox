@@ -31,7 +31,7 @@ class RED
   end
 end
 
-class TestReliableDelivery < Test::Unit::TestCase
+class TestReliableDelivery < MiniTest::Unit::TestCase
   def test_rdelivery
     rd = RED.new
     rd2 = RED.new

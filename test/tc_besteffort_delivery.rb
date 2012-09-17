@@ -22,7 +22,7 @@ class BED
   end
 end
 
-class TestBEDelivery < Test::Unit::TestCase
+class TestBEDelivery < MiniTest::Unit::TestCase
   def test_besteffort_delivery
     rd = BED.new
     sendtup = ['localhost:11116', 'localhost:11115', 1, 'foobar']

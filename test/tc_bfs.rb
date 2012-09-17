@@ -41,7 +41,7 @@ class HBA
   include StaticMembership
 end
 
-class TestBFS < Test::Unit::TestCase
+class TestBFS < MiniTest::Unit::TestCase
   def initialize(args)
     @opts = {}
     `rm -rf #{DATADIR}`

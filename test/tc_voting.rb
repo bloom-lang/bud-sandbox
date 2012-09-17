@@ -18,8 +18,7 @@ class VA2 < VA
   end
 end
 
-class TestVoting < Test::Unit::TestCase
-	
+class TestVoting < MiniTest::Unit::TestCase
   def initialize(args)
     @opts = {}
     super

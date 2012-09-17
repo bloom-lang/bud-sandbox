@@ -75,7 +75,7 @@ class LilChordStable
   include ChordSuccessors
 end
 
-class TestChord < Test::Unit::TestCase
+class TestChord < MiniTest::Unit::TestCase
   def do_lookup_tests(nodes)
     p = Queue.new
     q = Queue.new

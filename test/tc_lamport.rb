@@ -11,7 +11,7 @@ end
 #absolute values, but the absolute values suggested (enforced)
 #here likely make debugging easier
 
-class TestLamport < Test::Unit::TestCase
+class TestLamport < MiniTest::Unit::TestCase
   def test_simple_encode_decode
     lt = LT.new
     lt.to_stamp <+ [['foo']]

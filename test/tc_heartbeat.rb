@@ -12,7 +12,7 @@ class HB
 end
 
 
-class TestHB < Test::Unit::TestCase
+class TestHB < MiniTest::Unit::TestCase
   def test_heartbeat_group
     port_list = [46362, 46363, 46364]
     hb_list = port_list.map {|p| HB.new(:port => p)}

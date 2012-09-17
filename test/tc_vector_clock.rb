@@ -1,7 +1,7 @@
 require './test_common'
 require 'ordering/vector_clock'
 
-class TestVectorClock < Test::Unit::TestCase
+class TestVectorClock < MiniTest::Unit::TestCase
   def test_single_vector
     v1 = VectorClock.new
 

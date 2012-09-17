@@ -6,7 +6,7 @@ class AS
   include AggAssign
 end
 
-class TestAssg < Test::Unit::TestCase
+class TestAssg < MiniTest::Unit::TestCase
   def test_assigner
     as = AS.new
     as.run_bg

@@ -27,7 +27,7 @@ class DemonD
   end
 end
 
-class TestDemonicDelivery < Test::Unit::TestCase
+class TestDemonicDelivery < MiniTest::Unit::TestCase
   def test_dd_delivery_reliable
     snd = DemonD.new
     rcv = DemonD.new

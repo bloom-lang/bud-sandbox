@@ -45,7 +45,7 @@ class LocalDestructive < TestCartClient
   include BasicKVS
 end
 
-class TestCart < Test::Unit::TestCase
+class TestCart < MiniTest::Unit::TestCase
   include CartWorkloads
 
   # XXX: currently broken (issue #1 in sandbox)

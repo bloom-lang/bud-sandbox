@@ -22,7 +22,7 @@ class LocalCartLattice
   end
 end
 
-class TestCartLattice < Test::Unit::TestCase
+class TestCartLattice < MiniTest::Unit::TestCase
   def test_simple
     i = LocalCartLattice.new
     %w[c done del_t add_t do_checkout].each do |r|
@@ -61,7 +61,7 @@ class TestCartLattice < Test::Unit::TestCase
     assert_equal(false, i.done.current_value.reveal)
 
     i.do_checkout <+ [[203, 200]]
-    assert_raise(Bud::TypeError) do
+    assert_raises(Bud::TypeError) do
       i.tick
     end
   end
@@ -76,7 +76,7 @@ class TestCartLattice < Test::Unit::TestCase
     assert_equal(false, i.done.current_value.reveal)
 
     i.do_checkout <+ [[204, 201]]
-    assert_raise(Bud::TypeError) do
+    assert_raises(Bud::TypeError) do
       i.tick
     end
   end
@@ -89,7 +89,7 @@ class TestCartLattice < Test::Unit::TestCase
 
     assert_equal(false, i.done.current_value.reveal)
     i.do_checkout <+ [[302, 300]]
-    assert_raise(Bud::TypeError) do
+    assert_raises(Bud::TypeError) do
       i.tick
     end
   end
@@ -129,7 +129,7 @@ class MClientProgram
   end
 end
 
-class TestMonotoneCart < Test::Unit::TestCase
+class TestMonotoneCart < MiniTest::Unit::TestCase
   def test_monotone_simple
     s = MReplicaProgram.new
     c = MClientProgram.new

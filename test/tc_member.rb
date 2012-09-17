@@ -22,8 +22,7 @@ class MT2
 end
 
 
-class TestMembership < Test::Unit::TestCase
-
+class TestMembership < MiniTest::Unit::TestCase
   def test_mem1
     mt = MT.new
     mt.run_bg

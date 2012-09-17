@@ -28,7 +28,7 @@ class DastardlyD
   end
 end
 
-class TestDastardlyDelivery < Test::Unit::TestCase
+class TestDastardlyDelivery < MiniTest::Unit::TestCase
   def test_dd_delivery_reorder
     snd = DastardlyD.new
     rcv = DastardlyD.new
@@ -66,8 +66,8 @@ class TestDastardlyDelivery < Test::Unit::TestCase
       #from 2,3,4,1 to 2,1,3,4 (at least on my machine) so we just make
       #sure the orders aren't equal instead of checking for any particular
       #order--pdb
-      assert_not_equal(tuples,
-                       rcv.pipe_out_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
+      refute_equal(tuples,
+                   rcv.pipe_out_perm.to_a.sort { |a, b| a[1] <=> b[1] }.map { |m| m[0] } )
     }
     snd.stop
     rcv.stop

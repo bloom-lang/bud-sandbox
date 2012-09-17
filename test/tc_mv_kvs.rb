@@ -32,7 +32,7 @@ class SingleSiteMW_MVKVS
   include MW_MVKVS
 end
 
-class TestMVKVS < Test::Unit::TestCase
+class TestMVKVS < MiniTest::Unit::TestCase
   def test_simple
     v = SingleSiteMVKVS.new
     v.run_bg

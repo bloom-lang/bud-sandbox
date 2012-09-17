@@ -6,7 +6,7 @@ class LE
   include LeaderElection
 end
 
-class TestLE < Test::Unit::TestCase
+class TestLE < MiniTest::Unit::TestCase
   def initialize(args)
     @opts = {}
     super

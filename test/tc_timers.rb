@@ -6,7 +6,7 @@ class TT
   include ProgressTimer
 end
 
-class TestTimers < Test::Unit::TestCase
+class TestTimers < MiniTest::Unit::TestCase
   def test_simple_timers
     tt = TT.new
     tt.run_bg

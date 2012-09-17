@@ -5,7 +5,7 @@ require 'kvs/useful_combos'
 require 'ordering/serializer'
 require 'ordering/nonce'
 
-class TestKVS < Test::Unit::TestCase
+class TestKVS < MiniTest::Unit::TestCase
   include KVSWorkloads
 
   def initialize(args)

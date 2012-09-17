@@ -27,7 +27,7 @@ class GN
   include StaticMembership
 end
 
-class TestSer < Test::Unit::TestCase
+class TestSer < MiniTest::Unit::TestCase
   def test_group_nonce
     gn = GN.new
     gn.my_id <+ [[1]]
@@ -89,7 +89,7 @@ class TestSer < Test::Unit::TestCase
   end
 end
 
-class TestAssign < Test::Unit::TestCase
+class TestAssign < MiniTest::Unit::TestCase
   class BasicSortAssign
     include Bud
     include SortAssign

@@ -1,6 +1,4 @@
-require 'rubygems'
-require 'bud'
-require 'test/unit'
+require './test_common'
 require 'delivery/causal'
 
 class CausalAgent
@@ -8,7 +6,7 @@ class CausalAgent
   include CausalDelivery
 end
 
-class TestCausalDelivery < Test::Unit::TestCase
+class TestCausalDelivery < MiniTest::Unit::TestCase
   def register_recv_cb(bud, q)
     bud.register_callback(:pipe_out) do |t|
       raise unless t.length == 1
