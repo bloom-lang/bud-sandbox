@@ -153,8 +153,7 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
 
     c.sync_callback(:do_action, [[10, 3, 'beer', -1]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 10,
-                     [['vodka', 4]]]], c.response_log.to_a)
+      assert_equal([[c.ip_port, 10, [['vodka', 4]]]], c.response_log.to_a)
     }
 
     [c, s].each {|n| n.stop}
@@ -173,8 +172,7 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
 
     c.sync_callback(:do_checkout, [[11, 9, 8]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 11,
-                     [['coffee', 2]]]], c.response_log.to_a)
+      assert_equal([[c.ip_port, 11, [['coffee', 2]]]], c.response_log.to_a)
     }
 
     c.sync_do {
@@ -182,8 +180,8 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
     }
     c.sync_callback(:do_action, [[12, 1, 'rye', 1]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 11, [['coffee', 2]]],
-                    [c.ip_port, s.ip_port, 12, [['gin', 3], ['rye', 1]]]],
+      assert_equal([[c.ip_port, 11, [['coffee', 2]]],
+                    [c.ip_port, 12, [['gin', 3], ['rye', 1]]]],
                    c.response_log.to_a.sort)
     }
 

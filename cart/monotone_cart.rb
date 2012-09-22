@@ -6,11 +6,11 @@ require 'cart/cart_lattice'
 module MonotoneCartProtocol
   state do
     channel :action_msg,
-      [:@server, :client, :session, :op_id] => [:item, :cnt]
+      [:@server, :session, :op_id] => [:item, :cnt]
     channel :checkout_msg,
-      [:@server, :client, :session, :op_id] => [:lbound]
+      [:@server, :session, :op_id] => [:lbound, :addr]
     channel :response_msg,
-      [:@client, :server, :session] => [:items]
+      [:@client, :session] => [:items]
   end
 end
 
@@ -26,7 +26,7 @@ module MonotoneReplica
     end
 
     sessions <= checkout_msg do |m|
-      c = CartLattice.new({m.op_id => [CHECKOUT_OP, m.lbound, m.client]})
+      c = CartLattice.new({m.op_id => [CHECKOUT_OP, m.lbound, m.addr]})
       { m.session => c }
     end
 
@@ -34,7 +34,7 @@ module MonotoneReplica
     # each complete cart.
     response_msg <~ sessions.to_collection do |session, cart|
       cart.is_complete.when_true {
-        [cart.checkout_addr, ip_port, session, cart.summary]
+        [cart.checkout_addr, session, cart.summary]
       }
     end
   end
@@ -51,10 +51,10 @@ module MonotoneClient
 
   bloom do
     action_msg <~ (do_action * serv).pairs do |a,s|
-      [s.addr, ip_port, a.session, a.op_id, a.item, a.cnt]
+      [s.addr, a.session, a.op_id, a.item, a.cnt]
     end
     checkout_msg <~ (do_checkout * serv).pairs do |c,s|
-      [s.addr, ip_port, c.session, c.op_id, c.lbound]
+      [s.addr, c.session, c.op_id, c.lbound, ip_port]
     end
   end
 end
