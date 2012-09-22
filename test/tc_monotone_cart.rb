@@ -9,15 +9,15 @@ class LocalCartLattice
   state do
     lcart :c
     lbool :done
-    scratch :add_t, [:req] => [:item, :cnt]
-    scratch :del_t, [:req] => [:item, :cnt]
-    scratch :do_checkout, [:req] => [:lbound]
+    scratch :add_t, [:op_id] => [:item, :cnt]
+    scratch :del_t, [:op_id] => [:item, :cnt]
+    scratch :do_checkout, [:op_id] => [:lbound]
   end
 
   bloom do
-    c <= add_t {|t| { t.req => [ACTION_OP, t.item,  t.cnt] } }
-    c <= del_t {|t| { t.req => [ACTION_OP, t.item, -t.cnt] } }
-    c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound, ip_port] } }
+    c <= add_t {|t| { t.op_id => [ACTION_OP, t.item,  t.cnt] } }
+    c <= del_t {|t| { t.op_id => [ACTION_OP, t.item, -t.cnt] } }
+    c <= do_checkout {|t| { t.op_id => [CHECKOUT_OP, t.lbound, ip_port] } }
     done <= c.is_complete
   end
 end
@@ -132,6 +132,10 @@ end
 class TestMonotoneCart < MiniTest::Unit::TestCase
   def test_monotone_simple
     s = MReplicaProgram.new
+    %w[action_msg checkout_msg response_msg sessions].each do |r|
+      assert_equal(0, s.collection_stratum(r))
+    end
+
     c = MClientProgram.new
     [c, s].each {|n| n.run_bg}
 
