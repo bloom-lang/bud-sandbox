@@ -16,8 +16,9 @@ module BFSDatanode
     scratch :dir_contents, [:file, :time]
     table :last_dir_contents, [:nonce, :file, :time]
     scratch :to_payload, [:nonce, :file, :time]
-    scratch :payload_buff, [:nonce, :payload]
+    scratch :payload_buff, [:nonce, :pload]
     table :server_knows, [:file]
+    scratch :dir_empty, [:ident]
   end
 
   bloom :hblogic do
@@ -40,7 +41,9 @@ module BFSDatanode
     #stdio <~ hb_timer {["DB: #{@data_port}: payload #{to_payload.length}"] if to_payload.length > 2}
 
     # base case
-    to_payload <= nonce {|n| [n.ident, nil, -1]}
+    dir_empty <= nonce.notin(dir_contents){|n| true}
+    to_payload <= (hb_timer * dir_empty).rights {|n| [n.ident, nil, -1]}
+
     # remember the stuff we cast
     last_dir_contents <+ to_payload
     # if we get an ack, permanently remember
@@ -50,7 +53,7 @@ module BFSDatanode
     last_dir_contents <- acked_contents {|a, c| c}
     # turn a set into an array
     payload_buff <= to_payload.group([to_payload.nonce], accum(to_payload.file))
-    payload <= payload_buff {|b| [[b.nonce, b.payload]]}
+    payld <= payload_buff {|b| [[b.nonce, b.pload]]}
   end
 
   def initialize(dataport=nil, opts={})

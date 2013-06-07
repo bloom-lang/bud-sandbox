@@ -34,7 +34,7 @@ class TestBFS < MiniTest::Unit::TestCase
     Dir.new(dir).entries.length - 2
   end
 
-  def ntest_concurrent_clients
+  def Ntest_concurrent_clients
     b = BFSMasterServer.new(@opts.merge(:port => 44444))
     d1 = new_datanode(41111, 44444)
     d2 = new_datanode(41112, 44444)
@@ -76,7 +76,7 @@ class TestBFS < MiniTest::Unit::TestCase
     assert_equal(md5_of(TEST_FILE), md5_of(file))
   end
 
-  def ntest_many_datanodes
+  def test_many_datanodes
     b = BFSMasterServer.new(@opts.merge(:port => "33333"))
     b.run_bg
 
@@ -175,7 +175,7 @@ class TestBFS < MiniTest::Unit::TestCase
     dn2.stop_datanode
     puts "DB: @#{b.budtime}, }all down"
 
-    assert_raise(IOError) {do_read(s)}
+    assert_raises(IOError) {do_read(s)}
 
     # resurrect a datanode and its state
     dn3 = new_datanode(11117, b.port)
