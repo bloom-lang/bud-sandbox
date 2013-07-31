@@ -1,4 +1,4 @@
-=Peer to peer, fault-tolerant chat=
+= Peer to peer, fault-tolerant chat =
 
 Writing a simple chat server in Bloom is extremely simple.
 The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb">client) is simply to forward 
