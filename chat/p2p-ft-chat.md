@@ -1,4 +1,5 @@
-= Peer to peer, fault-tolerant chat =
+Peer to peer, fault-tolerant chat
+=========================
 
 Writing a simple chat server in Bloom is extremely simple.
 The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb">client) is simply to forward 
@@ -9,7 +10,8 @@ In this short demo, we'll evolve that toy chat server into a distributed system 
 have a chat program that behaves essentially the same, except that 1) all nodes can play the role of client or server, and 2) when the server node fails,
 one of the clients can assume its role.
 
-==Tweaks==
+Tweaks
+---------
 
 It turns out that the modifications to the original program are minimal, and fairly obvious.
 
@@ -41,7 +43,8 @@ We need to make this multicast conditional on the server's belief that it is the
 A node wearing the server hat will relay a message if it believes it is the leader -- and will relay it to everyone except himself (after all,
 he has already received it).
 
-==The distributed systems part==
+The distributed systems part
+------------------
 
 Now comes the fun part.  How does a node know if it is the leader, and how does a non-leader know who the leader is?  How does this knowledge
 persist or change under delay and failure?  We need a notion of *group membership*, and some form of *leader election*.  These are tricky things
