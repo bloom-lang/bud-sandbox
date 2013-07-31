@@ -1,8 +1,8 @@
 Peer to peer, fault-tolerant chat
 =========================
 
-Writing a simple chat server in Bloom is extremely simple.
-The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb">client) is simply to forward 
+Writing a simple chat server in Bloom is extremely [easy](https://github.com/bloom-lang/bud/tree/master/examples/chat).
+The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb) is to forward 
 messages (typed into the keyboard)to a central server, and to print (to the screen) messages relayed by that server.  
 The job of a [server](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat_server.rb) is to maintain a list of members, and forward all messages to all members.
 
