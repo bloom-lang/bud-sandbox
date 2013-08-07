@@ -1,7 +1,7 @@
 Peer to peer, fault-tolerant chat
 =========================
 
-Writing a simple chat server in Bloom is extremely [easy](https://github.com/bloom-lang/bud/tree/master/examples/chat).  The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb) is to forward messages (typed into the keyboard)to a central server, and to print (to the screen) messages relayed by that server.  The job of a [server](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat_server.rb) is to maintain a list of members, and forward all messages to all members.
+Writing a simple chat server in Bloom is extremely [easy](https://github.com/bloom-lang/bud/tree/master/examples/chat).  The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb) is to forward messages (typed into the keyboard) to a central server, and to print (to the screen) messages relayed by that server.  The job of a [server](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat_server.rb) is to maintain a list of members, and forward all messages to all members.
 
 In this short demo, we will evolve that toy chat server into a distributed system that is *decentralized* and *fault-tolerant*.  When we're done, we'll
 have a chat program that behaves essentially the same as the original, except that 1) all nodes can play the role of client or server, and 2) when the server node fails,
