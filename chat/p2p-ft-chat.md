@@ -52,13 +52,13 @@ attempting to send it again, so I do not require reliable message delivery) we c
 
 First, we need to define the *leader* collection, as well as any internal collections needed to define it:
 
-  state do
-    periodic :interval, 1
-    channel :heartbeat, [:@to, :from]
-    table :recently_seen, heartbeat.key_cols + [:rcv_time]
-    scratch :live_nodes, [:addr]
-    interface output, :leader, [:addr]
-  end
+    state do
+      periodic :interval, 1
+      channel :heartbeat, [:@to, :from]
+      table :recently_seen, heartbeat.key_cols + [:rcv_time]
+      scratch :live_nodes, [:addr]
+      interface output, :leader, [:addr]
+    end
   
 *interval* is a periodic ephemeral relation that will contain a tuple roughly once per second: we will use it to trigger *heartbeat* messages among nodes:
 
@@ -68,3 +68,29 @@ Every node sends every other node that it knows about a heartbeat message every 
 
     nodelist <= connect{|c| [c.client, c.nick]}
 
+Now all nodes have this rule.  We make sure that all nodes know about every node the leader has heard about by promiscuously broadcasting the leader's nodelist:
+
+    connect <~ (interval * nodelist * nodelist).combos do |h, n1, n2|
+      [n1.key, n2.key, n2.val]
+    end
+    
+    
+Now nodes with information share the information actively, so each node can (probably) independently determine the group membership and the current leader.
+The group membership -- the current set of live nodes, roughly -- is a view over the heartbeat log:
+
+    recently_seen <= heartbeat{|h| h.to_a + [Time.now.to_i]}
+    live_nodes <= recently_seen.group([:from], max(:rcv_time)) do |n|
+      [n.first] unless  (Time.now.to_i - n.last > 3)
+    end
+    
+The live nodes are those nodes from whom we have recently received heartbeat messages.
+
+The rules defining *leader* are a view over that view:
+
+    leader <= live_nodes.group([], min(:addr))
+
+The leader is the live node with the lowest address.  That's it!
+
+
+Running it
+------------
