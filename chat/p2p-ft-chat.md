@@ -91,6 +91,11 @@ The rules defining *leader* are a view over that view:
 
 The leader is the live node with the lowest address.  That's it!
 
+The code
+----------
+
+... is very [concise](https://github.com/bloom-lang/bud-sandbox/blob/master/chat/chat.rb).
+
 
 Running it
 ------------
@@ -99,4 +104,15 @@ If (perhaps due to a leader race), we instantiate a client with the address of a
 The node that receives the *connect* message will add the new node to its *nodelist*, and later forward its best guess at the current *nodelist* to the new node.
 At this point, the new node can determine the current leader and begin relaying messages to it.
 
+We include a simple [wrapper](https://github.com/bloom-lang/bud-sandbox/blob/master/chat/single.rb) for running chat from the commandline on a single node, for demonstration purposes.
+In a given console, you can run it like:
 
+    > ruby simple.rb NICKNAME LEADER_PORT [MY_PORT]
+    
+For example,
+
+    console1> ruby simple.rb peter 1234 1234
+    console2> ruby simple.rb paul 1234 2345
+    console3> ruby simple.rb mary 1234 3456
+    
+    
