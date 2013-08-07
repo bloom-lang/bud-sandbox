@@ -65,7 +65,7 @@ Every node sends every other node that it knows about a heartbeat message every 
 
     nodelist <= connect{|c| [c.client, c.nick]}
 
-Now all nodes have this rule.  We make sure that all nodes know about every other node by promiscuously broadcasting the leader's nodelist:
+Now all nodes have this rule.  We make sure that all nodes eventually have an _overestimate_ of the set of active nodes by promiscuously broadcasting the leader's nodelist:
 
     connect <~ (interval * nodelist * nodelist).combos do |h, n1, n2|
       [n1.key, n2.key, n2.val]
