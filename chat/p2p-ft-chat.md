@@ -47,5 +47,24 @@ The distributed systems part
 
 Now comes the fun part.  How does a node know if it is the leader, and how does a non-leader know who the leader is?  How does this knowledge
 persist or change under delay and failure?  We need a notion of *group membership*, and some form of *leader election*.  These are tricky things
-to get right in general, but since in a chat application we require only best-effort behavior (if I send a message and no one sees it, I am OK with
-attempting to send it again) we can roll ourselves very simple versions of both.
+to get right in general, but since in a chat application we require only best-effort behavior (e.g., if I send a message and no one sees it, I am OK with
+attempting to send it again, so I do not require reliable message delivery) we can roll ourselves very simple versions of both.
+
+First, we need to define the *leader* collection, as well as any internal collections needed to define it:
+
+  state do
+    periodic :interval, 1
+    channel :heartbeat, [:@to, :from]
+    table :recently_seen, heartbeat.key_cols + [:rcv_time]
+    scratch :live_nodes, [:addr]
+    interface output, :leader, [:addr]
+  end
+  
+*interval* is a periodic ephemeral relation that will contain a tuple roughly once per second: we will use it to trigger *heartbeat* messages among nodes:
+
+    heartbeat <~ (interval * nodelist).rights{|n| [n.key, ip_port]}
+
+Every node sends every other node that it knows about a heartbeat message every second.  But how does it know about other nodes?  Recall that in the original chatserver, the server inserts an address into *nodelist* whenever it gets a *connect* message.
+
+    nodelist <= connect{|c| [c.client, c.nick]}
+
