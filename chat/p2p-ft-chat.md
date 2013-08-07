@@ -50,7 +50,7 @@ persist or change under delay and failure?  We need a notion of *group membershi
 to get right in general, but since in a chat application we require only best-effort behavior (e.g., if I send a message and no one sees it, I am OK with
 attempting to send it again, so I do not require reliable message delivery) we can roll ourselves very simple versions of both.
 
-First, we need to define the *leader* collection, as well as any internal collections needed to define it:
+First, we need to define the *leader* collection, as well as any internal collections needed to describe what it contains:
 
     state do
       periodic :interval, 1
@@ -68,7 +68,7 @@ Every node sends every other node that it knows about a heartbeat message every 
 
     nodelist <= connect{|c| [c.client, c.nick]}
 
-Now all nodes have this rule.  We make sure that all nodes know about every node the leader has heard about by promiscuously broadcasting the leader's nodelist:
+Now all nodes have this rule.  We make sure that all nodes know about every other node by promiscuously broadcasting the leader's nodelist:
 
     connect <~ (interval * nodelist * nodelist).combos do |h, n1, n2|
       [n1.key, n2.key, n2.val]
@@ -94,3 +94,9 @@ The leader is the live node with the lowest address.  That's it!
 
 Running it
 ------------
+To bootstrap clients with a *nodelist*, we need to tell them the address of the current server when we launch the program.
+If (perhaps due to a leader race), we instantiate a client with the address of a node that is not the current leader, that is ok.
+The node that receives the *connect* message will add the new node to its *nodelist*, and later forward its best guess at the current *nodelist* to the new node.
+At this point, the new node can determine the current leader and begin relaying messages to it.
+
+
