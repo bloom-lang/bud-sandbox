@@ -7,7 +7,7 @@ The job of a [server](https://github.com/bloom-lang/bud/blob/master/examples/cha
 
 In this short demo, we'll evolve that toy chat server into a distributed system that is *decentralized* and *fault-tolerant*.  When we're done, we'll
 have a chat program that behaves essentially the same as the original, except that 1) all nodes can play the role of client or server, and 2) when the server node fails,
-one of the clients can assume its role.
+one of the clients automatically assumes its role.
 
 Tweaks
 ---------
