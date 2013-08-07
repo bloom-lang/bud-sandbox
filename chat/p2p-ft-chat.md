@@ -2,12 +2,11 @@ Peer to peer, fault-tolerant chat
 =========================
 
 Writing a simple chat server in Bloom is extremely [easy](https://github.com/bloom-lang/bud/tree/master/examples/chat).
-The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb) is to forward 
-messages (typed into the keyboard)to a central server, and to print (to the screen) messages relayed by that server.  
+The job of a chat [client](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat.rb) is to forward messages (typed into the keyboard)to a central server, and to print (to the screen) messages relayed by that server.  
 The job of a [server](https://github.com/bloom-lang/bud/blob/master/examples/chat/chat_server.rb) is to maintain a list of members, and forward all messages to all members.
 
 In this short demo, we'll evolve that toy chat server into a distributed system that is *decentralized* and *fault-tolerant*.  When we're done, we'll
-have a chat program that behaves essentially the same, except that 1) all nodes can play the role of client or server, and 2) when the server node fails,
+have a chat program that behaves essentially the same as the original, except that 1) all nodes can play the role of client or server, and 2) when the server node fails,
 one of the clients can assume its role.
 
 Tweaks
@@ -26,7 +25,7 @@ be the server.  So we replace the reference to an instance variable with a refer
       [l.addr, [ip_port, @nick, Time.new, s.line]]
     end
 
-We'll leave the declaration of leader and the rules that define its contents for later.
+We'll leave the declaration of *leader* and the rules that define its contents for later.
 
 The original chat server blindly multicasted all messages it received to all clients:
 
@@ -40,8 +39,8 @@ We need to make this multicast conditional on the server's belief that it is the
       end
     end
 
-A node wearing the server hat will relay a message if it believes it is the leader -- and will relay it to everyone except himself (after all,
-he has already received it).
+A node will relay a message if it believes it is the leader -- and will relay it to everyone except itself (after all,
+it has already received the message).
 
 The distributed systems part
 ------------------
