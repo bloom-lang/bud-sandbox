@@ -29,9 +29,6 @@ module ChatClient
 
   bootstrap do
     connect <~ [[@server, ip_port, @nick]]
-    # record the fact that we too are a node.
-    # at first, we'll suspect that we're the leader.  soon, when the bootstrap @server forwards
-    # us its node list, we'll have a better idea of who the leader is.
     nodelist <+ [[ip_port, @nick]]
   end
 
@@ -50,8 +47,6 @@ module ChatServer
 
   bloom do
     nodelist <= connect{|c| [c.client, c.nick]}
-
-    # forward a message if a) we're the leader, and b) it hasn't already been relayed to us.
     chatter <~ (chatter * nodelist * leader).combos do |m, n, l| 
       if l.addr == ip_port and n.key != ip_port
         [n.key, m.val]
