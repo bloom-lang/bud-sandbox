@@ -22,8 +22,7 @@ module BasicKVS
   end
 
   bloom :mutate do
-    kvstate <+ kvput {|s| [s.key, s.value]}
-    kvstate <- (kvstate * kvput).lefts(:key => :key)
+    kvstate <+- kvput {|s| [s.key, s.value]}
   end
 
   bloom :get do
