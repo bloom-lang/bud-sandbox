@@ -104,12 +104,12 @@ At this point, the new node can determine the current leader and begin relaying 
 We include a simple [wrapper](https://github.com/bloom-lang/bud-sandbox/blob/master/chat/single.rb) for running chat from the commandline on a single node, for demonstration purposes.
 In a given console, you can run it like:
 
-    > ruby simple.rb NICKNAME LEADER_PORT [MY_PORT]
+    > ruby single.rb NICKNAME LEADER_PORT [MY_PORT]
     
 For example,
 
-    console1> ruby simple.rb peter 1234 1234
-    console2> ruby simple.rb paul 1234 2345
-    console3> ruby simple.rb mary 1234 3456
+    console1> ruby single.rb peter 1234 1234
+    console2> ruby single.rb paul 1234 2345
+    console3> ruby single.rb mary 1234 3456
     
     
