@@ -1,16 +1,17 @@
+# to use the state machine, make sure to issue a "reset" event first
 module StateMachine
 	state do
 	    table   :states, [:name] => [:accepts]   
 	    table   :xitions, [:from, :to, :event]
 	    table   :current, [] => [:name] 
-	    scratch :event, [:name]
-	end
-
-	bootstrap do
-		current <= states {|s| [s.name] if s.name == 'start'}
+	    interface input, :event, [:name]
+	    interface output, :result, [:accepted]
 	end
 
 	bloom do
+		# result is the acceptance flag of current state
+		result <= (current*states).pairs(current.name=>states.name) {|c,s| [s.accepts]}
+
 		# change upon legal transition
 		current <+- (current*event*xitions).combos(current.name=>xitions.from, 
 			                                       event.name=>xitions.event) {|c,e,x|
