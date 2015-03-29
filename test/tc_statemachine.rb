@@ -21,7 +21,7 @@ class TestSM < MiniTest::Unit::TestCase
     rd.run_bg
 
     rd.sync_do {
-      rd.mshn.states <+ [['start'], ['moving'], ['end', true]]
+      rd.mshn.states <+ [['start', false], ['moving', false], ['end', true]]
       rd.mshn.xitions <+ [['start', 'moving', 'down'], ['moving', 'moving', 'move'], ['moving', 'end', 'up']]
     }
 
