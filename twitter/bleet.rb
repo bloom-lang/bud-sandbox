@@ -2,7 +2,6 @@ require 'readline'
 require 'rubygems'
 require 'backports'
 require 'bud'
-require 'http-cookie'
 require 'stringio' 
 require_relative 'bleet_protocol'
 
@@ -13,7 +12,7 @@ class ChatClient
   state do
     interface input, :bleet_in, [:line]
     scratch :command, [:name, :params]
-    table :session, [:cook]
+    table :session, [:cooky]
   end
 
   def initialize(nick, server, opts={})
@@ -25,9 +24,9 @@ class ChatClient
   bloom :commands do
     command <= bleet_in { |s| s.line.split(' ', 2) }
     # use outer join since some commands don't require a session cookie
-    command_chan <~ (command * session).outer {|c, s| [@server, ip_port, c.name, c.params, s.cook]}
-    session <= command_resp {|l| [l.cook] if l.command == 'login'}
-    session <- command_resp { |l| [l.cook] if l.command == 'logout'}
+    command_chan <~ (command * session).outer {|c, s| [@server, ip_port, c.name, c.params, s.cooky]}
+    session <= command_resp {|l| [l.cooky] if l.command == 'login'}
+    session <- command_resp { |l| [l.cooky] if l.command == 'logout'}
   end
 
   bloom :responses do
@@ -43,6 +42,7 @@ out_read, out_write = IO.pipe
 bleet = ChatClient.new(ARGV[0], server, :stdout => out_write)
 bleet.run_bg
 
+# simple Ruby command-line client
 while buf = Readline.readline("bleet> ", true)
   bleet.sync_do{ bleet.bleet_in <+ [[buf]] }
   begin

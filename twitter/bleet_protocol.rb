@@ -1,8 +1,8 @@
 module BleetProtocol
   state do
-  	channel          :command_chan,  [:@addr, :from, :name, :params, :cook]
-  	channel          :command_resp,  [:cook, :@addr, :succeeded, :command]
-  	channel          :getfeed_resp,  [:cook, :@addr, :poster, :text, :command]
+  	channel          :command_chan,  [:@addr, :from, :name, :params, :cooky]
+  	channel          :command_resp,  [:cooky, :@addr, :succeeded, :command]
+  	channel          :getfeed_resp,  [:cooky, :@addr, :poster, :text, :command]
   end
 
   DEFAULT_ADDR = "127.0.0.1:12345"
