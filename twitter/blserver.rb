@@ -1,10 +1,9 @@
 require 'rubygems'
 require 'backports'
 require 'bud'
-require 'readline'
-require_relative './bleet_protocol'
+require_relative 'blprotocol'
 
-class BleetServer
+module BleetServer
   include Bud
   include BleetProtocol
 
@@ -34,10 +33,11 @@ class BleetServer
   	post_sequence <+ [[0]] if post_sequence.empty?  # initialize counter for posts
     login_cmds <+ LOGIN_COMMANDS                    # command names that require login 
     commands <+ LOGIN_COMMANDS                      # all commands
-    commands <+ COMMANDS
+    commands <+ NO_LOGIN_COMMANDS
   end
 
-  # take in the command channel and demultiplex it to appropriate scratch tables
+  # Take in the command channel and demultiplex it to appropriate scratch tables
+  # Clearly some new Bloom syntactic sugar would help a lot here.
   bloom :demux do
   	register <= command_chan { |c| 
       [c.from, c.params.split[0], c.params.split[1], c.name] if c.name == 'register' 
@@ -121,24 +121,5 @@ class BleetServer
   		                                             follower.lead => posts.username) {|g,f,p|
       [nil, g.from, p.username, p.text, g.command]
   	}
-  end
-end
-
-# Provide a debugging shell that simply allows dumping state of tables
-DBM_BUD_DIR = "#{Dir.pwd}/bud_tmp"
-addr = ARGV.first ? ARGV.first : BleetProtocol::DEFAULT_ADDR
-ip, port = addr.split(":")
-puts "Server address: #{ip}:#{port}"
-program = BleetServer.new(:ip => ip, :port => port.to_i, :dbm_dir => DBM_BUD_DIR)
-program.run_bg
-
-while buf = Readline.readline("enter a name to dump> ", true)
-	program.sync_do # tick to capture prior activity
-  if program.tables.has_key? buf.to_sym
-	tups = program.tables[buf.to_sym].to_a.sort
-  	puts(tups.empty? ? "(empty)" : tups.sort.map{|t| "#{t}"}.join("\n"))
-  elsif program.lattices.has_key? buf.to_sym
-    val = program.lattices[buf.to_sym].current_value
-    puts val.inspect
   end
 end

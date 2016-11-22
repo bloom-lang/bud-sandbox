@@ -7,10 +7,10 @@ module BleetProtocol
 
   DEFAULT_ADDR = "127.0.0.1:12345"
   LOGIN_COMMANDS = [['logout'], ['follow'], ['post'], ['getfeed'], ['session']]
-  COMMANDS = [['register'], ['login']]
+  NO_LOGIN_COMMANDS = [['register'], ['login']]
 end
 
-# format messages with color and timestamp on the right of the screen
+# Ruby code to format messages with color and timestamp on the right of the screen
 # format is <val1>: <val2>      Time.now
 def pretty_print(*args)
 	return if args.nil?
